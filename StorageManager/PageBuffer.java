@@ -8,7 +8,10 @@ public class PageBuffer {
     private List<Page> buffer;
     private int bufferSize;
 
-    public PageBuffer(int bufferSize) {
+    public PageBuffer() {
+    }
+
+    public void setBufferSize(int bufferSize) {
         this.bufferSize = bufferSize;
     }
 }

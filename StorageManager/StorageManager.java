@@ -1,6 +1,6 @@
 package StorageManager;
 
-import javax.xml.catalog.Catalog;
+import StorageManager.Objects.Catalog;
 
 public class StorageManager {
     private Catalog catalog;
