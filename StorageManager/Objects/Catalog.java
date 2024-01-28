@@ -14,6 +14,7 @@ public class Catalog {
     public Catalog(String catalogLocation, String dbLocation, int bufferSize) {
         this.catalogLocation = catalogLocation;
         this.dbLocation = dbLocation;
+        loadCatalog();
         this.bufferSize = bufferSize;
 
     }
