@@ -14,4 +14,12 @@ public class UserInterface {
         this.catalog = catalog;
         this.scanner = scanner;
     }
+
+    public void start() {
+
+    }
+
+    public void processUserCommand(String command) {
+
+    }
 }
