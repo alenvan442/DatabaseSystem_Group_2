@@ -16,25 +16,43 @@ public class Attribute {
     }
 
     public String getAttributeName() {
-        return this.attributeName;
+        return attributeName;
+    }
+
+    public void setAttributeName(String attributeName) {
+        this.attributeName = attributeName;
     }
 
     public String getDataType() {
-        return this.dataType;
+        return dataType;
     }
 
-    public boolean isNull() {
-        return !this.notNull;
+    public void setDataType(String dataType) {
+        this.dataType = dataType;
+    }
+
+    public boolean isNotNull() {
+        return notNull;
+    }
+
+    public void setNotNull(boolean notNull) {
+        this.notNull = notNull;
     }
 
     public boolean isPrimaryKey() {
-        return this.primaryKey;
+        return primaryKey;
+    }
+
+    public void setPrimaryKey(boolean primaryKey) {
+        this.primaryKey = primaryKey;
     }
 
     public boolean isUnique() {
-        return this.unique;
+        return unique;
     }
 
-        
+    public void setUnique(boolean unique) {
+        this.unique = unique;
+    }
 
 }

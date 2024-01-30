@@ -1,19 +1,20 @@
 package StorageManager;
 
-import StorageManager.Objects.Catalog;
 
 public class StorageManager {
-    private Catalog catalog;
-    private PageBuffer buffer;
-    private String dbLocation;
+    private static StorageManager storageManager;
+    private PageBuffer pageBuffer;
 
-    public StorageManager(Catalog catalog, PageBuffer buffer) {
-        this.catalog = catalog;
-        this.buffer =  buffer;
+
+    private StorageManager() {
+        this.pageBuffer = new PageBuffer();
     }
 
-    //will call page buffer's write to hardware
-    public void insertRecord(int tableNumber) {
+    public static void createStorageManager(int bufferSize) {
+        storageManager = new StorageManager();
+    }
 
+    public static StorageManager getStorageManager() {
+        return storageManager;
     }
 }

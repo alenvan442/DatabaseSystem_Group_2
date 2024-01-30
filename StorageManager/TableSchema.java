@@ -8,43 +8,56 @@ public class TableSchema {
     private int tableNumber;
     private String tableName;
     private List<Attribute> attributes;
-    private Attribute primaryKey;
+    private int numPages;
+    private int records;
+
 
     public TableSchema(String tableName) {
 
     }
 
+
     public int getTableNumber() {
-        return 0;
+      return tableNumber;
     }
 
     public String getTableName() {
-        return null;
-    } 
+      return tableName;
+    }
+
 
     public void setTableName(String tableName) {
-
+      this.tableName = tableName;
     }
 
-    public Attribute getPrimaryKey() {
-        return this.primaryKey;
+
+    public List<Attribute> getAttributes() {
+      return attributes;
     }
 
-    public void setPrimaryKey(Attribute attribute) {
-    
+
+    public void setAttributes(List<Attribute> attributes) {
+      this.attributes = attributes;
     }
 
-    public void addAttribute(Attribute attribute) {
 
+    public int getNumPages() {
+      return numPages;
     }
 
-    public boolean removeAttribute(Attribute attribute) {
-        return false;
+
+    public void setNumPages(int numPages) {
+      this.numPages = numPages;
     }
 
-    public List<Attribute> getAttribtues() {
-        return this.attributes;
+
+    public int getRecords() {
+      return records;
     }
 
+
+    public void setRecords(int records) {
+      this.records = records;
+    }
 
 }

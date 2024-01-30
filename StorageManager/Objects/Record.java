@@ -8,4 +8,12 @@ public class Record {
     public Record(List<Object> values) {
         this.values = values;
     }
+
+    public List<Object> getValues() {
+        return values;
+    }
+
+    public void setValues(List<Object> values) {
+        this.values = values;
+    }
 }

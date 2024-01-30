@@ -1,18 +1,8 @@
 package Parser;
 
-import javax.xml.catalog.Catalog;
-import StorageManager.StorageManager;
-
 public class DMLParser {
-    private Catalog catalog;
-    private StorageManager storageManager;
 
-    public DMLParser(Catalog catalog, StorageManager storageManager) {
-        this.catalog = catalog;
-        this.storageManager = storageManager;
-    }
-
-    public void parseInsert(String dmlStatement) {
+    public static void parseInsert(String dmlStatement) {
         // Format: insert into <name> values <tuples>;
         // Example: insert into foo values (1 "foo" true 2.1);
 
@@ -29,7 +19,7 @@ public class DMLParser {
 
     }
 
-    public void parseSelect(String dmlStatement) {
+    public static void parseSelect(String dmlStatement) {
         // Command: select * from <name>;
         // Example: select * from foo;
 
@@ -41,7 +31,7 @@ public class DMLParser {
 
     }
 
-    public void parseDisplay(String dmlStatement) {
+    public static void parseDisplay(String dmlStatement) {
         // Command: display schema
         // It will show: database location, page size, buffer, size, and table schema
         // Command: display info <name>
@@ -73,11 +63,11 @@ public class DMLParser {
 
     }
 
-    public void parseDelete(String dmlStatement) {
+    public static void parseDelete(String dmlStatement) {
 
     }
 
-    public void parseUpdate(String dmlStatement) {
+    public static void parseUpdate(String dmlStatement) {
 
     }
 }

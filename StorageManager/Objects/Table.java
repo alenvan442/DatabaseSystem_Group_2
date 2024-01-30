@@ -11,11 +11,19 @@ public class Table {
         this.pages = pages;
     }
 
-    public void addPage(Page page) {
-
+    public int getNumPages() {
+        return numPages;
     }
 
-    public int getNumPage() {
-        return this.numPages;
+    public void setNumPages(int numPages) {
+        this.numPages = numPages;
+    }
+
+    public List<Page> getPages() {
+        return pages;
+    }
+
+    public void setPages(List<Page> pages) {
+        this.pages = pages;
     }
 }

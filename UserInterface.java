@@ -1,18 +1,12 @@
 import java.util.Scanner;
 
 
-import StorageManager.StorageManager;
-import StorageManager.Objects.Catalog;
 
 public class UserInterface {
-    private StorageManager storageManager;
     private Scanner scanner;
-    private Catalog catalog;
 
-    public UserInterface(StorageManager storageManager, Catalog catalog, Scanner scanner) {
-        this.storageManager = storageManager;
-        this.catalog = catalog;
-        this.scanner = scanner;
+    public UserInterface() {
+        this.scanner = new Scanner(System.in);
     }
 
     public void start() {
@@ -31,7 +25,6 @@ public class UserInterface {
         }
 
         scanner.close();
-
     }
 
     public void processUserCommand(String command) {
