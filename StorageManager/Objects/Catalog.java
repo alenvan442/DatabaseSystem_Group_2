@@ -52,16 +52,8 @@ public class Catalog implements CatalogInterface {
         return dbLocation;
     }
 
-    public void setDbLocation(String dbLocation) {
-        this.dbLocation = dbLocation;
-    }
-
     public String getCatalogLocation() {
         return catalogLocation;
-    }
-
-    public void setCatalogLocation(String catalogLocation) {
-        this.catalogLocation = catalogLocation;
     }
 
     public int getPageSize() {
@@ -70,10 +62,6 @@ public class Catalog implements CatalogInterface {
 
     public int getBufferSize() {
         return bufferSize;
-    }
-
-    public void setBufferSize(int bufferSize) {
-        this.bufferSize = bufferSize;
     }
 
 }

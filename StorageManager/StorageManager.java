@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.PriorityQueue;
 
 import StorageManager.Objects.Page;
+import StorageManager.Objects.Record;
 
 public class StorageManager implements StorageManagerInterface {
     private static StorageManager storageManager;
@@ -23,5 +24,10 @@ public class StorageManager implements StorageManagerInterface {
 
     public static StorageManager getStorageManager() {
         return storageManager;
+    }
+
+    public void insertRecord(int tableNumber, Record record) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'insertRecord'");
     }
 }
