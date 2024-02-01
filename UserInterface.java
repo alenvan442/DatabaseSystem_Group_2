@@ -13,7 +13,7 @@ public class UserInterface {
     }
 
     public void start() {
-        System.out.println("\nPlease enter commands, enter <quit> to shutdown the db\n");
+        System.out.println("\nPlease enter commands, enter <quit> to shutdown the db, press enter twice to submit command\n");
         while (true) {
             StringBuilder userInpBuilder = new StringBuilder();
             System.out.print("CASE-C QL> ");
