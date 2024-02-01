@@ -1,5 +1,8 @@
 package StorageManager;
 
+import java.io.IOException;
+import java.util.Dictionary;
+
 import java.util.List;
 import java.util.PriorityQueue;
 
@@ -30,7 +33,7 @@ public class StorageManager implements StorageManagerInterface {
     }
 
     public Table getTable(int hash) {
-        return this.tables.get(hash);
+        
     }
 
     public Table getTable(String name) {
@@ -46,6 +49,49 @@ public class StorageManager implements StorageManagerInterface {
             index++;
         }
         return hash;
+    }
+
+    //---------------------------- Page Buffer ------------------------------
+    //public void setBuffer(List<Page> buffer) {
+    //    this.buffer = buffer;
+    //}
+
+    private void addBuffer(Page page) {
+        if (this.buffer.size() == this.bufferSize) {
+            
+        } else {
+
+        }
+    }
+
+    public void readPageHardware() {
+
+    }
+
+    public void writePageHardware(Page page) {
+        // if the buffer size exceeds the limit then write the least recently used page to HW
+        // may need to change the buffer to either a queue or a stack
+        try {
+
+        } catch (IOException io) {
+            io.printStackTrace();
+        }
+
+    }
+
+    public void writeAll() {
+        for (Page page : buffer) {
+            if (page.isChanged()) {
+                writePageHardware(page);
+            }
+        }
+        this.buffer.removeAll(buffer);
+    }
+
+    private void pageSerailization(Page page) {
+        // serialize the page
+
+        // encode page to bytes
     }
 
 }
