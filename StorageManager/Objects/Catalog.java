@@ -4,7 +4,7 @@ import java.util.List;
 
 import StorageManager.TableSchema;
 
-public class Catalog {
+public class Catalog implements CatalogInterface {
     private static Catalog catalog;
     private List<TableSchema> schemas;
     private String dbLocation;

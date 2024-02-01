@@ -4,7 +4,7 @@ import java.util.List;
 
 import StorageManager.Objects.Attribute;
 
-public class TableSchema {
+public class TableSchema implements TableSchemaInterface {
     private int tableNumber;
     private String tableName;
     private List<Attribute> attributes;
