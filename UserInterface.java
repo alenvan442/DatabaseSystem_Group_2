@@ -13,7 +13,7 @@ public class UserInterface {
     }
 
     public void start() {
-        System.out.println("\nPlease enter commands, enter <quit> to shutdown the db, press enter twice to submit command\n");
+        System.out.println("\nPlease enter commands, enter <quit> to shutdown the db\n");
         while (true) {
             StringBuilder userInpBuilder = new StringBuilder();
             System.out.print("CASE-C QL> ");
@@ -21,22 +21,23 @@ public class UserInterface {
             while (true) {
                 String line = scanner.nextLine().trim();
 
-                if (line.isEmpty()) {
-                    break;
+                if (line.equalsIgnoreCase("<quit>")) {
+                    System.out.println("Safely shutting down the database...\n" +
+                                            "Purging page buffer...\n" +
+                                            "Saving catalog...\n" +
+                                            "Exiting the database...");
+                        return;
                 }
 
                 userInpBuilder.append(line).append(" ");
+
+                if (line.endsWith(";")) {
+                    break;
+                }
             }
 
             String userInput = userInpBuilder.toString().trim();
 
-            if (userInput.equalsIgnoreCase("<quit>")) {
-                System.out.println("Safely shutting down the database...\n" +
-                                        "Purging page buffer...\n" +
-                                        "Saving catalog...\n" +
-                                        "Exiting the database...");
-                    break;
-            }
 
             if (!userInput.endsWith(";")) {
                 System.err.println("ERROR: Each command must end with a semicolon (;).");
@@ -48,7 +49,6 @@ public class UserInterface {
                 processUserCommand(command.trim());
             }
         }
-        scanner.close();
     }
 
     public void processUserCommand(String command) {
