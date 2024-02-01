@@ -20,6 +20,15 @@ public class Catalog implements java.io.Serializable, CatalogInterface{
         this.pageSize = pageSize != -1 ? pageSize : loadCatalog();
     }
 
+    public static void createCatalog(String dbLocation, String catalogLocation, int pageSize, int bufferSize) {
+        catalog = new Catalog(catalogLocation, dbLocation, pageSize, bufferSize);
+    }
+
+
+    public static Catalog getCatalog() {
+        return catalog;
+    }
+
     public void saveCatalog() {
 
     }
