@@ -2,7 +2,7 @@ package StorageManager.Objects;
 
 import java.util.List;
 
-public class Record {
+public class Record implements java.io.Serializable {
     private List<Object> values;
 
     public Record(List<Object> values) {

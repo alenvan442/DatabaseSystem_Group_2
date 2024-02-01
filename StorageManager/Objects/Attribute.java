@@ -1,6 +1,6 @@
 package StorageManager.Objects;
 
-public class Attribute {
+public class Attribute implements java.io.Serializable {
     private String attributeName;
     private String dataType;
     private boolean notNull;

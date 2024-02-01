@@ -2,9 +2,10 @@ package StorageManager.Objects;
 
 import java.util.List;
 
-public class Page {
+public class Page implements java.io.Serializable {
     private int numRecords;
     private List<Record> records;
+    private boolean changed;
 
     public Page(int numRecords) {
         this.numRecords = numRecords;
@@ -25,4 +26,9 @@ public class Page {
     public void setRecords(List<Record> records) {
         this.records = records;
     }
+
+    public boolean isChanged() {
+        return this.changed;
+    }
+
 }

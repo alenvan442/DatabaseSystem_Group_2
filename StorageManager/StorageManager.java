@@ -11,8 +11,6 @@ public class StorageManager implements StorageManagerInterface {
     private PriorityQueue<Page> buffer;
     private int bufferSize;
 
-
-
     private StorageManager(int bufferSize) {
         this.bufferSize = bufferSize;
         this.buffer = new PriorityQueue<>(bufferSize);
@@ -30,4 +28,24 @@ public class StorageManager implements StorageManagerInterface {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'insertRecord'");
     }
+
+    public Table getTable(int hash) {
+        return this.tables.get(hash);
+    }
+
+    public Table getTable(String name) {
+        
+    }
+
+    public int hashName(String name) {
+        char[] chars = name.toLowerCase().toCharArray();
+        int hash = 0;
+        int index = 0;
+        for (char c : chars) {
+            hash += Character.hashCode(c) + index;
+            index++;
+        }
+        return hash;
+    }
+
 }
