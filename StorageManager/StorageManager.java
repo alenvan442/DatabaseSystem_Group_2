@@ -1,11 +1,11 @@
 package StorageManager;
 
+import java.io.File;
 import java.io.IOException;
-import java.util.Dictionary;
-
 import java.util.List;
 import java.util.PriorityQueue;
 
+import StorageManager.Objects.Catalog;
 import StorageManager.Objects.Page;
 import StorageManager.Objects.Record;
 
@@ -14,41 +14,93 @@ public class StorageManager implements StorageManagerInterface {
     private PriorityQueue<Page> buffer;
     private int bufferSize;
 
+    /*
+     * Constructor for the storage manager
+     * initializes the class by initializing the buffer
+     * 
+     * @param buffersize    The size of the buffer
+     */
     private StorageManager(int bufferSize) {
         this.bufferSize = bufferSize;
         this.buffer = new PriorityQueue<>(bufferSize);
     }
 
+    /*
+     * Static function that initializes the storageManager
+     * 
+     * @param bufferSize    The size of the buffer
+     */
     public static void createStorageManager(int bufferSize) {
         storageManager = new StorageManager(bufferSize);
     }
 
+    /*
+     * Getter for the global storageManager
+     * 
+     * @return  The storageManager
+     */
     public static StorageManager getStorageManager() {
         return storageManager;
     }
 
-    public void insertRecord(int tableNumber, Record record) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'insertRecord'");
-    }
-
-    public Table getTable(int hash) {
-        
-    }
-
-    public Table getTable(String name) {
-        
-    }
-
-    public int hashName(String name) {
-        char[] chars = name.toLowerCase().toCharArray();
-        int hash = 0;
-        int index = 0;
-        for (char c : chars) {
-            hash += Character.hashCode(c) + index;
-            index++;
+    /*
+     * Splits a page that is full into 2 separate pages
+     * 
+     * @param page  The page that is to be split
+     * 
+     * @return      An array of size 2, consisting of 2 pages
+     */
+    private Page[] pageSplit(Page page) {
+        List<Record> records = page.getRecords();
+        int size = records.size();
+        int startIndex = Math.ceilDiv(size, 2) - 1;
+        Page _new = new Page(startIndex + 1, page.getTableNumber());
+        for (int i = startIndex; i < size; i++) {
+            _new.addRecord(records.get(startIndex));
+            records.remove(startIndex);
         }
-        return hash;
+
+        page.setRecords(records);
+        page.setNumRecords(records.size());
+
+        page.isChanged();
+        _new.isChanged();
+
+        this.addBuffer(_new);
+
+        return new Page[] {page, _new};
+
+    }
+
+    /*
+     * Checks the buffer to determine if a needed page
+     * is already needed
+     * 
+     * @param   tentative
+     * 
+     * @return  returns a page if found, otherwise null
+     */
+    private Page checkBuffer() {
+        // TODO
+        return null;
+    }
+
+    private String getTablePath(int tableNumber) {
+        String dbLoc = Catalog.getCatalog().getDbLocation();
+        return dbLoc + "/tables/" + Integer.toString(tableNumber);
+
+    }
+
+    public void insertRecord(int tableNumber, Record record) {
+        // TODO
+    }
+
+    public void deleteRecord(int tableNumber, Object primaryKey) {
+        // TODO
+    }
+
+    public void updateRecord(int tableNumber, Object primaryKey, Record record) {
+        // TODO
     }
 
     //---------------------------- Page Buffer ------------------------------
@@ -58,24 +110,20 @@ public class StorageManager implements StorageManagerInterface {
 
     private void addBuffer(Page page) {
         if (this.buffer.size() == this.bufferSize) {
-            
-        } else {
+            // TODO, write LRU to disk
+        } 
 
-        }
+        this.buffer.add(page);
     }
 
-    public void readPageHardware() {
-
+    private void readPageHardware() {
+        // TODO
     }
 
-    public void writePageHardware(Page page) {
+    private void writePageHardware(Page page) {
         // if the buffer size exceeds the limit then write the least recently used page to HW
         // may need to change the buffer to either a queue or a stack
-        try {
-
-        } catch (IOException io) {
-            io.printStackTrace();
-        }
+        // TODO
 
     }
 
@@ -88,10 +136,10 @@ public class StorageManager implements StorageManagerInterface {
         this.buffer.removeAll(buffer);
     }
 
-    private void pageSerailization(Page page) {
-        // serialize the page
-
+    private void pageEncode(Page page) {
         // encode page to bytes
+        // TODO
+
     }
 
 }

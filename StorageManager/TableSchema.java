@@ -60,4 +60,15 @@ public class TableSchema implements TableSchemaInterface {
       this.records = records;
     }
 
+    private int hashName() {
+      char[] chars = this.tableName.toLowerCase().toCharArray();
+      int hash = 0;
+      int index = 0;
+      for (char c : chars) {
+          hash += Character.hashCode(c) + index;
+          index++;
+      }
+      return hash;
+  }
+
 }

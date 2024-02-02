@@ -16,4 +16,14 @@ public class Record implements java.io.Serializable {
     public void setValues(List<Object> values) {
         this.values = values;
     }
+
+    /*
+     * Returns the size of this record in number of bytes
+     * 
+     * @return  the number of bytes this record is
+     */
+    public int byteSize() {
+        // TODO
+        return 0;
+    }
 }
