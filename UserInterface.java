@@ -46,7 +46,7 @@ public class UserInterface {
 
             String[] commands = userInput.split(";");
             for (String command : commands) {
-                processUserCommand(command.trim());
+                processUserCommand(command.trim().concat(";"));
             }
         }
     }
