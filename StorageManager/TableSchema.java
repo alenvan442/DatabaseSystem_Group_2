@@ -13,7 +13,7 @@ public class TableSchema implements TableSchemaInterface {
 
 
     public TableSchema(String tableName) {
-
+      this.tableName = tableName;
     }
 
 
