@@ -3,10 +3,9 @@ package StorageManager.Objects;
 import java.util.Dictionary;
 import java.util.Hashtable;
 import java.util.List;
-
 import StorageManager.TableSchema;
 
-public class Catalog implements CatalogInterface {
+public class Catalog implements java.io.Serializable, CatalogInterface{
     private static Catalog catalog;
     private Dictionary<Integer, TableSchema> schemas;
     private String dbLocation;

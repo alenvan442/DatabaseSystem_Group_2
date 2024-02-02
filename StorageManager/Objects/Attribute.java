@@ -1,10 +1,6 @@
 package StorageManager.Objects;
 
-/**
- * Attribute Class
- * Represents each individual attribute in a record of the db's schema.
- */
-public class Attribute {
+public class Attribute implements java.io.Serializable {
     private String attributeName;
     private String dataType;
     private boolean notNull;
