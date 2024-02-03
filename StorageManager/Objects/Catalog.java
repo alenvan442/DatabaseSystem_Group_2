@@ -1,12 +1,13 @@
 package StorageManager.Objects;
 
+import java.io.Serializable;
 import java.util.Dictionary;
 import java.util.Hashtable;
 import java.util.List;
 
 import StorageManager.TableSchema;
 
-public class Catalog implements java.io.Serializable, CatalogInterface{
+public class Catalog implements Serializable, CatalogInterface{
     private static Catalog catalog;
     private Dictionary<Integer, TableSchema> schemas;
     private String dbLocation;
@@ -54,9 +55,39 @@ public class Catalog implements java.io.Serializable, CatalogInterface{
         schemas.remove(tableNumber);
     }
 
-    public void alterTableSchema(TableSchema schema, int tableNumber){
-        //implementation depends on how we want to read in changes.
-        schemas.put(tableNumber,schema);
+    public void alterTableSchema(int tableNumber) throws Exception {
+        TableSchema table = schemas.get(tableNumber);
+
+        // TODO: Figure out how we will determine what is being altered.
+        // may need more parameters to determine, what the AttrName and attrType
+        String testValue= "";
+        String testAName="";
+        String testAType="";
+        String testDefVal = null;
+        boolean has = false;
+        List<Attribute> attrList = table.getAttributes();
+        if(testValue.equals("drop")){
+            //List<Attribute> attrList = table.getAttributes();
+            attrList.remove(attrList.indexOf(testAName));
+            //table.setAttributes(attrList);
+
+        } else if (testValue.equals("add")) {
+            for(int i=0; i<attrList.size(); i++){
+                Attribute currentAttr = attrList.get(i);
+                if(currentAttr.getAttributeName().equals(testAName)){
+                    has = true;
+                }
+            }
+            if(!has) {
+                attrList.add(new Attribute(testAName, testAType, false, false, false));
+            }
+            //table.setAttributes(attrList);
+        }else{
+            throw new Exception("Invalid Command");
+        }
+        table.setAttributes(attrList);
+
+
     }
 
     private int loadCatalog() {
