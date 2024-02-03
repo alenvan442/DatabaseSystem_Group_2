@@ -50,33 +50,37 @@ public class Catalog implements Serializable, CatalogInterface{
 
     }
 
+    /**
+     * Method that deletes the schema for a table that is being dropped.
+     * @param tableNumber - The old table # for the table we are updating due to being dropped.
+     */
     public void removeTableSchema(int tableNumber){
-
         schemas.remove(tableNumber);
     }
 
+    /**
+     * Method that updates the Schema for a particular Table based on the result of an Alter command.
+     * @param tableNumber - The # for the Table we are updating the schemea of.
+     * @param op - the alter operation we performed on this table, ei: drop attr or add attr
+     * @param attrName - Name of the Attr that is being altered in the table.
+     * @param attrType - Type of the Attr that is being altered in the table.
+     * @throws Exception - Should only be thrown if the method is called in an incorrect fashion.
+     */
     public void alterTableSchema(int tableNumber,String op, String attrName, String attrType) throws Exception {
         TableSchema table = schemas.get(tableNumber);
 
         // TODO: Figure out how we will determine what is being altered.
         // TODO: may need more parameters to determine, what the AttrName and attrType
         // TODO: Records per page may need to be modified.
-        //String testValue= "";
-        //String testAName="";
-        //String testAType="";
-        //String testDefVal = null;
+        // TODO: Understand whether or not to handle PrimaryKey and Uniqueness.
         boolean has = false;
         List<Attribute> attrList = table.getAttributes();
         if(op.equals("drop")){
-            //List<Attribute> attrList = table.getAttributes();
-            //Attribute dropSearch = null;
             for(int i=0; i<attrList.size(); i++) {
                 if(attrList.get(i).getAttributeName().equals(attrName)){
                     attrList.remove(i);
                 }
             }
-            //attrList.remove(dropSearch);
-            //table.setAttributes(attrList);
 
         } else if (op.equals("add")) {
             for(int i=0; i<attrList.size(); i++){
@@ -88,13 +92,10 @@ public class Catalog implements Serializable, CatalogInterface{
             if(!has) {
                 attrList.add(new Attribute(attrName, attrType, false, false, false));
             }
-            //table.setAttributes(attrList);
         }else{
             throw new Exception("Invalid Command");
         }
         table.setAttributes(attrList);
-
-
     }
 
     private int loadCatalog() {
