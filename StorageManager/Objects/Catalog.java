@@ -24,6 +24,17 @@ public class Catalog implements java.io.Serializable, CatalogInterface{
         catalog = new Catalog(catalogLocation, dbLocation, pageSize, bufferSize);
     }
 
+    public static void alterCatalog(){
+        //curently assumes the operation will only be done a
+
+
+
+
+
+    }
+
+    public static void dropCatalog(){}
+
 
     public static Catalog getCatalog() {
         return catalog;
@@ -35,6 +46,16 @@ public class Catalog implements java.io.Serializable, CatalogInterface{
 
     public void addTableSchema(TableSchema schema) {
 
+    }
+
+    public void removeTableSchema(int tableNumber){
+
+        schemas.remove(tableNumber);
+    }
+
+    public void alterTableSchema(TableSchema schema, int tableNumber){
+        //implementation depends on how we want to read in changes.
+        schemas.put(tableNumber,schema);
     }
 
     private int loadCatalog() {
