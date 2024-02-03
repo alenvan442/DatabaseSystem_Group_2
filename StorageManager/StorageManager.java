@@ -9,6 +9,7 @@ import java.util.PriorityQueue;
 
 import StorageManager.Objects.Attribute;
 import StorageManager.Objects.Catalog;
+import StorageManager.Objects.ErrorType;
 import StorageManager.Objects.Page;
 import StorageManager.Objects.Record;
 
@@ -20,7 +21,7 @@ public class StorageManager implements StorageManagerInterface {
     /*
      * Constructor for the storage manager
      * initializes the class by initializing the buffer
-     * 
+     *
      * @param buffersize    The size of the buffer
      */
     private StorageManager(int bufferSize) {
@@ -30,7 +31,7 @@ public class StorageManager implements StorageManagerInterface {
 
     /*
      * Static function that initializes the storageManager
-     * 
+     *
      * @param bufferSize    The size of the buffer
      */
     public static void createStorageManager(int bufferSize) {
@@ -39,7 +40,7 @@ public class StorageManager implements StorageManagerInterface {
 
     /*
      * Getter for the global storageManager
-     * 
+     *
      * @return  The storageManager
      */
     public static StorageManager getStorageManager() {
@@ -48,25 +49,15 @@ public class StorageManager implements StorageManagerInterface {
 
     /*
      * Splits a page that is full into 2 separate pages
-     * after a page splits, add the incoming record to the correct page
-     * This function compares the last record of the first page
-     * with the to be inserted record then determines
-     * if the incoming record should be added to the first or second page
-     * 
-     * NOTE: Page.addRecord(Record) will add the page into the 
-     *       record in the correct sorted position
-     * 
+     *
      * @param page  The page that is to be split
-     * @param record    the record to insert
-     * @param index     the index of the value to compare
-     * @param dataType  the dataType of the values to compare
-     *  
+     *
      * @return      An array of size 2, consisting of 2 pages
      */
     private Page[] pageSplit(Page page, Record record, int index, String dataType) {
         List<Record> records = page.getRecords();
         int size = records.size();
-        int startIndex = Math.ceilDiv(size, 2) - 1;
+        int startIndex = (int) (Math.ceil(size / 2) - 1);
         Page _new = new Page(startIndex + 1, page.getTableNumber());
         for (int i = startIndex; i < size; i++) {
             _new.addRecord(records.get(startIndex));
@@ -101,12 +92,12 @@ public class StorageManager implements StorageManagerInterface {
     }
 
     /*
-     * Construct the full table path according to where
-     * the DB is located
-     * 
-     * @param tableNumber   the id of the table
-     * 
-     * @return              the full table path
+     * Checks the buffer to determine if a needed page
+     * is already needed
+     *
+     * @param   tentative
+     *
+     * @return  returns a page if found, otherwise null
      */
     private String getTablePath(int tableNumber) {
         String dbLoc = Catalog.getCatalog().getDbLocation();
@@ -156,7 +147,7 @@ public class StorageManager implements StorageManagerInterface {
 
                 // if already exists, check the buffer to see if
                 // the needed page is already there
-                
+
                 Page bufferPage = this.checkBuffer(tableNumber, record, true);
                 if (bufferPage != null) {
                     // if record add was successful update priority
@@ -183,7 +174,7 @@ public class StorageManager implements StorageManagerInterface {
 
                 // get primary key of incoming record
                 Object primaryKey = record.getValues().get(primaryIndex);
-                
+
                 // read first 8 byte and determine number of pages in table
                 byte[] buffer = new byte[8];
                 InputStream reader = new FileInputStream(tableFile);
@@ -205,7 +196,7 @@ public class StorageManager implements StorageManagerInterface {
                             // failed to add, page full
                             Page[] pages = this.pageSplit(page, record, pageIndex,
                                 attrs.get(primaryIndex).getAttributeName());
-                            
+
                             // write both pages to the buffer
                             this.addBuffer(pages[0]);
                             this.addBuffer(pages[1]);
@@ -217,9 +208,9 @@ public class StorageManager implements StorageManagerInterface {
                     List<Record> records = page.getRecords();
                     Record lastRecord = records.get(records.size() - 1);
                     int comparison = lastRecord.comparison(
-                                        primaryIndex, primaryKey, 
+                                        primaryIndex, primaryKey,
                                         attrs.get(primaryIndex).getAttributeName());
-                    
+
                     if (comparison == -1 || comparison == 0) {
                         // if inputted is greater or equal to, continue
                         pageIndex++;
@@ -234,7 +225,7 @@ public class StorageManager implements StorageManagerInterface {
                             // if page is full then split
                             Page[] pages = this.pageSplit(page, record, primaryIndex,
                                     attrs.get(primaryIndex).getAttributeName());
-  
+
                             // write both pages to the buffer
                             this.addBuffer(pages[0]);
                             this.addBuffer(pages[1]);
@@ -242,9 +233,9 @@ public class StorageManager implements StorageManagerInterface {
                     }
 
                 }
-                
+
             }
-            
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -262,13 +253,13 @@ public class StorageManager implements StorageManagerInterface {
     /*
      * Checks the buffer to determine if a needed page
      * is already in the buffer
-     * 
+     *
      * It determines what the needed page is by finding a record
      * with the same primary key on the page
-     * 
+     *
      * @param table     the table to find a page for
      * @param record    the record to search for
-     * 
+     *
      * @return  returns a page if found, otherwise null
      */
     private Page checkBuffer(int table, Record record) {
@@ -279,16 +270,16 @@ public class StorageManager implements StorageManagerInterface {
     /*
      * Checks the buffer to determine if a needed page
      * is already in the buffer
-     * 
+     *
      * It determines what the needed page is by finding a page
-     * in which the record would fit in 
+     * in which the record would fit in
      * (typically used for insertion)
-     * 
+     *
      * @param table         the table to find a page for
      * @param record        the record to search for
      * @param notSpecific   true: find a page where this record should belong in
      *                      false: call the other checkBuffer method
-     * 
+     *
      * @return  returns a page if found, otherwise null
      */
     private Page checkBuffer(int table, Record record, boolean notSpecific) {
@@ -302,10 +293,9 @@ public class StorageManager implements StorageManagerInterface {
 
     private void addBuffer(Page page) {
         if (this.buffer.size() == this.bufferSize) {
-            // TODO make sure what is being removed is the LRU
-            this.writePageHardware(this.buffer.remove());
+            // TODO, write LRU to disk
         }
-        page.setPriority();
+
         this.buffer.add(page);
     }
 
@@ -335,6 +325,18 @@ public class StorageManager implements StorageManagerInterface {
         // encode page to bytes
         // TODO
 
+    }
+
+    @Override
+    public ErrorType saveCatalog() {
+        return ErrorType.SUCCESS;
+
+    }
+
+    @Override
+    public ErrorType loadCatalog() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'loadCatalog'");
     }
 
 }
