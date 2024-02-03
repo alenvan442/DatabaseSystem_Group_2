@@ -21,6 +21,15 @@ public interface CatalogInterface {
   public Dictionary<Integer, TableSchema> getSchemas();
 
   /*
+   * Get a single schema from the catalog
+   * 
+   * @param tableNumber The id fo the tableSchema to get
+   * 
+   * @return            the retrieved tableSchema
+   */
+  public TableSchema getSchema(int tableNumber);
+
+  /*
    * Overloaded method that takes a list of tableSchemas
    * and converts them into a dictionary of <Integer, TableSchema>
    * where the key is the tableNumber.

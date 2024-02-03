@@ -1,8 +1,30 @@
 package StorageManager;
 
+import java.util.List;
+
 import StorageManager.Objects.Record;
 
 public interface StorageManagerInterface {
+
+    /*
+     * Gets a single record from a table
+     * 
+     * @param tableNumber   the table to search in
+     * @param primaryKey    the key associated with the record 
+     *                      we are looking for
+     * 
+     * @return              the record that was found, otherwise null
+     */
+    public Record getRecord(int tableNumber, Object primaryKey);
+
+    /*
+     * Gets all records from a table
+     * 
+     * @param tableNumber   the table to search in
+     * 
+     * @return              a list of all records in the table
+     */
+    public List<Record> getRecords(int tableNumber);
 
     /*
      * Inserts a record into a specified table
