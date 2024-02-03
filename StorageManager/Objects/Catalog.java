@@ -55,31 +55,38 @@ public class Catalog implements Serializable, CatalogInterface{
         schemas.remove(tableNumber);
     }
 
-    public void alterTableSchema(int tableNumber) throws Exception {
+    public void alterTableSchema(int tableNumber,String op, String attrName, String attrType) throws Exception {
         TableSchema table = schemas.get(tableNumber);
 
         // TODO: Figure out how we will determine what is being altered.
-        // may need more parameters to determine, what the AttrName and attrType
-        String testValue= "";
-        String testAName="";
-        String testAType="";
-        String testDefVal = null;
+        // TODO: may need more parameters to determine, what the AttrName and attrType
+        // TODO: Records per page may need to be modified.
+        //String testValue= "";
+        //String testAName="";
+        //String testAType="";
+        //String testDefVal = null;
         boolean has = false;
         List<Attribute> attrList = table.getAttributes();
-        if(testValue.equals("drop")){
+        if(op.equals("drop")){
             //List<Attribute> attrList = table.getAttributes();
-            attrList.remove(attrList.indexOf(testAName));
+            //Attribute dropSearch = null;
+            for(int i=0; i<attrList.size(); i++) {
+                if(attrList.get(i).getAttributeName().equals(attrName)){
+                    attrList.remove(i);
+                }
+            }
+            //attrList.remove(dropSearch);
             //table.setAttributes(attrList);
 
-        } else if (testValue.equals("add")) {
+        } else if (op.equals("add")) {
             for(int i=0; i<attrList.size(); i++){
                 Attribute currentAttr = attrList.get(i);
-                if(currentAttr.getAttributeName().equals(testAName)){
+                if(currentAttr.getAttributeName().equals(attrName)){
                     has = true;
                 }
             }
             if(!has) {
-                attrList.add(new Attribute(testAName, testAType, false, false, false));
+                attrList.add(new Attribute(attrName, attrType, false, false, false));
             }
             //table.setAttributes(attrList);
         }else{
