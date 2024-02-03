@@ -1,12 +1,13 @@
 package StorageManager.Objects;
 
 import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 
 public class Page implements java.io.Serializable, Comparator<Page> {
     private int numRecords;
     private List<Record> records;
-    private int priority;
+    private long priority;
     private boolean changed;
     private int tableNumber;
 
@@ -60,8 +61,8 @@ public class Page implements java.io.Serializable, Comparator<Page> {
      * Sets the priority of this page
      * This is used in ordering the buffer for LRU
      */
-    public void setPriority(int pritority) {
-        this.priority = pritority;
+    public void setPriority() {
+        this.priority = System.currentTimeMillis();
     }
 
     /*
@@ -77,6 +78,8 @@ public class Page implements java.io.Serializable, Comparator<Page> {
             return false;
         } else {
             // TODO, insert the record in order
+            this.numRecords++;
+            this.changed = true;
             return true;
         }
     } 
@@ -97,7 +100,13 @@ public class Page implements java.io.Serializable, Comparator<Page> {
      */
     @Override
     public int compare(Page o1, Page o2) {
-        return o1.priority - o2.priority;
+        if (o1.priority > o2.priority) {
+            return 1;
+        } else if (o1.priority == o2.priority) {
+            return 0;
+        } else {
+            return -1;
+        }
     }
 
 

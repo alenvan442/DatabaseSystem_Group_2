@@ -3,6 +3,7 @@ package StorageManager.Objects;
 import java.util.Dictionary;
 import java.util.Hashtable;
 import java.util.List;
+
 import StorageManager.TableSchema;
 
 public class Catalog implements java.io.Serializable, CatalogInterface{
@@ -64,6 +65,10 @@ public class Catalog implements java.io.Serializable, CatalogInterface{
 
     public Dictionary<Integer, TableSchema> getSchemas() {
         return schemas;
+    }
+
+    public TableSchema getSchema(int tableNumber) {
+        return schemas.get(tableNumber);
     }
 
     public void setSchemas(List<TableSchema> schemas) {

@@ -14,6 +14,7 @@ public class TableSchema implements TableSchemaInterface {
 
     public TableSchema(String tableName) {
       this.tableName = tableName;
+      this.tableNumber = this.hashName();
     }
 
 
@@ -28,6 +29,7 @@ public class TableSchema implements TableSchemaInterface {
 
     public void setTableName(String tableName) {
       this.tableName = tableName;
+      this.tableNumber = this.hashName();
     }
 
 
