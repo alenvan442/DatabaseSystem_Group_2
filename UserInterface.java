@@ -2,6 +2,8 @@ import java.util.Scanner;
 
 import Parser.DDLParser;
 import Parser.DMLParser;
+import StorageManager.Objects.Catalog;
+import StorageManager.Objects.ErrorType;
 
 
 
@@ -64,7 +66,10 @@ public class UserInterface {
         } else if (command.toLowerCase().contains("display schema") || command.toLowerCase().contains("display info")) {
             DMLParser.parseDisplay(command);
         } else {
-            System.err.println("ERROR: " + command + " is not a valid command");
+            System.err.println(ErrorType.ERROR + ": " + command + " is not a valid command");
         }
+
+        Catalog catalog = Catalog.getCatalog();
+        catalog.saveCatalog();
     }
 }

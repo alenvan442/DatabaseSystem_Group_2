@@ -18,17 +18,19 @@ public class Database {
     public void start() {
         System.out.println("Welcolm to CASE-C QL");
         System.out.println("Looking at " + dbLocation);
-        File directory = new File(dbLocation);
-        if (directory.exists() && directory.isDirectory()) {
+        File dbDirectory = new File(dbLocation);
+        if (dbDirectory.exists() && dbDirectory.isDirectory()) {
             System.out.println("Database found...");
             StorageManager.createStorageManager(bufferSize);
-            Catalog.createCatalog(dbLocation, dbLocation, -1, bufferSize);
+            Catalog.createCatalog(dbLocation, dbDirectory.getAbsolutePath().concat("/catalog"), -1, bufferSize);
         } else {
             System.out.println("Creating new db at " + dbLocation);
-            boolean success = directory.mkdirs();
+            File tableDirectory = new File(dbDirectory.getAbsolutePath() + "/tables");
+            File catalogDirectory = new File(dbDirectory.getAbsolutePath() + "/catalog");
+            boolean success = dbDirectory.mkdir() &&  tableDirectory.mkdir() && catalogDirectory.mkdir();
             if (success){
                 StorageManager.createStorageManager(bufferSize);
-                Catalog.createCatalog(dbLocation, dbLocation + "/catalog", pageSize, bufferSize);
+                Catalog.createCatalog(dbLocation, dbDirectory.getAbsolutePath().concat("/catalog"), pageSize, bufferSize);
                 System.out.println("New db created sucessfully");
                 System.out.println("Page Size: " + pageSize);
                 System.out.println("Buffer Size: " + bufferSize);

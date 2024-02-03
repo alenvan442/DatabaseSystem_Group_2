@@ -1,5 +1,6 @@
 package StorageManager;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import StorageManager.Objects.Attribute;
@@ -9,12 +10,15 @@ public class TableSchema implements TableSchemaInterface {
     private String tableName;
     private List<Attribute> attributes;
     private int numPages;
-    private int records;
+    private int numRecords;
 
 
     public TableSchema(String tableName) {
       this.tableName = tableName;
       this.tableNumber = this.hashName();
+      this.numPages = 0;
+      this.numRecords = 0;
+      this.attributes = new ArrayList<Attribute>();
     }
 
 
@@ -54,12 +58,12 @@ public class TableSchema implements TableSchemaInterface {
 
 
     public int getRecords() {
-      return records;
+      return numRecords;
     }
 
 
-    public void setRecords(int records) {
-      this.records = records;
+    public void setRecords(int numRecords) {
+      this.numRecords = numRecords;
     }
 
     private int hashName() {
