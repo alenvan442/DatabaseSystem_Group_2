@@ -9,6 +9,7 @@ import java.util.Dictionary;
 import java.util.Hashtable;
 import java.util.List;
 
+import StorageManager.StorageManager;
 import StorageManager.TableSchema;
 import StorageManager.Objects.MessagePrinter.MessageType;
 
@@ -61,8 +62,9 @@ public class Catalog implements java.io.Serializable, CatalogInterface{
      * Method that deletes the schema for a table that is being dropped.
      * @param tableNumber - The old table # for the table we are updating due to being dropped.
      */
-    public int removeTableSchema(int tableNumber){
+    public void dropTableSchema(int tableNumber){
         schemas.remove(tableNumber);
+        StorageManager.getStorageManager().dropTable(tableNumber);
         //call StorageManager
     }
 
@@ -112,6 +114,7 @@ public class Catalog implements java.io.Serializable, CatalogInterface{
             throw new Exception("The schema alter add or drop was not accounted for correctly.");
         }
         //call new storage manager method.
+        StorageManager.getStorageManager().alterTable(tableNumber, op, attrName, attrType, notNull, pKey, unique);
         return returnIndex;
     }
 

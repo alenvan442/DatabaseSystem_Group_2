@@ -352,4 +352,11 @@ public class StorageManager implements StorageManagerInterface {
         return null;
     }
 
+    public void dropTable(int tableNumber) {
+        //TODO: The method.
+    }
+
+    public void alterTable(int tableNumber, String op, String attrName, String attrType, boolean notNull, boolean pKey, boolean unique) {
+        //TODO: The method.
+    }
 }
