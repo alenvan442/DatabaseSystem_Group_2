@@ -1,9 +1,11 @@
+import java.io.IOException;
 import java.util.Scanner;
 
 import Parser.DDLParser;
 import Parser.DMLParser;
 import StorageManager.Objects.Catalog;
-import StorageManager.Objects.ErrorType;
+import StorageManager.Objects.MessagePrinter;
+import StorageManager.Objects.MessagePrinter.MessageType;
 
 
 
@@ -66,10 +68,15 @@ public class UserInterface {
         } else if (command.toLowerCase().contains("display schema") || command.toLowerCase().contains("display info")) {
             DMLParser.parseDisplay(command);
         } else {
-            System.err.println(ErrorType.ERROR + ": " + command + " is not a valid command");
+            MessagePrinter.printMessage(MessageType.ERROR, command + "Is not valid");
         }
 
         Catalog catalog = Catalog.getCatalog();
-        catalog.saveCatalog();
+        try {
+            catalog.saveCatalog();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
     }
 }
