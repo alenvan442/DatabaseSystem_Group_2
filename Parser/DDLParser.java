@@ -54,7 +54,7 @@ public static class DDLParser extends Parser{
 					throw new Exception("Open parenthesis expected for char or varchar type");
 				}
 				dataType += "(";
-				i++
+				i++;
 				String[] Size = tokens[i].split(.); //we need to ensure this is an integer not decimal
 				if(!Size.length == 1)
 				{
@@ -72,7 +72,7 @@ public static class DDLParser extends Parser{
 			}
 			i++;
 			//from here we can have up to 3 constraints
-			int constraints = 0
+			int constraints = 0;
 			boolean comma = false;
 			while(!comma && constraints <= 4)
 			{
