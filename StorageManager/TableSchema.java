@@ -13,12 +13,12 @@ public class TableSchema implements TableSchemaInterface {
     private int numRecords;
 
 
-    public TableSchema(String tableName) {
+    public TableSchema(String tableName, ArrayList<Attribute> attributes) {
       this.tableName = tableName;
       this.tableNumber = this.hashName();
       this.numPages = 0;
       this.numRecords = 0;
-      this.attributes = new ArrayList<Attribute>();
+      this.attributes = attributes;
     }
 
 
