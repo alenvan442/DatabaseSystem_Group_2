@@ -1,12 +1,14 @@
 package StorageManager.Objects;
 
+import java.util.Dictionary;
+import java.util.Hashtable;
 import java.util.List;
 
 import StorageManager.TableSchema;
 
-public class Catalog implements CatalogInterface {
+public class Catalog implements java.io.Serializable, CatalogInterface{
     private static Catalog catalog;
-    private List<TableSchema> schemas;
+    private Dictionary<Integer, TableSchema> schemas;
     private String dbLocation;
     private String catalogLocation;
     private int pageSize;
@@ -40,11 +42,23 @@ public class Catalog implements CatalogInterface {
         return 0;
     }
 
-    public List<TableSchema> getSchemas() {
+    public Dictionary<Integer, TableSchema> getSchemas() {
         return schemas;
     }
 
+    public TableSchema getSchema(int tableNumber) {
+        return schemas.get(tableNumber);
+    }
+
     public void setSchemas(List<TableSchema> schemas) {
+        Dictionary<Integer, TableSchema> _new = new Hashtable<Integer,TableSchema>();
+        for (TableSchema tableSchema : schemas) {
+            _new.put(tableSchema.getTableNumber(), tableSchema);
+        }
+        this.schemas = _new;
+    }
+
+    public void setSchemas(Dictionary<Integer, TableSchema> schemas) {
         this.schemas = schemas;
     }
 
@@ -52,16 +66,8 @@ public class Catalog implements CatalogInterface {
         return dbLocation;
     }
 
-    public void setDbLocation(String dbLocation) {
-        this.dbLocation = dbLocation;
-    }
-
     public String getCatalogLocation() {
         return catalogLocation;
-    }
-
-    public void setCatalogLocation(String catalogLocation) {
-        this.catalogLocation = catalogLocation;
     }
 
     public int getPageSize() {
@@ -70,10 +76,6 @@ public class Catalog implements CatalogInterface {
 
     public int getBufferSize() {
         return bufferSize;
-    }
-
-    public void setBufferSize(int bufferSize) {
-        this.bufferSize = bufferSize;
     }
 
 }
