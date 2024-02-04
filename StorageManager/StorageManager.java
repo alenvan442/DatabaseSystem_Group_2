@@ -309,7 +309,7 @@ public class StorageManager implements StorageManagerInterface {
         if (this.buffer.size() == this.bufferSize) {
             // TODO, write LRU to disk
         }
-
+        page.setPriority();
         this.buffer.add(page);
     }
 
