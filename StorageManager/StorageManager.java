@@ -349,8 +349,7 @@ public class StorageManager implements StorageManagerInterface {
 
     @Override
     public MessageType loadCatalog() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'loadCatalog'");
+        return null;
     }
 
 }

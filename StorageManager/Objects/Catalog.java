@@ -10,6 +10,7 @@ import java.util.Hashtable;
 import java.util.List;
 
 import StorageManager.TableSchema;
+import StorageManager.Objects.MessagePrinter.MessageType;
 
 public class Catalog implements java.io.Serializable, CatalogInterface{
     private static Catalog catalog;
@@ -56,8 +57,8 @@ public class Catalog implements java.io.Serializable, CatalogInterface{
         schemas.put(schema.getTableNumber(), schema);
     }
 
-    private int loadCatalog() {
-        return 0;
+    private MessageType loadCatalog() {
+        return null;
     }
 
     public Dictionary<Integer, TableSchema> getSchemas() {
