@@ -3,15 +3,17 @@ package StorageManager;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.lang.management.MemoryType;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.PriorityQueue;
 
-import StorageManager.Objects.Attribute;
+import StorageManager.Objects.AttributeSchema;
 import StorageManager.Objects.Catalog;
-import StorageManager.Objects.ErrorType;
+
 import StorageManager.Objects.Page;
 import StorageManager.Objects.Record;
+import StorageManager.Objects.MessagePrinter.MessageType;
 
 public class StorageManager implements StorageManagerInterface {
     private static StorageManager storageManager;
@@ -133,7 +135,7 @@ public class StorageManager implements StorageManagerInterface {
 
                 // determine index of the primary key
                 int primaryIndex = -1;
-                List<Attribute> attrs = schema.getAttributes();
+                List<AttributeSchema> attrs = schema.getAttributes();
                 for (int i = 0; i < attrs.size(); i++) {
                     if (attrs.get(i).isPrimaryKey()) {
                         primaryIndex = i;
@@ -328,13 +330,13 @@ public class StorageManager implements StorageManagerInterface {
     }
 
     @Override
-    public ErrorType saveCatalog() {
-        return ErrorType.SUCCESS;
+    public MessageType saveCatalog() {
+        return MessageType.SUCCESS;
 
     }
 
     @Override
-    public ErrorType loadCatalog() {
+    public MessageType loadCatalog() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'loadCatalog'");
     }

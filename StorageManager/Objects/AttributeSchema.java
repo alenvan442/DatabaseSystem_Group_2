@@ -1,13 +1,17 @@
 package StorageManager.Objects;
 
-public class Attribute implements java.io.Serializable {
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+
+public class AttributeSchema implements java.io.Serializable {
     private String attributeName;
     private String dataType;
     private boolean notNull;
     private boolean primaryKey;
     private boolean unique;
 
-    public Attribute(String attributeName, String dataType, boolean notNull, boolean primaryKey, boolean unique) {
+    public AttributeSchema(String attributeName, String dataType, boolean notNull, boolean primaryKey, boolean unique) {
         this.attributeName = attributeName;
         this.dataType = dataType;
         this.notNull = notNull;
@@ -53,6 +57,16 @@ public class Attribute implements java.io.Serializable {
 
     public void setUnique(boolean unique) {
         this.unique = unique;
+    }
+
+    public byte[] convertToBytes() throws IOException {
+        ByteArrayOutputStream attributeByteArray = new ByteArrayOutputStream();
+        attributeByteArray.write(this.attributeName.getBytes(StandardCharsets.UTF_8));
+        attributeByteArray.write(this.dataType.getBytes(StandardCharsets.UTF_8));
+        attributeByteArray.write(this.notNull ? new byte[]{1} : new byte[]{0});
+        attributeByteArray.write(this.primaryKey ? new byte[]{1} : new byte[]{0});
+        attributeByteArray.write(this.unique ? new byte[]{1} : new byte[]{0});
+        return attributeByteArray.toByteArray();
     }
 
 }

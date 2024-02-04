@@ -1,5 +1,10 @@
 package StorageManager.Objects;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.Dictionary;
 import java.util.Hashtable;
 import java.util.List;
@@ -18,7 +23,8 @@ public class Catalog implements java.io.Serializable, CatalogInterface{
     private Catalog(String catalogLocation, String dbLocation, int pageSize, int bufferSize) {
         this.catalogLocation = catalogLocation;
         this.dbLocation = dbLocation;
-        this.pageSize = pageSize != -1 ? pageSize : loadCatalog();
+        this.pageSize = pageSize != -1 ? pageSize : 0;
+        loadCatalog();
     }
 
     public static void createCatalog(String dbLocation, String catalogLocation, int pageSize, int bufferSize) {
@@ -30,12 +36,24 @@ public class Catalog implements java.io.Serializable, CatalogInterface{
         return catalog;
     }
 
-    public void saveCatalog() {
-
+    public void saveCatalog() throws IOException {
+        ByteArrayOutputStream catalogByteArray = new ByteArrayOutputStream();
+        ByteBuffer integerBuffer = ByteBuffer.allocate(Integer.BYTES * 3);
+        integerBuffer.putInt(pageSize);
+        integerBuffer.putInt(bufferSize);
+        integerBuffer.putInt(schemas.size());
+        catalogByteArray.write(integerBuffer.array());
+        while (schemas.keys().hasMoreElements()) {
+            Integer tableNum = schemas.keys().nextElement();
+            catalogByteArray.write(schemas.get(tableNum).convertToBytes());
+        }
+        File schema = new File(this.catalogLocation + "/schema");
+        FileOutputStream fileOutputStream = new FileOutputStream(schema.getAbsolutePath(), false);
+        catalogByteArray.writeTo(fileOutputStream);
     }
 
     public void addTableSchema(TableSchema schema) {
-
+        schemas.put(schema.getTableNumber(), schema);
     }
 
     private int loadCatalog() {
