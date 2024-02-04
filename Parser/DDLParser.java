@@ -2,12 +2,12 @@ package Parser;
 import java.util.Scanner;
 
 
-public class DDLParser extends Parser{
+public static class DDLParser extends Parser{
 
-    public static void parseCreateTable(String ddlStatement) 
+    public static Pair<String, ArrayList<AttributeSchema> parseCreateTable(String ddlStatement) 
 	{	
 		private String tableName;
-		ArrayList<Attribute> attributes = new ArrayList<Attribute>;
+		ArrayList<AttributeSchema> attributes = new ArrayList<AttributeSchema>;
 		String tableName;
 		Arraylist<String> tokens = Tokenize(ddlStatement);
 		if(!tokens[0].toLower.equals("create") || !tokens[1].toLower.equals("table")
@@ -71,7 +71,44 @@ public class DDLParser extends Parser{
 				dataType = type;
 			}
 			i++;
+			//from here we can have up to 3 constraints
+			int constraints = 0
+			boolean comma = false;
+			while(!comma && constraints <= 4)
+			{
+				String constraint = tokens[i].toLower();
+				if(constraint.equals(",")
+				{
+					comma = true;
+				} else if(constraint.equals("notnull") && !notNull)
+				{
+					notNull = true;
+				} else if(constraint.equals("primarykey") && !primaryKey)
+				{
+					primaryKey = true;
+				} else if(constraint.equals("unique") && !unique)
+				{
+					unique = true;
+				} else
+				{
+					throw new Exception("Unrecognized constraint, valid constraints are notnull, primarykey, and unique");
+				}
+			}
+			if(!comma){
+				throw new Exception("Attributes must be comma-seperated");
+			}
+			attributes.add(new AttributeSchema(attributeName, dataType, notNull, primaryKey, unique));
 		}
+		if(!tokens[i].equals(")"))
+		{
+			throw new Exception("Attribute list must be closed with \")\"!"); //just a few escape characters
+		}
+		i++;
+		if(!tokens[i].equals(";"))
+		{
+			throw new Exception("Commands must end with a \";\"!");
+		}
+		return new Pair<String, ArrayList<AttributeSchema>(tableName, attributes);
     }
 
     public static void parseDropTable(String ddlStatement)
@@ -86,89 +123,4 @@ public class DDLParser extends Parser{
 
     }
 	
-	private boolean keywordCheck(String label)
-	{
-		label = label.toLower()
-		return (label.equals("integer") ||
-				label.equals("double") ||
-				label.equals("boolean") ||
-				label.equals("char") ||
-				label.equals("varchar") ||
-				label.equals("notnull") ||
-				label.equals("primarykey") ||
-				label.equals("unique") ||
-				label.equals("distinct") ||
-				label.equals("table") ||
-				label.equals("create") ||
-				label.equals("drop") ||
-				label.equals("alter") ||
-				label.equals("select")
-				label.equals("into") ||
-				label.equals("values") ||
-				label.equals("add") ||
-				label.equals("default"));
-	}
-	
-	private Arraylist<String> Tokenize(String ddlStatement)
-	{
-        Scanner scanner = new scanner(ddlStatement);
-        Arraylist<String> tokens;
-        String currentToken = "";
-        char nextByte (Char)scanner.nextByte();
-        bool label = false;
-		bool number = false;
-		bool sentinal = (!label && ! number);
-		bool hasdecimal = false;
-        While(scanner.hasNext){
-            if(nextByte == '(' && !sentinal)
-			{
-                tokens.add("(")
-                nextByte = scanner.nextByte();
-            }
-            else if(nextByte == ')' && !sentinal)
-			{
-                tokens.add(")")
-                nextByte = scanner.nextByte();
-            }
-            else if(nextByte == ';' && !sentinal)
-			{
-                tokens.add(";")
-                nextByte = scanner.nextByte();
-            }
-            else if(nextByte == ',' && !sentinal)
-			{
-                tokens.add(",")
-                nextByte = scanner.nextByte();
-            }
-			else if((Character.isDigit(nextByte) || (nextByte == "." && !hasdecimal)) && !label) //only ONE decimal point per double!
-			{
-				if(nextByte == ".")
-				{
-					hasdecimal = true;
-				}
-				currentToken += nextByte;
-				number = true;
-				nextByte = scanner.nextByte();
-			}
-            else if(Character.isLetterOrDigit(nextByte)) //covering both labels and values in the same block since values only come after "default" anyway
-			{
-				if(!label && !Character.isLetter(nextByte){
-					throw new Exception("Labels must start with a letter!") //realistically the digit branch should stop this from ever being accessible
-				}
-                currentToken += nextByte;
-                label = true; //we need to block the other paths to know when to flush.
-                nextByte = scanner.nextByte();
-            } else
-			{ //flush the label or number token string
-                tokens.add(currentToken);
-                currentToken = "";
-                number = false;
-				label = false;
-				hasdecimal = false;
-            } else 
-			{
-				throw new Exception("invalid token, please check your command")
-			}
-        }            
-    }
 }

@@ -79,7 +79,7 @@ public static class Parser{ //extend me!
             else if(Character.isLetterOrDigit(nextByte)) //covering both labels and values in the same block since values only come after "default" anyway
 			{
 				if(!label && !Character.isLetter(nextByte){
-					throw new Exception("Labels must start with a letter!") //realistically the digit branch should stop this from ever being accessible
+					throw new Exception("Labels must start with a letter!"); //realistically the digit branch should stop this from ever being accessible
 				}
                 currentToken += nextByte;
                 label = true; //we need to block the other paths to know when to flush.
@@ -93,7 +93,7 @@ public static class Parser{ //extend me!
 				hasdecimal = false;
             } else 
 			{
-				throw new Exception("invalid token, please check your command")
+				throw new Exception("invalid token, please check your command");
 			}
         }            
     }
