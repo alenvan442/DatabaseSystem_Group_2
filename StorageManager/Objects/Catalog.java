@@ -61,8 +61,9 @@ public class Catalog implements java.io.Serializable, CatalogInterface{
      * Method that deletes the schema for a table that is being dropped.
      * @param tableNumber - The old table # for the table we are updating due to being dropped.
      */
-    public void removeTableSchema(int tableNumber){
+    public int removeTableSchema(int tableNumber){
         schemas.remove(tableNumber);
+        //call StorageManager
     }
 
     /**
@@ -110,6 +111,7 @@ public class Catalog implements java.io.Serializable, CatalogInterface{
         if(returnIndex== -1){
             throw new Exception("The schema alter add or drop was not accounted for correctly.");
         }
+        //call new storage manager method.
         return returnIndex;
     }
 
