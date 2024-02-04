@@ -51,10 +51,22 @@ public class StorageManager implements StorageManagerInterface {
 
     /*
      * Splits a page that is full into 2 separate pages
+     * after a page splits, add the incoming record to the correct page
+     * This function compares the last record of the first page
+     * with the to be inserted record then determines
+     * if the incoming record should be added to the first or second page
+     * 
+     * NOTE: Page.addRecord(Record) will add the page into the 
+     *       record in the correct sorted position
+     * 
      *
-     * @param page  The page that is to be split
+     * @param page      The page that is to be split
+     * @param record    the record to insert
+     * @param index     the index of the value to compare
+     * @param dataType  the dataType of the values to compare
+     *  
      *
-     * @return      An array of size 2, consisting of 2 pages
+     * @return          An array of size 2, consisting of 2 pages
      */
     private Page[] pageSplit(Page page, Record record, int index, String dataType) {
         List<Record> records = page.getRecords();
@@ -94,12 +106,12 @@ public class StorageManager implements StorageManagerInterface {
     }
 
     /*
-     * Checks the buffer to determine if a needed page
-     * is already needed
-     *
-     * @param   tentative
-     *
-     * @return  returns a page if found, otherwise null
+     * Construct the full table path according to where
+     * the DB is located
+     * 
+     * @param tableNumber   the id of the table
+     * 
+     * @return              the full table path
      */
     private String getTablePath(int tableNumber) {
         String dbLoc = Catalog.getCatalog().getDbLocation();
@@ -262,7 +274,7 @@ public class StorageManager implements StorageManagerInterface {
      * @param table     the table to find a page for
      * @param record    the record to search for
      *
-     * @return  returns a page if found, otherwise null
+     * @return          returns a page if found, otherwise null
      */
     private Page checkBuffer(int table, Record record) {
         // TODO
@@ -282,7 +294,7 @@ public class StorageManager implements StorageManagerInterface {
      * @param notSpecific   true: find a page where this record should belong in
      *                      false: call the other checkBuffer method
      *
-     * @return  returns a page if found, otherwise null
+     * @return              returns a page if found, otherwise null
      */
     private Page checkBuffer(int table, Record record, boolean notSpecific) {
         if (!notSpecific) {
@@ -297,7 +309,7 @@ public class StorageManager implements StorageManagerInterface {
         if (this.buffer.size() == this.bufferSize) {
             // TODO, write LRU to disk
         }
-
+        page.setPriority();
         this.buffer.add(page);
     }
 
@@ -337,8 +349,7 @@ public class StorageManager implements StorageManagerInterface {
 
     @Override
     public MessageType loadCatalog() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'loadCatalog'");
+        return null;
     }
 
 }

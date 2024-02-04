@@ -1,7 +1,5 @@
 package StorageManager.Objects;
 
-
-import java.io.Serializable;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -12,8 +10,9 @@ import java.util.Hashtable;
 import java.util.List;
 
 import StorageManager.TableSchema;
+import StorageManager.Objects.MessagePrinter.MessageType;
 
-public class Catalog implements Serializable, CatalogInterface{
+public class Catalog implements java.io.Serializable, CatalogInterface{
     private static Catalog catalog;
     private Dictionary<Integer, TableSchema> schemas;
     private String dbLocation;
@@ -32,17 +31,6 @@ public class Catalog implements Serializable, CatalogInterface{
     public static void createCatalog(String dbLocation, String catalogLocation, int pageSize, int bufferSize) {
         catalog = new Catalog(catalogLocation, dbLocation, pageSize, bufferSize);
     }
-
-    public static void alterCatalog(){
-        //curently assumes the operation will only be done a
-
-
-
-
-
-    }
-
-    public static void dropCatalog(){}
 
 
     public static Catalog getCatalog() {
@@ -69,56 +57,8 @@ public class Catalog implements Serializable, CatalogInterface{
         schemas.put(schema.getTableNumber(), schema);
     }
 
-    /**
-     * Method that deletes the schema for a table that is being dropped.
-     * @param tableNumber - The old table # for the table we are updating due to being dropped.
-     */
-    public void removeTableSchema(int tableNumber){
-        schemas.remove(tableNumber);
-    }
-
-    /**
-     * Method that updates the Schema for a particular Table based on the result of an Alter command.
-     * @param tableNumber - The # for the Table we are updating the schemea of.
-     * @param op - the alter operation we performed on this table, ei: drop attr or add attr
-     * @param attrName - Name of the Attr that is being altered in the table.
-     * @param attrType - Type of the Attr that is being altered in the table.
-     * @throws Exception - Should only be thrown if the method is called in an incorrect fashion.
-     */
-    public void alterTableSchema(int tableNumber,String op, String attrName, String attrType) throws Exception {
-        TableSchema table = schemas.get(tableNumber);
-
-        // TODO: Figure out how we will determine what is being altered.
-        // TODO: may need more parameters to determine, what the AttrName and attrType
-        // TODO: Records per page may need to be modified.
-        // TODO: Understand whether or not to handle PrimaryKey and Uniqueness.
-        boolean has = false;
-        List<Attribute> attrList = table.getAttributes();
-        if(op.equals("drop")){
-            for(int i=0; i<attrList.size(); i++) {
-                if(attrList.get(i).getAttributeName().equals(attrName)){
-                    attrList.remove(i);
-                }
-            }
-
-        } else if (op.equals("add")) {
-            for(int i=0; i<attrList.size(); i++){
-                Attribute currentAttr = attrList.get(i);
-                if(currentAttr.getAttributeName().equals(attrName)){
-                    has = true;
-                }
-            }
-            if(!has) {
-                attrList.add(new Attribute(attrName, attrType, false, false, false));
-            }
-        }else{
-            throw new Exception("Invalid Command");
-        }
-        table.setAttributes(attrList);
-    }
-
-    private int loadCatalog() {
-        return 0;
+    private MessageType loadCatalog() {
+        return null;
     }
 
     public Dictionary<Integer, TableSchema> getSchemas() {
