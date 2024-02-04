@@ -2,8 +2,9 @@ package StorageManager;
 
 import java.util.List;
 
-import StorageManager.Objects.ErrorType;
+
 import StorageManager.Objects.Record;
+import StorageManager.Objects.MessagePrinter.MessageType;
 
 public interface StorageManagerInterface {
 
@@ -73,7 +74,7 @@ public interface StorageManagerInterface {
      */
     public void writeAll();
 
-    public ErrorType saveCatalog();
+    public MessageType saveCatalog();
 
-    public ErrorType loadCatalog();
+    public MessageType loadCatalog();
 }

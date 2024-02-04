@@ -2,7 +2,7 @@ package StorageManager;
 
 import java.util.List;
 
-import StorageManager.Objects.Attribute;
+import StorageManager.Objects.AttributeSchema;
 
 public interface TableSchemaInterface {
   public int getTableNumber();
@@ -11,9 +11,9 @@ public interface TableSchemaInterface {
 
   public void setTableName(String tableName);
 
-  public List<Attribute> getAttributes();
+  public List<AttributeSchema> getAttributes();
 
-  public void setAttributes(List<Attribute> attributes);
+  public void setAttributes(List<AttributeSchema> attributes);
 
   public int getNumPages();
 
