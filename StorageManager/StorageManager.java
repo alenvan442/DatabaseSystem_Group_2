@@ -9,6 +9,7 @@ import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.lang.management.MemoryType;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.PriorityQueue;
 
@@ -99,8 +100,11 @@ public class StorageManager implements StorageManagerInterface {
             // inputted was less than the last record of the first page
             // add to first page
             page.addRecord(record);
+        } else if (comparison == 0) {
+            // TODO primary key unique constraint not met error
+            return null;
         } else {
-            // inputted was either equal to, or greater than the last record
+            // inputted was greater than the last record
             // of the first page, so add to the second page
             _new.addRecord(record);
         }
@@ -150,45 +154,14 @@ public class StorageManager implements StorageManagerInterface {
                 TableSchema schema = Catalog.getCatalog().getSchema(tableNumber);
 
                 // determine index of the primary key
-                int primaryIndex = -1;
+                int primaryIndex = schema.getPrimaryIndex();
                 List<AttributeSchema> attrs = schema.getAttributes();
-                for (int i = 0; i < attrs.size(); i++) {
-                    if (attrs.get(i).isPrimaryKey()) {
-                        primaryIndex = i;
-                    }
-                }
+                String primaryType = attrs.get(primaryIndex).getAttributeName();
 
                 if (primaryIndex == -1) {
                     System.out.print("Error! This relation has no primary key!");
                     return;
                 }
-
-                // if already exists, check the buffer to see if
-                // the needed page is already there
-
-                Page bufferPage = this.checkBuffer(tableNumber, record, true);
-                if (bufferPage != null) {
-                    // if record add was successful update priority
-                    if (bufferPage.addRecord(record)) {
-                        bufferPage.setPriority();
-                    } else {
-                        // page is full split it
-                        Page[] pages = this.pageSplit(bufferPage, record, primaryIndex,
-                                attrs.get(primaryIndex).getAttributeName());
-
-                        // remove original bufferPage from the buffer
-                        this.buffer.remove(bufferPage);
-
-                        // write both pages to the buffer
-                        this.addBuffer(pages[0]);
-                        this.addBuffer(pages[1]);
-                    }
-                    return;
-                }
-
-                // if not, start reading from file
-                boolean found = false;
-                int pageIndex = 0;
 
                 // get primary key of incoming record
                 Object primaryKey = record.getValues().get(primaryIndex);
@@ -200,56 +173,65 @@ public class StorageManager implements StorageManagerInterface {
                 reader.close();
                 int numPages = ByteBuffer.wrap(buffer).getInt();
 
-                while (!found) {
-                    // read a page in
-                    Page page = this.readPageHardware(tableNumber, pageIndex);
+                // if already exists, check constraints
+                // check null constraints
+                this.checkNullConstraint(schema, record);
 
-                    // if this is the last page in the table, append
-                    if (numPages == pageIndex+1) {
-                        found = true;
-                        if (page.addRecord(record)) {
-                            // page was added successfully, write it to the buffer
-                            this.addBuffer(page);
-                        } else {
-                            // failed to add, page full
-                            Page[] pages = this.pageSplit(page, record, pageIndex,
-                                attrs.get(primaryIndex).getAttributeName());
-
-                            // write both pages to the buffer
-                            this.addBuffer(pages[0]);
-                            this.addBuffer(pages[1]);
-                        }
-                        continue;
+                // check unique constraints
+                List<Integer> uniqueIndex = new ArrayList<Integer>();
+                for (int i = 0; i < attrs.size(); i++) {
+                    if (attrs.get(i).isUnique()) {
+                        uniqueIndex.add(i);
                     }
+                }
 
-                    // compare the last record in the page
-                    List<Record> records = page.getRecords();
-                    Record lastRecord = records.get(records.size() - 1);
-                    int comparison = lastRecord.comparison(
-                                        primaryIndex, primaryKey,
-                                        attrs.get(primaryIndex).getAttributeName());
-
-                    if (comparison == -1 || comparison == 0) {
-                        // if inputted is greater or equal to, continue
-                        pageIndex++;
-                        continue;
-                    } else {
-                        found = true;
-                        // if inputted is less, add record
-                        if (page.addRecord(record)) {
-                            // page was added successfully, write it to the buffer
-                            this.addBuffer(page);
-                        } else {
-                            // if page is full then split
-                            Page[] pages = this.pageSplit(page, record, primaryIndex,
-                                    attrs.get(primaryIndex).getAttributeName());
-
-                            // write both pages to the buffer
-                            this.addBuffer(pages[0]);
-                            this.addBuffer(pages[1]);
-                        }
+                if (uniqueIndex.size() > 0) {
+                    this.insertUnique(schema, record, uniqueIndex,
+                                    primaryIndex, primaryKey, primaryType);
+                } else {
+                    
+                    //check the buffer to see if
+                    // the needed page is already there
+                    if (this.insertBuffer(tableNumber, primaryIndex, primaryType, record)) {
+                        return;
                     }
+                    
+                    // if not, start reading from file
+                    boolean found = false;
+                    int pageIndex = 0;
 
+                    while (!found) {
+                        // read a page in
+                        Page page = this.readPageHardware(tableNumber, pageIndex);
+
+                        // if this is the last page in the table, append
+                        if (numPages == pageIndex+1) {
+                            found = true;
+                            if (page.addRecord(record)) {
+                                // page was added successfully, write it to the buffer
+                                this.addBuffer(page);
+                            } else {
+                                // failed to add, page full
+                                Page[] pages = this.pageSplit(page, record, 
+                                    pageIndex, primaryType);
+
+                                // write both pages to the buffer
+                                this.addBuffer(pages[0]);
+                                this.addBuffer(pages[1]);
+                            }
+                            continue;
+                        }
+
+                        // attempt to add to page
+                        boolean result = this.insertHelper(page, primaryIndex, primaryKey, 
+                                                            primaryType, record);
+                        if (!result) {
+                            pageIndex++;
+                        } else {
+                            found = true;
+                        }
+
+                    }
                 }
 
             }
@@ -257,6 +239,173 @@ public class StorageManager implements StorageManagerInterface {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    /*
+     * Given a table schema and a record, check
+     * to determine if the record conforms to any null
+     * constraints
+     * 
+     * @param table     The table schema
+     * @param record    The record to check
+     * 
+     * @return          true:  pass
+     *                  false: fail
+     */
+    private boolean checkNullConstraint(TableSchema table, Record record) {
+        List<AttributeSchema> attrs = table.getAttributes();
+        for (int i = 0; i > attrs.size(); i++) {
+            if (attrs.get(i).isNotNull()) {
+                if (record.getValues().get(i).equals(null)) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    /*
+     * Helper function for the insert
+     * This function will take in a page and determine if
+     * the incoming record should be inserted there
+     * 
+     * @param page          Page to insert a record to
+     * @param record        to be inserted record
+     * 
+     * @return      boolean indicating of a successful insert
+     */
+    private boolean insertHelper(Page page, int primaryIndex, Object primaryKey, 
+                                String primaryType, Record record) {
+        // compare the last record in the page
+        List<Record> records = page.getRecords();
+        Record lastRecord = records.get(records.size() - 1);
+        int comparison = lastRecord.comparison(
+                            primaryIndex, primaryKey, primaryType);
+
+        if (comparison == -1) {
+            // if inputted is greater, continue
+            return false;
+        } else if (comparison == 0) {
+            // an equal primary key was found, primary key unique conflict found
+            // TODO unique conflict with primary key
+            return false;
+        } else {
+            // if inputted is less, add record
+            if (page.addRecord(record)) {
+                // page was added successfully, write it to the buffer
+                this.addBuffer(page);
+            } else {
+                // if page is full then split
+                Page[] pages = this.pageSplit(page, record, 
+                        primaryIndex, primaryType);
+
+                // write both pages to the buffer
+                this.addBuffer(pages[0]);
+                this.addBuffer(pages[1]);
+            }
+            return true;
+        }
+    }
+    
+    /*
+     * Checks to see if the buffer has a page where
+     * the to be inserted record will be inserted in
+     * if so, insert, otherwise return false
+     * 
+     * @param tableNumber   The table to insert in
+     * @param primaryIndex  Location of thr primary key within the tableSchema
+     * @param primaryType   The dataType of the primary key
+     * @param record        The to be insertted record
+     * 
+     * @return              boolean indicating result of the isnert
+     */
+    private boolean insertBuffer(int tableNumber, int primaryIndex, 
+                                String primaryType, Record record) {
+        // check if buffer has the needed file
+        // if so insert and return true
+        Page bufferPage = this.checkBuffer(tableNumber, record, true);
+        if (bufferPage != null) {
+            // if record add was successful update priority
+            if (bufferPage.addRecord(record)) {
+                bufferPage.setPriority();
+            } else {
+                // page is full split it
+                Page[] pages = this.pageSplit(bufferPage, record, 
+                        primaryIndex, primaryType);
+
+                // remove original bufferPage from the buffer
+                this.buffer.remove(bufferPage);
+
+                // write both pages to the buffer
+                this.addBuffer(pages[0]);
+                this.addBuffer(pages[1]);
+            }
+            return true;
+        }
+        return false;
+    }
+
+    /*
+     * Helper function for the insert,
+     * Gets called if the relation has a unique attribute
+     * Will then call insertHelper 
+     */
+    private boolean insertUnique(TableSchema table, Record record, List<Integer> uniqueIndex,
+                            int primaryIndex, Object primaryKey, String primaryType) {
+        // the relation has one or more unique attributes
+        // read in the entire relation locally
+        List<Page> pages = this.readTableHardware(table.getTableNumber());
+        int foundPage = -1;
+        List<Object> incomingValues = record.getValues();
+
+        // loop through every page to check if the constraint is met
+        for (int i = 0; i < pages.size(); i++) {
+
+            // as we loop through, determine where the record is supposed to be inserted as well
+            if (foundPage == -1) {
+                // compare the last record in the page
+                List<Record> records = pages.get(i).getRecords();
+                Record lastRecord = records.get(records.size() - 1);
+                int comparison = lastRecord.comparison(
+                                    primaryIndex, primaryKey, primaryType);
+                if (comparison == 0) {
+                    // TODO primaryKey not unique!
+                    return false;
+                } else if (comparison == 1) {
+                    foundPage = i;
+                }
+            }
+            List<Record> records = pages.get(i).getRecords();
+            for (Record j : records) {
+                for (int o : uniqueIndex) {
+                    if (j.comparison(o, incomingValues.get(o), 
+                        table.getAttributes().get(o).getDataType()) == 0) {
+                        // TODO unique constraint fail
+                        return false;
+                    }
+                }
+            }
+        }
+        // constraints have been passed, attempt insert
+        // attempt to insert into a page in the buffer
+        if (!this.insertBuffer(table.getTableNumber(), primaryIndex, primaryType, record)) {
+            // if not, use the page we found earlier
+            Page page = pages.get(foundPage);
+            if (page.addRecord(record)) {
+                // page was added successfully, write it to the buffer
+                this.addBuffer(page);
+            } else {
+                // if page is full then split
+                Page[] splitPages = this.pageSplit(page, record, 
+                        primaryIndex, primaryType);
+
+                // write both pages to the buffer
+                this.addBuffer(splitPages[0]);
+                this.addBuffer(splitPages[1]);
+            }
+        }
+        return true;
+
     }
 
     public void deleteRecord(int tableNumber, Object primaryKey) {
@@ -321,6 +470,18 @@ public class StorageManager implements StorageManagerInterface {
         // TODO
         // skip first 8 bytes since the first 8 bytes consist of the number of pages in the table
         // construct a new page class, first 8 bytes of a page is a number of records in the page
+        return null;
+    }
+
+    /*
+     * Reads all pages in a table and returns it
+     * 
+     * @param tableNum  The table to read
+     * 
+     * @return          The list of all pages
+     */
+    private List<Page> readTableHardware(int tableNum) {
+        // TODO
         return null;
     }
 

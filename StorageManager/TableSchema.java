@@ -160,4 +160,16 @@ public class TableSchema implements SchemaInterface {
         this.attributes.add(attributeSchema);
     }
   }
+
+    public int getPrimaryIndex() {
+      // determine index of the primary key
+      int primaryIndex = -1;
+      for (int i = 0; i < this.attributes.size(); i++) {
+          if (this.attributes.get(i).isPrimaryKey()) {
+              primaryIndex = i;
+          }
+      }
+      return primaryIndex;  
+    }
+
 }

@@ -2,7 +2,10 @@ package StorageManager.Objects;
 
 import java.util.Comparator;
 import java.util.Date;
+import java.util.Dictionary;
 import java.util.List;
+
+import StorageManager.TableSchema;
 
 public class Page implements java.io.Serializable, Comparator<Page> {
     private int numRecords;
@@ -66,7 +69,7 @@ public class Page implements java.io.Serializable, Comparator<Page> {
     }
 
     /*
-     * Adds a record to the page
+     * Adds a record to the page in the correct order
      * 
      * @param record    The record to be inserted
      * 
@@ -77,7 +80,36 @@ public class Page implements java.io.Serializable, Comparator<Page> {
         if (this.spaceLeft() < record.byteSize()) {
             return false;
         } else {
-            // TODO, insert the record in order
+            Dictionary<Integer, TableSchema> schemas = Catalog.getCatalog().getSchemas();
+            TableSchema schema = schemas.get(this.tableNumber);
+            int primaryIndex = schema.getPrimaryIndex();
+            String primaryType = schema.getAttributes().get(primaryIndex).getAttributeName();
+            boolean added = false;
+            for (int i = 0; i < this.records.size(); i++) {
+                int compare = this.records.get(i).comparison(primaryIndex, 
+                                    record.getValues().get(primaryIndex), primaryType);
+                if (compare == -1) {
+                    // in coming record is greater, so continue
+                    continue;
+                } else {
+                    // in coming record is either equal to, or less than
+                    // so append before
+                    List<Record> updatedList = this.records.subList(0, i);
+                    updatedList.add(record);
+                    for (int j = i; j < this.records.size(); j++) {
+                        updatedList.add(this.records.get(j));
+                    }
+                    this.records = updatedList;
+                    added = true;
+                    break;
+                }
+            }
+
+            // unable to find a spot, append to end of page
+            if (added == false) {
+                this.records.add(record);
+            }
+            
             this.numRecords++;
             this.changed = true;
             return true;
