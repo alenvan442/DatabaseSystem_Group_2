@@ -78,7 +78,7 @@ public static class Parser{ //extend me!
 			}
             else if(Character.isLetterOrDigit(nextByte)) //covering both labels and values in the same block since values only come after "default" anyway
 			{
-				if(!label && !Character.isLetter(nextByte){
+				if(!label && !Character.isLetter(nextByte)){
 					throw new Exception("Labels must start with a letter!"); //realistically the digit branch should stop this from ever being accessible
 				}
                 currentToken += nextByte;

@@ -10,7 +10,7 @@ public static class DDLParser extends Parser{
 		ArrayList<AttributeSchema> attributes = new ArrayList<AttributeSchema>;
 		String tableName;
 		Arraylist<String> tokens = Tokenize(ddlStatement);
-		if(!tokens[0].toLower.equals("create") || !tokens[1].toLower.equals("table")
+		if(!tokens[0].toLower.equals("create") || !tokens[1].toLower.equals("table"))
 		{
 			throw new Exception("this should be a create table statement???");
 		}
@@ -41,15 +41,15 @@ public static class DDLParser extends Parser{
 				throw new Exception("Attribute names must be alphanumeric and begin with a letter!"); //can't use a double!
 			}
 			String type = tokens[i].toLower();
-			if(!(type.equals("integer") || type.equals("double") || type.equals("boolean") || type.equals("char") || type.equals("varchar"))
+			if(!(type.equals("integer") || type.equals("double") || type.equals("boolean") || type.equals("char") || type.equals("varchar")))
 			{
 				throw new Exception("Attribute types must be one of the following: integer, double, boolean, char, varchar");
 			}
-			if(type.equals("char") || type.equals("varchar")
+			if(type.equals("char") || type.equals("varchar"))
 			{
 				dataType += type;
 				i++;
-				if(!tokens[i].equals("(")
+				if(!tokens[i].equals("("))
 				{
 					throw new Exception("Open parenthesis expected for char or varchar type");
 				}
@@ -62,7 +62,7 @@ public static class DDLParser extends Parser{
 				}
 				dataType += tokens[i];
 				i++;
-				if(!tokens[i].equals(")")
+				if(!tokens[i].equals(")"))
 				{
 					throw new Exception("Close parenthesis expected for char or varchar type");
 				}
@@ -77,7 +77,7 @@ public static class DDLParser extends Parser{
 			while(!comma && constraints <= 4)
 			{
 				String constraint = tokens[i].toLower();
-				if(constraint.equals(",")
+				if(constraint.equals(","))
 				{
 					comma = true;
 				} else if(constraint.equals("notnull") && !notNull)
