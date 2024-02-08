@@ -41,15 +41,10 @@ public static class ParserCommon { // extend me!
 	// Numbers, which can be integer or double with exactly 1 "." in any place, the
 	// char/varchar case must check for double seperately.
 	// any tokens outside these options will throw an error.
-	protected Arraylist<String> Tokenize(String ddlStatement) {
-		Scanner scanner = new scanner(ddlStatement);
-		Arraylist<String> tokens;
+	protected ArrayList<String> Tokenize(String ddlStatement) {
+		Scanner scanner = new Scanner(ddlStatement);
+		ArrayList<String> tokens;
 		String currentToken = "";
-		char nextByte = (char) scanner.nextByte();
-		boolean label = false;
-		boolean number = false;
-		boolean sentinal = (!label && !number);
-		boolean hasdecimal = false;
 		char nextByte = (char) scanner.nextByte();
 		boolean label = false;
 		boolean number = false;
@@ -70,7 +65,7 @@ public static class ParserCommon { // extend me!
 			} else if ((Character.isDigit(nextByte) || (nextByte == "." && !hasdecimal)) && !label) // only ONE decimal
 																									// point per double!
 			{
-				if (nextByte == ".") {
+				if (nextByte == '.') {
 					hasdecimal = true;
 				}
 				currentToken += nextByte;
