@@ -9,7 +9,7 @@ public static class ParserCommon { // extend me!
 	// keywordCheck returns false if the passed label is a protected keyword, true
 	// otherwise
 	protected boolean keywordCheck(String label) {
-		label = label.toLower();
+		label = label.toLowerCase();
 		return !(label.equals("integer") ||
 				label.equals("double") ||
 				label.equals("boolean") ||
@@ -41,16 +41,16 @@ public static class ParserCommon { // extend me!
 	// Numbers, which can be integer or double with exactly 1 "." in any place, the
 	// char/varchar case must check for double seperately.
 	// any tokens outside these options will throw an error.
-	protected Arraylist<String> Tokenize(String ddlStatement) {
-		Scanner scanner = new scanner(ddlStatement);
-		Arraylist<String> tokens;
+	protected ArrayList<String> Tokenize(String ddlStatement) {
+		Scanner scanner = new Scanner(ddlStatement);
+		ArrayList<String> tokens = new ArrayList<>();
 		String currentToken = "";
-		char nextByte = (char) scanner.nextByte();
+		char nextByte;
 		boolean label = false;
 		boolean number = false;
 		boolean sentinal = (!label && !number);
 		boolean hasdecimal = false;
-		char nextByte = (char) scanner.nextByte();
+		nextByte = (char) scanner.nextByte();
 		boolean label = false;
 		boolean number = false;
 		boolean hasdecimal = false;
