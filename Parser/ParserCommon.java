@@ -45,7 +45,7 @@ public static class ParserCommon { // extend me!
 		Scanner scanner = new Scanner(ddlStatement);
 		ArrayList<String> tokens = new ArrayList<>();
 		String currentToken = "";
-		char nextByte;
+		char nextByte = (char)scanner.nextByte();
 		boolean label = false;
 		boolean number = false;
 		boolean hasdecimal = false;
