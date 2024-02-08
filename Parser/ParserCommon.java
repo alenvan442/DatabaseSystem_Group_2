@@ -4,11 +4,11 @@ package Parser;
 import java.util.ArrayList;
 import java.util.Scanner;
 
-public static class ParserCommon { // extend me!
+public class ParserCommon { // extend me!
 
 	// keywordCheck returns false if the passed label is a protected keyword, true
 	// otherwise
-	protected boolean keywordCheck(String label) {
+	protected boolean keywordCheck(String label){
 		label = label.toLowerCase();
 		return !(label.equals("integer") ||
 				label.equals("double") ||
@@ -41,7 +41,7 @@ public static class ParserCommon { // extend me!
 	// Numbers, which can be integer or double with exactly 1 "." in any place, the
 	// char/varchar case must check for double seperately.
 	// any tokens outside these options will throw an error.
-	protected ArrayList<String> Tokenize(String ddlStatement) {
+	protected ArrayList<String> Tokenize(String ddlStatement) throws Exception {
 		Scanner scanner = new Scanner(ddlStatement);
 		ArrayList<String> tokens = new ArrayList<>();
 		String currentToken = "";
@@ -62,7 +62,7 @@ public static class ParserCommon { // extend me!
 			} else if (nextByte == ',' && !label && !number) {
 				tokens.add(",");
 				nextByte = (char) scanner.nextByte();
-			} else if ((Character.isDigit(nextByte) || (nextByte == "." && !hasdecimal)) && !label) // only ONE decimal
+			} else if ((Character.isDigit(nextByte) || (nextByte == '.' && !hasdecimal)) && !label) // only ONE decimal
 																									// point per double!
 			{
 				if (nextByte == '.') {
