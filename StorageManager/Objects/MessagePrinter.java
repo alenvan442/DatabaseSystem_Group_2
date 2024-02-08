@@ -1,6 +1,6 @@
 package StorageManager.Objects;
 
-public class MessagePrinter {
+public class MessagePrinter{
   // Enum to represent message types
   public enum MessageType {
       SUCCESS,

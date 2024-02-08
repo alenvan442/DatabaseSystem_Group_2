@@ -1,8 +1,12 @@
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
 import Parser.DDLParser;
 import Parser.DMLParser;
+import StorageManager.TableSchema;
+import StorageManager.Objects.AttributeSchema;
 import StorageManager.Objects.Catalog;
 import StorageManager.Objects.MessagePrinter;
 import StorageManager.Objects.MessagePrinter.MessageType;
@@ -71,12 +75,5 @@ public class UserInterface {
             MessagePrinter.printMessage(MessageType.ERROR, command + "Is not valid");
         }
 
-        Catalog catalog = Catalog.getCatalog();
-        try {
-            catalog.saveCatalog();
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
     }
 }

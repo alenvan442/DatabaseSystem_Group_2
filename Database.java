@@ -25,12 +25,12 @@ public class Database {
             Catalog.createCatalog(dbLocation, dbDirectory.getAbsolutePath().concat("/catalog"), -1, bufferSize);
         } else {
             System.out.println("Creating new db at " + dbLocation);
-            File tableDirectory = new File(dbDirectory.getAbsolutePath() + "/tables");
-            File catalogDirectory = new File(dbDirectory.getAbsolutePath() + "/catalog");
+            File tableDirectory = new File(dbDirectory.getAbsolutePath().concat("/tables"));
+            File catalogDirectory = new File(dbDirectory.getAbsolutePath().concat("/catalog"));
             boolean success = dbDirectory.mkdir() &&  tableDirectory.mkdir() && catalogDirectory.mkdir();
             if (success){
                 StorageManager.createStorageManager(bufferSize);
-                Catalog.createCatalog(dbLocation, dbDirectory.getAbsolutePath().concat("/catalog"), pageSize, bufferSize);
+                Catalog.createCatalog(dbDirectory.getAbsolutePath(), dbDirectory.getAbsolutePath().concat("/catalog"), pageSize, bufferSize);
                 System.out.println("New db created sucessfully");
                 System.out.println("Page Size: " + pageSize);
                 System.out.println("Buffer Size: " + bufferSize);

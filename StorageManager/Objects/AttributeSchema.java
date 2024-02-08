@@ -2,6 +2,8 @@ package StorageManager.Objects;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
 public class AttributeSchema implements java.io.Serializable {
@@ -17,6 +19,9 @@ public class AttributeSchema implements java.io.Serializable {
         this.notNull = notNull;
         this.primaryKey = primaryKey;
         this.unique = unique;
+    }
+
+    public AttributeSchema(){
     }
 
     public String getAttributeName() {
@@ -59,14 +64,63 @@ public class AttributeSchema implements java.io.Serializable {
         this.unique = unique;
     }
 
-    public byte[] convertToBytes() throws IOException {
-        ByteArrayOutputStream attributeByteArray = new ByteArrayOutputStream();
-        attributeByteArray.write(this.attributeName.getBytes(StandardCharsets.UTF_8));
-        attributeByteArray.write(this.dataType.getBytes(StandardCharsets.UTF_8));
-        attributeByteArray.write(this.notNull ? new byte[]{1} : new byte[]{0});
-        attributeByteArray.write(this.primaryKey ? new byte[]{1} : new byte[]{0});
-        attributeByteArray.write(this.unique ? new byte[]{1} : new byte[]{0});
-        return attributeByteArray.toByteArray();
+    /**
+     * Saves the attribute schema information to the specified random access file.
+     *
+     * @param catalogAccessFile the random access file where the attribute schema information will be saved
+     * @throws IOException if an I/O error occurs while writing to the random access file
+     */
+    public void saveAttributeSchema(RandomAccessFile catalogAccessFile) throws IOException {
+        // Write attribute name to the catalog file as UTF string
+        catalogAccessFile.writeUTF(this.attributeName);
+
+        // Write data type to the catalog file as UTF string
+        catalogAccessFile.writeUTF(this.dataType);
+
+        // Write whether the attribute is not null to the catalog file
+        catalogAccessFile.writeBoolean(this.notNull);
+
+        // Write whether the attribute is a primary key to the catalog file
+        catalogAccessFile.writeBoolean(this.primaryKey);
+
+        // Write whether the attribute is unique to the catalog file
+        catalogAccessFile.writeBoolean(this.unique);
     }
 
+    /**
+     * Loads the attribute schema information from the specified random access file.
+     *
+     * @param catalogAccessFile the random access file from which the attribute schema information will be loaded
+     * @throws IOException if an I/O error occurs while reading from the random access file
+     */
+    public void loadAttributeSchema(RandomAccessFile catalogAccessFile) throws IOException {
+        // Read the length of the attribute name from the catalog file
+        int attributeNameLength = catalogAccessFile.readShort();
+
+        // Read bytes representing the attribute name from the catalog file
+        byte[] attributeNameBytes = new byte[attributeNameLength];
+        catalogAccessFile.read(attributeNameBytes);
+
+        // Convert the byte array to a String representing the attribute name
+        this.attributeName = new String(attributeNameBytes);
+
+        // Read the length of the data type from the catalog file
+        int dataTypeLength = catalogAccessFile.readShort();
+
+        // Read bytes representing the data type from the catalog file
+        byte[] dataTypeBytes = new byte[dataTypeLength];
+        catalogAccessFile.read(dataTypeBytes);
+
+        // Convert the byte array to a String representing the data type
+        this.dataType = new String(dataTypeBytes);
+
+        // Read whether the attribute is not null from the catalog file
+        this.notNull = catalogAccessFile.readBoolean();
+
+        // Read whether the attribute is a primary key from the catalog file
+        this.primaryKey = catalogAccessFile.readBoolean();
+
+        // Read whether the attribute is unique from the catalog file
+        this.unique = catalogAccessFile.readBoolean();
+    }
 }

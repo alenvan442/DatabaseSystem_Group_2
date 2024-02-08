@@ -1,8 +1,12 @@
 package StorageManager;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.RandomAccessFile;
 import java.lang.management.MemoryType;
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -55,16 +59,16 @@ public class StorageManager implements StorageManagerInterface {
      * This function compares the last record of the first page
      * with the to be inserted record then determines
      * if the incoming record should be added to the first or second page
-     * 
-     * NOTE: Page.addRecord(Record) will add the page into the 
+     *
+     * NOTE: Page.addRecord(Record) will add the page into the
      *       record in the correct sorted position
-     * 
+     *
      *
      * @param page      The page that is to be split
      * @param record    the record to insert
      * @param index     the index of the value to compare
      * @param dataType  the dataType of the values to compare
-     *  
+     *
      *
      * @return          An array of size 2, consisting of 2 pages
      */
@@ -108,9 +112,9 @@ public class StorageManager implements StorageManagerInterface {
     /*
      * Construct the full table path according to where
      * the DB is located
-     * 
+     *
      * @param tableNumber   the id of the table
-     * 
+     *
      * @return              the full table path
      */
     private String getTablePath(int tableNumber) {
@@ -342,14 +346,15 @@ public class StorageManager implements StorageManagerInterface {
     }
 
     @Override
-    public MessageType saveCatalog() {
-        return MessageType.SUCCESS;
-
+    public RandomAccessFile saveCatalog(File schemaFile) throws IOException {
+        RandomAccessFile schemaAccessFile = new RandomAccessFile(schemaFile, "rw");
+        return schemaAccessFile;
     }
 
     @Override
-    public MessageType loadCatalog() {
-        return null;
+    public RandomAccessFile loadCatalog(File schmaFile) throws IOException {
+        RandomAccessFile schemaAccessFile = new RandomAccessFile(schmaFile, "r");
+        return schemaAccessFile;
     }
 
 }

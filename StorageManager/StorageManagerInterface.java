@@ -1,5 +1,10 @@
 package StorageManager;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.util.List;
 
 
@@ -74,7 +79,7 @@ public interface StorageManagerInterface {
      */
     public void writeAll();
 
-    public MessageType saveCatalog();
+    public RandomAccessFile saveCatalog(File schemaFile) throws IOException;
 
-    public MessageType loadCatalog();
+    public RandomAccessFile loadCatalog(File schemaFile) throws FileNotFoundException, IOException;
 }
