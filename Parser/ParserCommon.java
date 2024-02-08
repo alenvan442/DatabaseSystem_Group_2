@@ -1,11 +1,11 @@
 //contains methods common to DDLParser and DMLParser
 package Parser;
 
-public static class ParserCommon { // extend me!
+public class ParserCommon { // extend me!
 
 	// keywordCheck returns false if the passed label is a protected keyword, true
 	// otherwise
-	private boolean keywordCheck(String label) {
+	protected boolean keywordCheck(String label) {
 		label = label.toLower();
 		return !(label.equals("integer") ||
 				label.equals("double") ||
@@ -38,7 +38,7 @@ public static class ParserCommon { // extend me!
 	// Numbers, which can be integer or double with exactly 1 "." in any place, the
 	// char/varchar case must check for double seperately.
 	// any tokens outside these options will throw an error.
-	private Arraylist<String> Tokenize(String ddlStatement) {
+	protected Arraylist<String> Tokenize(String ddlStatement) {
 		Scanner scanner = new scanner(ddlStatement);
 		Arraylist<String> tokens;
 		String currentToken = "";
