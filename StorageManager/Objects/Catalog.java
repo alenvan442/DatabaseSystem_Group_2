@@ -140,6 +140,64 @@ public class Catalog implements java.io.Serializable, CatalogInterface{
         }
     }
 
+    //  * Method that deletes the schema for a table that is being dropped.
+    //  * @param tableNumber - The old table # for the table we are updating due to being dropped.
+
+    public void dropTableSchema(int tableNumber){
+        schemas.remove(tableNumber);
+        StorageManager.getStorageManager().dropTable(tableNumber);
+        //call StorageManager
+    }
+
+    /**
+     * Method that updates the Schema for a particular Table based on the result of an Alter command.
+     * @param tableNumber - The # for the Table we are updating the schemea of.
+     * @param op - the alter operation we performed on this table, ei: drop attr or add attr
+     * @param attrName - Name of the Attr that is being altered in the table.
+     * @param attrType - Type of the Attr that is being altered in the table.
+     * @param notNull - The attribute cannot be null.
+     * @param pKey - Whether or not the attribute is a primary key.
+     * @param unique - Whether or not the attribute has to be unique.
+     * @throws Exception - Should only be thrown if the method is called in an incorrect fashion.
+     * @return - If drop - The previous index of the dropped item. If add - the index of the new attr.
+     */
+    public int alterTableSchema(int tableNumber,String op, String attrName, String attrType, boolean notNull,
+                                boolean pKey, boolean unique) throws Exception {
+        TableSchema table = schemas.get(tableNumber);
+        int returnIndex = -1;
+
+        boolean has = false;
+        List<AttributeSchema> attrList = table.getAttributes();
+        if(op.equals("drop")){
+            for(int i=0; i<attrList.size(); i++) {
+                if(attrList.get(i).getAttributeName().equals(attrName)){
+                    attrList.remove(i);
+                    returnIndex = i;
+                }
+            }
+        } else if (op.equals("add")) {
+            for(int i=0; i<attrList.size(); i++){
+                AttributeSchema currentAttr = attrList.get(i);
+                if(currentAttr.getAttributeName().equals(attrName)){
+                    has = true;
+                }
+            }
+            if(!has) {
+                attrList.add(new AttributeSchema(attrName, attrType, notNull, pKey, unique));
+                returnIndex = attrList.size()-1;
+            }
+        }else{
+            throw new Exception("Invalid Command");
+        }
+        table.setAttributes(attrList);
+
+        if(returnIndex== -1){
+            throw new Exception("The schema alter add or drop was not accounted for correctly.");
+        }
+        //call new storage manager method.
+        StorageManager.getStorageManager().alterTable(tableNumber, op, attrName, attrType, notNull, pKey, unique);
+        return returnIndex;
+    }
 
     public Dictionary<Integer, TableSchema> getSchemas() {
         return schemas;
