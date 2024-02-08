@@ -1,7 +1,7 @@
 //contains methods common to DDLParser and DMLParser
 package Parser;
 
-public static class Parser { // extend me!
+public static class ParserCommon { // extend me!
 
 	// keywordCheck returns false if the passed label is a protected keyword, true
 	// otherwise
