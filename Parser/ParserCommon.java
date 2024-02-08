@@ -42,24 +42,23 @@ public class ParserCommon { // extend me!
 		Scanner scanner = new scanner(ddlStatement);
 		Arraylist<String> tokens;
 		String currentToken = "";
-		char nextByte = (Char) scanner.nextByte();
-		bool label = false;
-		bool number = false;
-		bool sentinal = (!label && !number);
-		bool hasdecimal = false;
+		char nextByte = (char) scanner.nextByte();
+		boolean label = false;
+		boolean number = false;
+		boolean hasdecimal = false;
 		while (scanner.hasNext()) {
-			if (nextByte == '(' && !sentinal) {
+			if (nextByte == '(' && !label && !number) {
 				tokens.add("(");
-				nextByte = scanner.nextByte();
-			} else if (nextByte == ')' && !sentinal) {
+				nextByte = (char) scanner.nextByte();
+			} else if (nextByte == ')' && !label && !number) {
 				tokens.add(")");
-				nextByte = scanner.nextByte();
-			} else if (nextByte == ';' && !sentinal) {
+				nextByte = (char) scanner.nextByte();
+			} else if (nextByte == ';' && !label && !number) {
 				tokens.add(";");
-				nextByte = scanner.nextByte();
-			} else if (nextByte == ',' && !sentinal) {
+				nextByte = (char) scanner.nextByte();
+			} else if (nextByte == ',' && !label && !number) {
 				tokens.add(",");
-				nextByte = scanner.nextByte();
+				nextByte = (char) scanner.nextByte();
 			} else if ((Character.isDigit(nextByte) || (nextByte == "." && !hasdecimal)) && !label) // only ONE decimal
 																									// point per double!
 			{
@@ -68,7 +67,7 @@ public class ParserCommon { // extend me!
 				}
 				currentToken += nextByte;
 				number = true;
-				nextByte = scanner.nextByte();
+				nextByte = (char) scanner.nextByte();
 			} else if (Character.isLetterOrDigit(nextByte)) // covering both labels and values in the same block since
 															// values only come after "default" anyway
 			{
@@ -78,7 +77,7 @@ public class ParserCommon { // extend me!
 				}
 				currentToken += nextByte;
 				label = true; // we need to block the other paths to know when to flush.
-				nextByte = scanner.nextByte();
+				nextByte = (char) scanner.nextByte();
 			} else { // flush the label or number token string
 				if (currentToken.equals("")) {
 					throw new Exception("Invalid Token!");
