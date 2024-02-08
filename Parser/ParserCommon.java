@@ -1,12 +1,15 @@
 //contains methods common to DDLParser and DMLParser
 package Parser;
 
-public class ParserCommon { // extend me!
+import java.util.ArrayList;
+import java.util.Scanner;
+
+public static class ParserCommon { // extend me!
 
 	// keywordCheck returns false if the passed label is a protected keyword, true
 	// otherwise
-	protected boolean keywordCheck(String label) {
-		label = label.toLower();
+	private boolean keywordCheck(String label) {
+		label = label.toLowerCase();
 		return !(label.equals("integer") ||
 				label.equals("double") ||
 				label.equals("boolean") ||
@@ -38,15 +41,15 @@ public class ParserCommon { // extend me!
 	// Numbers, which can be integer or double with exactly 1 "." in any place, the
 	// char/varchar case must check for double seperately.
 	// any tokens outside these options will throw an error.
-	protected Arraylist<String> Tokenize(String ddlStatement) {
-		Scanner scanner = new scanner(ddlStatement);
-		Arraylist<String> tokens;
+	private ArrayList<String> Tokenize(String ddlStatement) {
+		Scanner scanner = new Scanner(ddlStatement);
+		ArrayList<String> tokens;
 		String currentToken = "";
-		char nextByte = (Char) scanner.nextByte();
-		bool label = false;
-		bool number = false;
-		bool sentinal = (!label && !number);
-		bool hasdecimal = false;
+		char nextByte = (char) scanner.nextByte();
+		boolean label = false;
+		boolean number = false;
+		boolean sentinal = (!label && !number);
+		boolean hasdecimal = false;
 		while (scanner.hasNext()) {
 			if (nextByte == '(' && !sentinal) {
 				tokens.add("(");
