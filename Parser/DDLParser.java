@@ -2,7 +2,7 @@ package Parser;
 
 import java.util.Scanner;
 
-public static class DDLParser extends Parser {
+public static class DDLParser extends ParserCommon {
 
 	public static Pair<String, ArrayList<AttributeSchema>> parseCreateTable(String ddlStatement) {
 		ArrayList<AttributeSchema> attributes = new ArrayList<AttributeSchema>();
