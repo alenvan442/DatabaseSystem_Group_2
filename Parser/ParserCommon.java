@@ -92,5 +92,6 @@ public class ParserCommon { // extend me!
 				hasdecimal = false;
 			}
 		}
+		return tokens;
 	}
 }
