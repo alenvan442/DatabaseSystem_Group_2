@@ -345,18 +345,6 @@ public class StorageManager implements StorageManagerInterface {
 
     }
 
-    @Override
-    public RandomAccessFile saveCatalog(File schemaFile) throws IOException {
-        RandomAccessFile schemaAccessFile = new RandomAccessFile(schemaFile, "rw");
-        return schemaAccessFile;
-    }
-
-    @Override
-    public RandomAccessFile loadCatalog(File schmaFile) throws IOException {
-        RandomAccessFile schemaAccessFile = new RandomAccessFile(schmaFile, "r");
-        return schemaAccessFile;
-    }
-
     public void dropTable(int tableNumber) {
         //TODO: The method.
     }

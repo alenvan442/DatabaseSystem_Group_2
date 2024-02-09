@@ -1,12 +1,9 @@
 package StorageManager.Objects;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 
-public class AttributeSchema implements java.io.Serializable {
+public class AttributeSchema implements java.io.Serializable, SchemaInterface {
     private String attributeName;
     private String dataType;
     private boolean notNull;
@@ -70,7 +67,8 @@ public class AttributeSchema implements java.io.Serializable {
      * @param catalogAccessFile the random access file where the attribute schema information will be saved
      * @throws IOException if an I/O error occurs while writing to the random access file
      */
-    public void saveAttributeSchema(RandomAccessFile catalogAccessFile) throws IOException {
+    @Override
+    public void saveSchema(RandomAccessFile catalogAccessFile) throws IOException {
         // Write attribute name to the catalog file as UTF string
         catalogAccessFile.writeUTF(this.attributeName);
 
@@ -93,7 +91,8 @@ public class AttributeSchema implements java.io.Serializable {
      * @param catalogAccessFile the random access file from which the attribute schema information will be loaded
      * @throws IOException if an I/O error occurs while reading from the random access file
      */
-    public void loadAttributeSchema(RandomAccessFile catalogAccessFile) throws IOException {
+    @Override
+    public void loadSchema(RandomAccessFile catalogAccessFile) throws IOException {
         // Read the length of the attribute name from the catalog file
         int attributeNameLength = catalogAccessFile.readShort();
 

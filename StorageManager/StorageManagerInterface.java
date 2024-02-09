@@ -78,8 +78,4 @@ public interface StorageManagerInterface {
      * This is used upon system shut off
      */
     public void writeAll();
-
-    public RandomAccessFile saveCatalog(File schemaFile) throws IOException;
-
-    public RandomAccessFile loadCatalog(File schemaFile) throws FileNotFoundException, IOException;
 }
