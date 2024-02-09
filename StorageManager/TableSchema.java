@@ -9,8 +9,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import StorageManager.Objects.AttributeSchema;
+import StorageManager.Objects.SchemaInterface;
 
-public class TableSchema implements TableSchemaInterface {
+public class TableSchema implements SchemaInterface {
     private int tableNumber;
     private String tableName;
     private List<AttributeSchema> attributes;
@@ -28,58 +29,50 @@ public class TableSchema implements TableSchemaInterface {
       this.attributes = new ArrayList<AttributeSchema>();
     }
 
-    @Override
     public int getTableNumber() {
       return tableNumber;
     }
 
-    @Override
     public String getTableName() {
       return tableName;
     }
 
-    @Override
+
     public void setTableName(String tableName) {
       this.tableName = tableName;
       this.tableNumber = this.hashName();
     }
 
-    @Override
+
     public List<AttributeSchema> getAttributes() {
       return attributes;
     }
 
-    @Override
     public void setAttributes(List<AttributeSchema> attributes) {
       this.attributes = attributes;
     }
 
-    @Override
     public int getNumPages() {
       return numPages;
     }
 
-    @Override
+
     public void setNumPages(int numPages) {
       this.numPages = numPages;
     }
 
-    @Override
     public List<Integer> getPageOrder() {
       return this.pageOrder;
     }
 
-    @Override
     public void setPageOrder(List<Integer> pageOrder) {
       this.pageOrder = pageOrder;
     }
 
-    @Override
     public int getRecords() {
       return numRecords;
     }
 
-    @Override
     public void setRecords(int numRecords) {
       this.numRecords = numRecords;
     }
@@ -102,7 +95,7 @@ public class TableSchema implements TableSchemaInterface {
    * @throws IOException if an I/O error occurs while writing to the random access file
    */
   @Override
-  public void saveTableSchema(RandomAccessFile catalogAccessFile) throws IOException {
+  public void saveSchema(RandomAccessFile catalogAccessFile) throws IOException {
     // Write table name to the catalog file as UTF string
     catalogAccessFile.writeUTF(this.tableName);
 
@@ -125,12 +118,10 @@ public class TableSchema implements TableSchemaInterface {
 
     // Iterate over each attribute and save its schema to the catalog file
     for (int i = 0; i < this.attributes.size(); ++i) {
-        this.attributes.get(i).saveAttributeSchema(catalogAccessFile);
+        this.attributes.get(i).saveSchema(catalogAccessFile);
     }
   }
 
-
-  @Override
   public void addAttribute(AttributeSchema attributeSchema) {
     this.attributes.add(attributeSchema);
   }
@@ -142,7 +133,7 @@ public class TableSchema implements TableSchemaInterface {
    * @throws IOException if an I/O error occurs while reading from the random access file
    */
   @Override
-  public void loadTableSchema(RandomAccessFile catalogAccessFile) throws IOException {
+  public void loadSchema(RandomAccessFile catalogAccessFile) throws IOException {
     // Read the number of pages from the catalog file
     this.numPages = catalogAccessFile.readInt();
 
@@ -163,7 +154,7 @@ public class TableSchema implements TableSchemaInterface {
         AttributeSchema attributeSchema = new AttributeSchema();
 
         // Load attribute schema from the catalog file
-        attributeSchema.loadAttributeSchema(catalogAccessFile);
+        attributeSchema.loadSchema(catalogAccessFile);
 
         // Add the loaded attribute schema to the list of attributes
         this.attributes.add(attributeSchema);

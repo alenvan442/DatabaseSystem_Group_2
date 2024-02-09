@@ -52,16 +52,10 @@ public class Catalog implements java.io.Serializable, CatalogInterface{
      * @throws IOException if an I/O error occurs while saving the catalog
     */
     public void saveCatalog() {
-        // Retrieve the storage manager instance
-        StorageManager storageManager = StorageManager.getStorageManager();
-
-        // Create a file for the schema
-        File schemaFile = new File(this.catalogLocation + "/schema");
-        RandomAccessFile catalogAccessFile;
-
         try {
-            // Save catalog to the storage and obtain a random access file
-            catalogAccessFile = storageManager.saveCatalog(schemaFile);
+            // Save catalog to hardware and obtain a random access file
+            File schemaFile = new File(this.catalogLocation + "/schema");
+            RandomAccessFile catalogAccessFile = new RandomAccessFile(schemaFile, "r");
             catalogAccessFile.seek(0);
 
             // Write page size to the catalog file
@@ -74,7 +68,7 @@ public class Catalog implements java.io.Serializable, CatalogInterface{
             Enumeration<Integer> tableNums = schemas.keys();
             while (tableNums.hasMoreElements()) {
                 int tableNum = tableNums.nextElement();
-                this.schemas.get(tableNum).saveTableSchema(catalogAccessFile);
+                this.schemas.get(tableNum).saveSchema(catalogAccessFile);
             }
         } catch (IOException e) {
             // Print the stack trace in case of an exception
@@ -94,17 +88,12 @@ public class Catalog implements java.io.Serializable, CatalogInterface{
      *
      * @throws IOException if an I/O error occurs while loading the catalog
     */
-    private void loadCatalog() {
-        // Retrieve the storage manager instance
-        StorageManager storageManager = StorageManager.getStorageManager();
-
-        // Create a file for the schema
-        File schemaFile = new File(this.catalogLocation + "/schema");
-        RandomAccessFile catalogAccessFile;
-
+    @Override
+    public void loadCatalog() {
         try {
-            // Load catalog from the storage and obtain a random access file
-            catalogAccessFile = storageManager.loadCatalog(schemaFile);
+            // Load catalog from hardware and obtain a random access file
+            File schemaFile = new File(this.catalogLocation + "/schema");
+            RandomAccessFile catalogAccessFile = new RandomAccessFile(schemaFile, "rw");
 
             // Read page size from the catalog file
             this.pageSize = catalogAccessFile.readInt();
@@ -129,7 +118,7 @@ public class Catalog implements java.io.Serializable, CatalogInterface{
 
                 // Create a new table schema instance and load it from the catalog file
                 TableSchema tableSchema = new TableSchema(tableName, tableNumber);
-                tableSchema.loadTableSchema(catalogAccessFile);
+                tableSchema.loadSchema(catalogAccessFile);
 
                 // Add the loaded table schema to the schemas map
                 this.schemas.put(tableNumber, tableSchema);
@@ -143,6 +132,7 @@ public class Catalog implements java.io.Serializable, CatalogInterface{
     //  * Method that deletes the schema for a table that is being dropped.
     //  * @param tableNumber - The old table # for the table we are updating due to being dropped.
 
+    @Override
     public void dropTableSchema(int tableNumber){
         schemas.remove(tableNumber);
         StorageManager.getStorageManager().dropTable(tableNumber);
@@ -161,6 +151,7 @@ public class Catalog implements java.io.Serializable, CatalogInterface{
      * @throws Exception - Should only be thrown if the method is called in an incorrect fashion.
      * @return - If drop - The previous index of the dropped item. If add - the index of the new attr.
      */
+    @Override
     public int alterTableSchema(int tableNumber,String op, String attrName, String attrType, boolean notNull,
                                 boolean pKey, boolean unique) throws Exception {
         TableSchema table = schemas.get(tableNumber);
@@ -197,6 +188,11 @@ public class Catalog implements java.io.Serializable, CatalogInterface{
         //call new storage manager method.
         StorageManager.getStorageManager().alterTable(tableNumber, op, attrName, attrType, notNull, pKey, unique);
         return returnIndex;
+    }
+
+    @Override
+    public void createTable(String attributeName, String attributeType, boolean isNotNull, boolean isUnique, boolean isPrimaryKey) {
+
     }
 
     public Dictionary<Integer, TableSchema> getSchemas() {
