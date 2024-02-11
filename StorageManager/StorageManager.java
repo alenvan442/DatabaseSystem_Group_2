@@ -345,18 +345,6 @@ public class StorageManager implements StorageManagerInterface {
 
     }
 
-    @Override
-    public RandomAccessFile saveCatalog(File schemaFile) throws IOException {
-        RandomAccessFile schemaAccessFile = new RandomAccessFile(schemaFile, "rw");
-        return schemaAccessFile;
-    }
-
-    @Override
-    public RandomAccessFile loadCatalog(File schmaFile) throws IOException {
-        RandomAccessFile schemaAccessFile = new RandomAccessFile(schmaFile, "r");
-        return schemaAccessFile;
-    }
-
     public void dropTable(int tableNumber) {
         //TODO: Current Implementation assumes that if the table exists in the buffer, it DOES not exist as a file and
         //TODO: Vice Versa.
