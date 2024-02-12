@@ -15,7 +15,7 @@ public class Database {
         this.dbLocation = dbLocation;
     }
 
-    public void start() {
+    public void start() throws Exception {
         System.out.println("Welcolm to CASE-C QL");
         System.out.println("Looking at " + dbLocation);
         File dbDirectory = new File(dbLocation);
