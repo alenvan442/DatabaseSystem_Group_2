@@ -112,9 +112,46 @@ public class Page implements java.io.Serializable, Comparator<Page> {
             
             this.numRecords++;
             this.changed = true;
+            this.setPriority();
             return true;
         }
     } 
+
+    /*
+     * Deletes a record at a specific index
+     * 
+     * @param index     The index to delete the record at
+     * 
+     * @return          boolean, indicating success status
+     */
+    public boolean deleteRecord(int index) {
+        Record removed = this.records.remove(index);
+        if (!removed.equals(null)) {
+            this.changed = true;
+            this.setPriority();
+            return true;
+        }
+        return false;
+    }
+
+    /*
+     * Replaces a record at a given index
+     * 
+     * @param index     The index to replace the record at
+     * @param record    The record to replace with
+     * 
+     * @return          boolean, indicating success status
+     */
+    public boolean updateRecord(int index, Record record) {
+        if (this.getRecords().remove(index).equals(null)) {
+            return false;
+        } else {
+            this.getRecords().add(index, record);
+            this.changed = true;
+            this.setPriority();
+            return true;
+        }
+    }
 
     /*
      * returns the number of bytes of space is left in this page

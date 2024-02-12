@@ -21,7 +21,7 @@ public class Table implements java.io.Serializable {
     }
 
     public void addPage(Page page) {
-
+        this.pages.add(page);
     }
 
     public void setNumPages(int numPages) {

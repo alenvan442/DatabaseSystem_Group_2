@@ -31,7 +31,7 @@ public interface StorageManagerInterface {
      *
      * @return              a list of all records in the table
      */
-    public List<Record> getRecords(int tableNumber);
+    public List<Record> getAllRecords(int tableNumber);
 
     /*
      * Inserts a record into a specified table
@@ -56,7 +56,7 @@ public interface StorageManagerInterface {
      * @param tableNumber   the table to delete from
      * @param primaryKey    the value of the primaryKey to search for
      */
-    public void deleteRecord(int tableNumber, Object primaryKey);
+    public void deleteRecord(int tableNumber, Record record);
 
     /*
      * Update a record in the DB
@@ -71,7 +71,7 @@ public interface StorageManagerInterface {
      * @param primaryKey    value fo the primaryKey to search for
      * @param record        a record with the updated values
      */
-    public void updateRecord(int tableNumber, Object primaryKey, Record record);
+    public void updateRecord(int tableNumber, Record record);
 
     /*
      * Writes all pages in the buffer to disk

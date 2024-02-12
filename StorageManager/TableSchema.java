@@ -10,6 +10,7 @@ import java.util.List;
 
 import StorageManager.Objects.AttributeSchema;
 import StorageManager.Objects.SchemaInterface;
+import StorageManager.Objects.Page;
 
 public class TableSchema implements SchemaInterface {
     private int tableNumber;
@@ -18,7 +19,6 @@ public class TableSchema implements SchemaInterface {
     private int numPages;
     private List<Integer> pageOrder;
     private int numRecords;
-
 
     public TableSchema(String tableName, int tableNumber) {
       this.tableName = tableName;
@@ -67,6 +67,23 @@ public class TableSchema implements SchemaInterface {
 
     public void setPageOrder(List<Integer> pageOrder) {
       this.pageOrder = pageOrder;
+    }
+
+    public void addPageIndex(int pageNumber) {
+      this.pageOrder.add(pageNumber);
+    }
+
+    public void addPageIndex(int numberBefore, int pageNumber) {
+      int index = 0;
+      for (int i = 0; i < this.pageOrder.size(); i++) {
+        if (this.pageOrder.get(i) == numberBefore) {
+          index = i;
+          break;
+        }
+      }
+
+      this.pageOrder.add(index+1, pageNumber);
+
     }
 
     public int getRecords() {
