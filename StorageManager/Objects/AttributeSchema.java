@@ -137,6 +137,7 @@ public class AttributeSchema implements java.io.Serializable, SchemaInterface {
         // Read the default value from the catalog
         int defaultValueLength = catalogAccessFile.readInt();
         byte[] defaultValueBytes = new byte[defaultValueLength];
+        catalogAccessFile.readFully(defaultValueBytes);
 
         ByteArrayInputStream bytetStream = new ByteArrayInputStream(defaultValueBytes);
         ObjectInputStream objectStream = new ObjectInputStream(bytetStream);
