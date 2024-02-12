@@ -48,7 +48,7 @@ public class Catalog implements java.io.Serializable, CatalogInterface{
     public void saveCatalog() throws Exception {
         // Save catalog to hardware and obtain a random access file
         File schemaFile = new File(this.catalogLocation + "/schema");
-        RandomAccessFile catalogAccessFile = new RandomAccessFile(schemaFile, "r");
+        RandomAccessFile catalogAccessFile = new RandomAccessFile(schemaFile, "rw");
         catalogAccessFile.seek(0);
 
         // Write page size to the catalog file
@@ -74,7 +74,8 @@ public class Catalog implements java.io.Serializable, CatalogInterface{
     public void loadCatalog() throws Exception {
         // Load catalog from hardware and obtain a random access file
         File schemaFile = new File(this.catalogLocation + "/schema");
-        RandomAccessFile catalogAccessFile = new RandomAccessFile(schemaFile, "rw");
+        RandomAccessFile catalogAccessFile = new RandomAccessFile(schemaFile, "r");
+        catalogAccessFile.seek(0);
 
         // Read page size from the catalog file
         this.pageSize = catalogAccessFile.readInt();
@@ -188,8 +189,8 @@ public class Catalog implements java.io.Serializable, CatalogInterface{
         this.schemas = _new;
     }
 
-    public void setSchemas(Map<Integer, TableSchema> schemas) {
-        this.schemas = schemas;
+    public void addSchemas(TableSchema tableSchema) {
+        this.schemas.put(tableSchema.getTableNumber(), tableSchema);
     }
 
     public String getDbLocation() {
