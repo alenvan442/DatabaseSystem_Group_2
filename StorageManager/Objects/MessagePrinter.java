@@ -16,7 +16,7 @@ public class MessagePrinter{
           case ERROR:
               throw new Exception(message + "\n" + MessageType.ERROR);
           default:
-              throw new IllegalArgumentException("Unsupported message type: " + messageType);
+              throw new Exception("Unsupported message type: " + messageType);
       }
   }
 }

@@ -1,10 +1,6 @@
 package StorageManager;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -89,13 +85,10 @@ public class TableSchema implements SchemaInterface {
   }
 
     /**
-   * Saves the table schema information to the specified random access file.
-   *
-   * @param catalogAccessFile the random access file where the table schema information will be saved
-   * @throws IOException if an I/O error occurs while writing to the random access file
+   * {@inheritDoc}
    */
   @Override
-  public void saveSchema(RandomAccessFile catalogAccessFile) throws IOException {
+  public void saveSchema(RandomAccessFile catalogAccessFile) throws Exception {
     // Write table name to the catalog file as UTF string
     catalogAccessFile.writeUTF(this.tableName);
 
@@ -126,14 +119,11 @@ public class TableSchema implements SchemaInterface {
     this.attributes.add(attributeSchema);
   }
 
-    /**
-   * Loads the table schema information from the specified random access file.
-   *
-   * @param catalogAccessFile the random access file from which the table schema information will be loaded
-   * @throws IOException if an I/O error occurs while reading from the random access file
+  /**
+    * {@inheritDoc}
    */
   @Override
-  public void loadSchema(RandomAccessFile catalogAccessFile) throws IOException {
+  public void loadSchema(RandomAccessFile catalogAccessFile) throws Exception {
     // Read the number of pages from the catalog file
     this.numPages = catalogAccessFile.readInt();
 

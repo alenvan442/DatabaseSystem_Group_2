@@ -1,9 +1,7 @@
 package StorageManager.Objects;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
@@ -22,7 +20,7 @@ public class Catalog implements java.io.Serializable, CatalogInterface{
     private int bufferSize;
 
 
-    private Catalog(String catalogLocation, String dbLocation, int pageSize, int bufferSize) {
+    private Catalog(String catalogLocation, String dbLocation, int pageSize, int bufferSize) throws Exception {
         this.catalogLocation = catalogLocation;
         this.dbLocation = dbLocation;
         this.bufferSize = bufferSize;
@@ -34,7 +32,7 @@ public class Catalog implements java.io.Serializable, CatalogInterface{
         }
     }
 
-    public static void createCatalog(String dbLocation, String catalogLocation, int pageSize, int bufferSize) {
+    public static void createCatalog(String dbLocation, String catalogLocation, int pageSize, int bufferSize) throws Exception {
         catalog = new Catalog(catalogLocation, dbLocation, pageSize, bufferSize);
     }
 
@@ -45,72 +43,69 @@ public class Catalog implements java.io.Serializable, CatalogInterface{
 
     /**
      * {@inheritDoc}
+     * @throws Exception
     */
-    public void saveCatalog() {
-        try {
-            // Save catalog to hardware and obtain a random access file
-            File schemaFile = new File(this.catalogLocation + "/schema");
-            RandomAccessFile catalogAccessFile = new RandomAccessFile(schemaFile, "r");
-            catalogAccessFile.seek(0);
+    public void saveCatalog() throws Exception {
+        // Save catalog to hardware and obtain a random access file
+        File schemaFile = new File(this.catalogLocation + "/schema");
+        RandomAccessFile catalogAccessFile = new RandomAccessFile(schemaFile, "r");
+        catalogAccessFile.seek(0);
 
-            // Write page size to the catalog file
-            catalogAccessFile.writeInt(this.pageSize);
+        // Write page size to the catalog file
+        catalogAccessFile.writeInt(this.pageSize);
 
-            // Write the number of schemas to the catalog file
-            catalogAccessFile.writeInt(this.schemas.size());
+        // Write the number of schemas to the catalog file
+        catalogAccessFile.writeInt(this.schemas.size());
 
-            // Iterate over each table schema and save it to the catalog file
-            for (int tableNum : this.schemas.keySet()) {
-                this.schemas.get(tableNum).saveSchema(catalogAccessFile);
-            }
-        } catch (IOException e) {
-            // Print the stack trace in case of an exception
-            e.printStackTrace();
+        // Iterate over each table schema and save it to the catalog file
+        for (int tableNum : this.schemas.keySet()) {
+            this.schemas.get(tableNum).saveSchema(catalogAccessFile);
         }
+
+        catalogAccessFile.close();
+
     }
 
     /**
      * {@inheritDoc}
+     * @throws Exception
     */
     @Override
-    public void loadCatalog() {
-        try {
-            // Load catalog from hardware and obtain a random access file
-            File schemaFile = new File(this.catalogLocation + "/schema");
-            RandomAccessFile catalogAccessFile = new RandomAccessFile(schemaFile, "rw");
+    public void loadCatalog() throws Exception {
+        // Load catalog from hardware and obtain a random access file
+        File schemaFile = new File(this.catalogLocation + "/schema");
+        RandomAccessFile catalogAccessFile = new RandomAccessFile(schemaFile, "rw");
 
-            // Read page size from the catalog file
-            this.pageSize = catalogAccessFile.readInt();
+        // Read page size from the catalog file
+        this.pageSize = catalogAccessFile.readInt();
 
-            // Read the number of tables from the catalog file
-            int numOfTables = catalogAccessFile.readInt();
+        // Read the number of tables from the catalog file
+        int numOfTables = catalogAccessFile.readInt();
 
-            // Iterate over each table schema and load it from the catalog file
-            for (int i = 0; i < numOfTables; ++i) {
-                // Read the length of the table name
-                int tableNameLength = catalogAccessFile.readShort();
+        // Iterate over each table schema and load it from the catalog file
+        for (int i = 0; i < numOfTables; ++i) {
+            // Read the length of the table name
+            int tableNameLength = catalogAccessFile.readShort();
 
-                // Read the bytes representing the table name
-                byte[] tableNameBytes = new byte[tableNameLength];
-                catalogAccessFile.read(tableNameBytes);
+            // Read the bytes representing the table name
+            byte[] tableNameBytes = new byte[tableNameLength];
+            catalogAccessFile.read(tableNameBytes);
 
-                // Convert the byte array to a String representing the table name
-                String tableName = new String(tableNameBytes);
+            // Convert the byte array to a String representing the table name
+            String tableName = new String(tableNameBytes);
 
-                // Read the table number
-                int tableNumber = catalogAccessFile.readInt();
+            // Read the table number
+            int tableNumber = catalogAccessFile.readInt();
 
-                // Create a new table schema instance and load it from the catalog file
-                TableSchema tableSchema = new TableSchema(tableName, tableNumber);
-                tableSchema.loadSchema(catalogAccessFile);
+            // Create a new table schema instance and load it from the catalog file
+            TableSchema tableSchema = new TableSchema(tableName, tableNumber);
+            tableSchema.loadSchema(catalogAccessFile);
 
-                // Add the loaded table schema to the schemas map
-                this.schemas.put(tableNumber, tableSchema);
-            }
-        } catch (IOException e) {
-            // Print the stack trace in case of an exception
-            e.printStackTrace();
+            // Add the loaded table schema to the schemas map
+            this.schemas.put(tableNumber, tableSchema);
         }
+
+        catalogAccessFile.close();
     }
 
     /**
@@ -128,7 +123,7 @@ public class Catalog implements java.io.Serializable, CatalogInterface{
      */
     @Override
     public int alterTableSchema(int tableNumber,String op, String attrName, String attrType, boolean notNull,
-                                boolean pKey, boolean unique) throws Exception {
+                                boolean pKey, boolean unique, Object defaultValue) throws Exception {
         TableSchema table = schemas.get(tableNumber);
         int returnIndex = -1;
 
@@ -149,7 +144,7 @@ public class Catalog implements java.io.Serializable, CatalogInterface{
                 }
             }
             if(!has) {
-                attrList.add(new AttributeSchema(attrName, attrType, notNull, pKey, unique));
+                attrList.add(new AttributeSchema(attrName, attrType, notNull, pKey, unique, defaultValue));
                 returnIndex = attrList.size()-1;
             }
         }else{

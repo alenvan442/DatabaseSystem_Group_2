@@ -1,6 +1,10 @@
 package StorageManager.Objects;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.RandomAccessFile;
 
 public class AttributeSchema implements java.io.Serializable, SchemaInterface {
@@ -9,13 +13,15 @@ public class AttributeSchema implements java.io.Serializable, SchemaInterface {
     private boolean notNull;
     private boolean primaryKey;
     private boolean unique;
+    private Object defaultValue;
 
-    public AttributeSchema(String attributeName, String dataType, boolean notNull, boolean primaryKey, boolean unique) {
+    public AttributeSchema(String attributeName, String dataType, boolean notNull, boolean primaryKey, boolean unique, Object defaultValue) {
         this.attributeName = attributeName;
         this.dataType = dataType;
         this.notNull = notNull;
         this.primaryKey = primaryKey;
         this.unique = unique;
+        this.defaultValue = defaultValue;
     }
 
     public AttributeSchema(){
@@ -62,10 +68,7 @@ public class AttributeSchema implements java.io.Serializable, SchemaInterface {
     }
 
     /**
-     * Saves the attribute schema information to the specified random access file.
-     *
-     * @param catalogAccessFile the random access file where the attribute schema information will be saved
-     * @throws IOException if an I/O error occurs while writing to the random access file
+     * {@inheritDoc}
      */
     @Override
     public void saveSchema(RandomAccessFile catalogAccessFile) throws IOException {
@@ -83,16 +86,25 @@ public class AttributeSchema implements java.io.Serializable, SchemaInterface {
 
         // Write whether the attribute is unique to the catalog file
         catalogAccessFile.writeBoolean(this.unique);
+
+        // Write the attribute default value to the catalog file
+        ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
+
+        ObjectOutputStream objectOutputStream = new ObjectOutputStream(byteStream);
+        objectOutputStream.writeObject(this.defaultValue);
+
+        byte[] objectBytes = byteStream.toByteArray();
+        catalogAccessFile.writeInt(objectBytes.length);
+        catalogAccessFile.write(objectBytes);
+
+        objectOutputStream.close();
     }
 
     /**
-     * Loads the attribute schema information from the specified random access file.
-     *
-     * @param catalogAccessFile the random access file from which the attribute schema information will be loaded
-     * @throws IOException if an I/O error occurs while reading from the random access file
+     * {@inheritDoc}
      */
     @Override
-    public void loadSchema(RandomAccessFile catalogAccessFile) throws IOException {
+    public void loadSchema(RandomAccessFile catalogAccessFile) throws Exception {
         // Read the length of the attribute name from the catalog file
         int attributeNameLength = catalogAccessFile.readShort();
 
@@ -121,5 +133,16 @@ public class AttributeSchema implements java.io.Serializable, SchemaInterface {
 
         // Read whether the attribute is unique from the catalog file
         this.unique = catalogAccessFile.readBoolean();
+
+        // Read the default value from the catalog
+        int defaultValueLength = catalogAccessFile.readInt();
+        byte[] defaultValueBytes = new byte[defaultValueLength];
+
+        ByteArrayInputStream bytetStream = new ByteArrayInputStream(defaultValueBytes);
+        ObjectInputStream objectStream = new ObjectInputStream(bytetStream);
+
+        this.defaultValue = objectStream.readObject();
+
+        objectStream.close();
     }
 }

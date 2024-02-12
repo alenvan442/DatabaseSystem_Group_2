@@ -32,23 +32,20 @@ public interface CatalogInterface {
    * @return - If drop - The previous index of the dropped item. If add - the index of the new attr.
    */
   public int alterTableSchema(int tableNumber,String op, String attrName, String attrType, boolean notNull,
-                                boolean pKey, boolean unique) throws Exception;
+                                boolean pKey, boolean unique, Object defaultValue) throws Exception;
 
   /**
-     * Loads the catalog from the storage.
-     * The catalog information is loaded from a file specified by the catalog location,
-     * including the schema information for each table.
-     *
-     * @throws IOException if an I/O error occurs while loading the catalog
-    */
-  public void loadCatalog();
+   * Loads the catalog from hardware and obtains a random access file.
+   *
+   * @throws Exception if an error occurs during loading the catalog
+ */
+  public void loadCatalog() throws Exception;
 
   /**
      * Saves the catalog to the storage.
      * The catalog information is saved to a file specified by the catalog location,
      * along with the schema information for each table.
-     *
-     * @throws IOException if an I/O error occurs while saving the catalog
+     * @throws Exception
     */
-  public void saveCatalog();
+  public void saveCatalog() throws Exception;
 }
