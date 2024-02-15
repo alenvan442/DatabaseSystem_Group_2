@@ -145,7 +145,7 @@ public class Catalog implements java.io.Serializable, CatalogInterface{
                 }
             }
             if(!has) {
-                attrList.add(new AttributeSchema(attrName, attrType, notNull, pKey, unique, defaultValue));
+                attrList.add(new AttributeSchema(attrName, attrType, notNull, pKey, unique));
                 returnIndex = attrList.size()-1;
             }
         }else{

@@ -13,15 +13,13 @@ public class AttributeSchema implements java.io.Serializable, SchemaInterface {
     private boolean notNull;
     private boolean primaryKey;
     private boolean unique;
-    private Object defaultValue;
 
-    public AttributeSchema(String attributeName, String dataType, boolean notNull, boolean primaryKey, boolean unique, Object defaultValue) {
+    public AttributeSchema(String attributeName, String dataType, boolean notNull, boolean primaryKey, boolean unique) {
         this.attributeName = attributeName;
         this.dataType = dataType;
         this.notNull = notNull;
         this.primaryKey = primaryKey;
         this.unique = unique;
-        this.defaultValue = defaultValue;
     }
 
     public AttributeSchema(){
