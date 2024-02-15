@@ -728,6 +728,9 @@ public class StorageManager implements StorageManagerInterface {
         //TODO: Current Implementation assumes that if the table exists in the buffer, it DOES not exist as a file and
         //TODO: Vice Versa.
 
+        //LOOP THROUGH THE BUFFER
+        //DELETE ALL PAGES IN THE BUFFER THAT REFERENCE A TABLE WE ARE DROPPING.
+
         //Checks the hardware for a tablefile. If it finds it remove it.
         String tablePath = this.getTablePath(tableNumber);
         File tableFile = new File(tablePath);
@@ -752,6 +755,9 @@ public class StorageManager implements StorageManagerInterface {
     public void alterTable(int tableNumber, String op, String attrName, String attrType, boolean notNull, boolean pKey, boolean unique) {
         //TODO: The method.
 
+        //NOTES FROM PROFESSOR:
+        //WHEN MAKING A NEW COLUMN, MAKE A NEW TABLE AND LOOP THROUGH ADDING ALL THE ATTRS FROM THE OLD TABLE THEN
+        //DELETE THE OLD TABLE.
         String tablePath = this.getTablePath(tableNumber);
         File tableFile = new File(tablePath);
         try {

@@ -1,9 +1,6 @@
 package StorageManager.Objects;
 
-import java.util.Comparator;
-import java.util.Date;
-import java.util.Dictionary;
-import java.util.List;
+import java.util.*;
 
 import StorageManager.TableSchema;
 
@@ -80,7 +77,7 @@ public class Page implements java.io.Serializable, Comparator<Page> {
         if (this.spaceLeft() < record.byteSize()) {
             return false;
         } else {
-            Dictionary<Integer, TableSchema> schemas = Catalog.getCatalog().getSchemas();
+            Map<Integer, TableSchema> schemas = Catalog.getCatalog().getSchemas();
             TableSchema schema = schemas.get(this.tableNumber);
             int primaryIndex = schema.getPrimaryIndex();
             String primaryType = schema.getAttributes().get(primaryIndex).getAttributeName();
