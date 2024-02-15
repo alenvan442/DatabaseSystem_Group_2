@@ -41,7 +41,7 @@ public class ParserCommon { // extend me!
 	// Numbers, which can be integer or double with exactly 1 "." in any place, the
 	// char/varchar case must check for double seperately.
 	// any tokens outside these options will throw an error.
-	protected ArrayList<String> Tokenize(String ddlStatement) throws Exception {
+	protected static ArrayList<String> Tokenize(String ddlStatement) throws Exception {
 		Scanner scanner = new Scanner(ddlStatement);
 		ArrayList<String> tokens = new ArrayList<>();
 		String currentToken = "";
