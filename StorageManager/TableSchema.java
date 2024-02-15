@@ -25,6 +25,15 @@ public class TableSchema implements SchemaInterface {
       this.attributes = new ArrayList<AttributeSchema>();
     }
 
+    public TableSchema(String tableName) {
+      this.tableName = tableName;
+      this.tableNumber = this.hashName();
+      this.numPages = 0;
+      this.pageOrder = new ArrayList<Integer>();
+      this.numRecords = 0;
+      this.attributes = new ArrayList<AttributeSchema>();
+    }
+
     public int getTableNumber() {
       return tableNumber;
     }
