@@ -260,11 +260,13 @@ public class StorageManager implements StorageManagerInterface {
     }
 
     public void deleteRecord(int tableNumber, Object primaryKey) {
-        // TODO
+        // TODO: FIND RECORD
+        // TODO: DELETE RECORD
     }
 
     public void updateRecord(int tableNumber, Object primaryKey, Record record) {
-        // TODO
+        // TODO: FIND RECORD
+        // TODO: DELETE RECORD
     }
 
     //---------------------------- Page Buffer ------------------------------
