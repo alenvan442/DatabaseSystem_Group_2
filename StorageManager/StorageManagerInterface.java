@@ -45,7 +45,7 @@ public interface StorageManagerInterface {
      * @param record        the record to insert
      *
      */
-    public void insertRecord(int tableNumber, Record record);
+    public void insertRecord(int tableNumber, Record record) throws Exception;
 
     /*
      * Deletes a record from the DB
