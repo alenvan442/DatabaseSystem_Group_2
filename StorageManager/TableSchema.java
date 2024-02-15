@@ -18,7 +18,16 @@ public class TableSchema implements SchemaInterface {
 
     public TableSchema(String tableName, int tableNumber) {
       this.tableName = tableName;
-      this.tableNumber = tableNumber == -1 ? this.hashName(): tableNumber;
+      this.tableNumber = tableNumber;
+      this.numPages = 0;
+      this.pageOrder = new ArrayList<Integer>();
+      this.numRecords = 0;
+      this.attributes = new ArrayList<AttributeSchema>();
+    }
+
+    public TableSchema(String tableName) {
+      this.tableName = tableName;
+      this.tableNumber = this.hashName();
       this.numPages = 0;
       this.pageOrder = new ArrayList<Integer>();
       this.numRecords = 0;
@@ -176,7 +185,7 @@ public class TableSchema implements SchemaInterface {
               primaryIndex = i;
           }
       }
-      return primaryIndex;  
+      return primaryIndex;
     }
 
 }
