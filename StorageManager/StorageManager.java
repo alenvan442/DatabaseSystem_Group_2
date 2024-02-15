@@ -751,5 +751,40 @@ public class StorageManager implements StorageManagerInterface {
 
     public void alterTable(int tableNumber, String op, String attrName, String attrType, boolean notNull, boolean pKey, boolean unique) {
         //TODO: The method.
+
+        String tablePath = this.getTablePath(tableNumber);
+        File tableFile = new File(tablePath);
+        try {
+            if (tableFile.exists()) {
+                //TODO: Import File as a table
+                //tableFile.delete();
+                if(op.equals("add")){
+                    //TODO: Add the specified attr to the table
+                }else if(op.equals("drop")){
+                    //TODO: Find the specified attr and drop it
+                }else{
+                    throw new Exception("Invalid: Alter Table Operation.");
+                }
+
+                Page bufferPage = this.checkBuffer(tableNumber, null, true);
+                while(bufferPage!=null){
+                    //TODO: Get the table from the buffer.
+                    if(op.equals("add")){
+                        //TODO: Add the specified attr to the table.
+                    }else if(op.equals("drop")){
+                        //TODO: Find the specified attr and drop it.
+                    }else{
+                        throw new Exception("Invalid: Alter Table Operation");
+                    }
+
+                    //buffer.remove(bufferPage);
+                    bufferPage = this.checkBuffer(tableNumber, null, true);
+                }
+            }else {
+
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }
