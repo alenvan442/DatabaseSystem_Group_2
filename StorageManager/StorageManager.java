@@ -738,11 +738,19 @@ public class StorageManager implements StorageManagerInterface {
             if (tableFile.exists()) {
                 tableFile.delete();
 
+                for (Page page : this.buffer) {
+                    if(tableNumber == page.getTableNumber()){
+                        buffer.remove(page);
+                    }
+                }
+                /*
                 Page bufferPage = this.checkBuffer(tableNumber, null, true);
                 while(bufferPage!=null){
                     buffer.remove(bufferPage);
                     bufferPage = this.checkBuffer(tableNumber, null, true);
                 }
+
+                 */
             }else {
 
             }
