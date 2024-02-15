@@ -725,7 +725,28 @@ public class StorageManager implements StorageManagerInterface {
     }
 
     public void dropTable(int tableNumber) {
-        //TODO: The method.
+        //TODO: Current Implementation assumes that if the table exists in the buffer, it DOES not exist as a file and
+        //TODO: Vice Versa.
+
+        //Checks the hardware for a tablefile. If it finds it remove it.
+        String tablePath = this.getTablePath(tableNumber);
+        File tableFile = new File(tablePath);
+        try {
+            if (tableFile.exists()) {
+                tableFile.delete();
+
+                Page bufferPage = this.checkBuffer(tableNumber, null, true);
+                while(bufferPage!=null){
+                    buffer.remove(bufferPage);
+                    bufferPage = this.checkBuffer(tableNumber, null, true);
+                }
+            }else {
+
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
     }
 
     public void alterTable(int tableNumber, String op, String attrName, String attrType, boolean notNull, boolean pKey, boolean unique) {
