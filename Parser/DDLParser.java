@@ -97,7 +97,8 @@ public static class DDLParser extends ParserCommon {
 		if (!tokens[i].equals(";")) {
 			throw new Exception("Commands must end with a \";\"!");
 		}
-		return new Pair<String, ArrayList<AttributeSchema>>(tableName, attributes);
+		TableSchema schema = new TableSchema(tableName, attributes);
+		return schema;
 	}
 
 	public static void parseDropTable(String ddlStatement) {
