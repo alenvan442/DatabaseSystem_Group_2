@@ -32,7 +32,7 @@ public interface CatalogInterface {
    * @return - If drop - The previous index of the dropped item. If add - the index of the new attr.
    */
   public int alterTableSchema(int tableNumber,String op, String attrName, String attrType, boolean notNull,
-                                boolean pKey, boolean unique, Object defaultValue) throws Exception;
+                                boolean pKey, boolean unique) throws Exception;
 
   /**
    * Loads the catalog from hardware and obtains a random access file.
