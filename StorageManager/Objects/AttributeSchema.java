@@ -13,15 +13,13 @@ public class AttributeSchema implements java.io.Serializable, SchemaInterface {
     private boolean notNull;
     private boolean primaryKey;
     private boolean unique;
-    private Object defaultValue;
 
-    public AttributeSchema(String attributeName, String dataType, boolean notNull, boolean primaryKey, boolean unique, Object defaultValue) {
+    public AttributeSchema(String attributeName, String dataType, boolean notNull, boolean primaryKey, boolean unique) {
         this.attributeName = attributeName;
         this.dataType = dataType;
         this.notNull = notNull;
         this.primaryKey = primaryKey;
         this.unique = unique;
-        this.defaultValue = defaultValue;
     }
 
     public AttributeSchema(){
@@ -86,18 +84,6 @@ public class AttributeSchema implements java.io.Serializable, SchemaInterface {
 
         // Write whether the attribute is unique to the catalog file
         catalogAccessFile.writeBoolean(this.unique);
-
-        // Write the attribute default value to the catalog file
-        ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
-
-        ObjectOutputStream objectOutputStream = new ObjectOutputStream(byteStream);
-        objectOutputStream.writeObject(this.defaultValue);
-
-        byte[] objectBytes = byteStream.toByteArray();
-        catalogAccessFile.writeInt(objectBytes.length);
-        catalogAccessFile.write(objectBytes);
-
-        objectOutputStream.close();
     }
 
     /**
@@ -133,17 +119,5 @@ public class AttributeSchema implements java.io.Serializable, SchemaInterface {
 
         // Read whether the attribute is unique from the catalog file
         this.unique = catalogAccessFile.readBoolean();
-
-        // Read the default value from the catalog
-        int defaultValueLength = catalogAccessFile.readInt();
-        byte[] defaultValueBytes = new byte[defaultValueLength];
-        catalogAccessFile.readFully(defaultValueBytes);
-
-        ByteArrayInputStream bytetStream = new ByteArrayInputStream(defaultValueBytes);
-        ObjectInputStream objectStream = new ObjectInputStream(bytetStream);
-
-        this.defaultValue = objectStream.readObject();
-
-        objectStream.close();
     }
 }
