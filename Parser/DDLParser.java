@@ -105,13 +105,23 @@ public class DDLParser extends ParserCommon {
 		return schema;
 	}
 
-	public static void parseDropTable(String ddlStatement) {
+	public static String parseDropTable(String ddlStatement) throws Exception {
 		ArrayList<String> tokens = Tokenize(ddlStatement);
+		if (!tokens.get(0).toLowerCase().equals("drop") || !tokens.get(1).toLowerCase().equals("table")) {
+			throw new Exception("this should be a drop table statement???");
+		}
+		if (Character.isLetter(tokens.get(2).charAt(0))) 	// verifying first is a letter ensures this is a legal label via the
+															// tokenizer's constraints
+		{
+			return tokens.get(2).toLowerCase();
+		} else {
+			throw new Exception("Table names must be alphanumeric and begin with a letter!"); // can't use a double!
+		}
 
 	}
 
-	public static void parseAlterTable(String ddlStatement) {
-		Arraylist<String> tokens = Tokenize(ddlStatement);
+	public static void parseAlterTable(String ddlStatement) throws Exception {
+		ArrayList<String> tokens = Tokenize(ddlStatement);
 
 	}
 

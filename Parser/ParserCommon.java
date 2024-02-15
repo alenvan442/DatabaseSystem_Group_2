@@ -49,18 +49,36 @@ public class ParserCommon { // extend me!
 		boolean label = false;
 		boolean number = false;
 		boolean hasdecimal = false;
+		boolean string = false;
 		while (scanner.hasNext()) {
-			if (nextByte == '(' && !label && !number) {
+			if (nextByte == '(' && !label && !number && !string) {
 				tokens.add("(");
 				nextByte = (char) scanner.nextByte();
-			} else if (nextByte == ')' && !label && !number) {
+			} else if (nextByte == ')' && !label && !number && !string) {
 				tokens.add(")");
 				nextByte = (char) scanner.nextByte();
-			} else if (nextByte == ';' && !label && !number) {
+			} else if (nextByte == ';' && !label && !number && !string) {
 				tokens.add(";");
 				nextByte = (char) scanner.nextByte();
-			} else if (nextByte == ',' && !label && !number) {
+			} else if (nextByte == ',' && !label && !number && !string) {
 				tokens.add(",");
+				nextByte = (char) scanner.nextByte();
+			} else if (nextByte == '\"' && !label && !number || string){ //have to parse string vals as well
+				if(string)
+				{
+					if(nextByte != '\"')
+					{
+						currentToken += nextByte;
+					} else
+					{
+						tokens.add(currentToken);
+						currentToken = "";
+					}
+				} else
+				{
+					currentToken += nextByte;
+					string = true;
+				}
 				nextByte = (char) scanner.nextByte();
 			} else if ((Character.isDigit(nextByte) || (nextByte == '.' && !hasdecimal)) && !label) // only ONE decimal
 																									// point per double!
