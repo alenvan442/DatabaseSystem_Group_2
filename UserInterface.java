@@ -1,6 +1,3 @@
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Scanner;
 
 import Parser.DDLParser;
@@ -8,8 +5,6 @@ import Parser.DMLParser;
 import StorageManager.TableSchema;
 import StorageManager.Objects.AttributeSchema;
 import StorageManager.Objects.Catalog;
-import StorageManager.Objects.MessagePrinter;
-import StorageManager.Objects.MessagePrinter.MessageType;
 
 
 
@@ -60,20 +55,23 @@ public class UserInterface {
     }
 
     public void processUserCommand(String command) {
-        System.out.println("Processing command: " + command);
-        if (command.toLowerCase().startsWith("create table")) {
-            System.out.println("dcubuvsb");
-        } else if (command.toLowerCase().startsWith("drop table")) {
-            DDLParser.parseDropTable(command);
-        } else if (command.toLowerCase().startsWith("alter table")) {
-            DDLParser.parseAlterTable(command);
-        } else if (command.toLowerCase().startsWith("insert into")) {
-            DMLParser.parseInsert(command);
-        } else if (command.toLowerCase().startsWith("display schema") || command.toLowerCase().startsWith("display info")) {
-            DMLParser.parseDisplay(command);
-        } else {
-            MessagePrinter.printMessage(MessageType.ERROR, command + "Is not valid");
+        try{
+            System.out.println("Processing command: " + command);
+            if (command.toLowerCase().startsWith("create table")) {
+                // DDLParser.parseCreateTable(command);
+            } else if (command.toLowerCase().startsWith("drop table")) {
+                DDLParser.parseDropTable(command);
+            } else if (command.toLowerCase().startsWith("alter table")) {
+                DDLParser.parseAlterTable(command);
+            } else if (command.toLowerCase().startsWith("insert into")) {
+                DMLParser.parseInsert(command);
+            } else if (command.toLowerCase().startsWith("display schema") || command.toLowerCase().startsWith("display info")) {
+                DMLParser.parseDisplay(command);
+            } else {
+                System.out.println("Not a valid command");
+            }
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
         }
-
     }
 }

@@ -15,7 +15,7 @@ public class Database {
         this.dbLocation = dbLocation;
     }
 
-    public void start() {
+    public void start() throws Exception {
         System.out.println("Welcolm to CASE-C QL");
         System.out.println("Looking at " + dbLocation);
         File dbDirectory = new File(dbLocation);
@@ -27,7 +27,9 @@ public class Database {
             System.out.println("Creating new db at " + dbLocation);
             File tableDirectory = new File(dbDirectory.getAbsolutePath().concat("/tables"));
             File catalogDirectory = new File(dbDirectory.getAbsolutePath().concat("/catalog"));
-            boolean success = dbDirectory.mkdir() &&  tableDirectory.mkdir() && catalogDirectory.mkdir();
+            File tableFile = new File(tableDirectory.getAbsolutePath().concat("/tables"));
+            File schemaFile = new File(catalogDirectory.getAbsolutePath() + "/schema");
+            boolean success = dbDirectory.mkdir() &&  tableDirectory.mkdir() && catalogDirectory.mkdir() && tableFile.createNewFile() && schemaFile.createNewFile();
             if (success){
                 StorageManager.createStorageManager(bufferSize);
                 Catalog.createCatalog(dbDirectory.getAbsolutePath(), dbDirectory.getAbsolutePath().concat("/catalog"), pageSize, bufferSize);
