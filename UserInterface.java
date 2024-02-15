@@ -1,11 +1,9 @@
+import java.util.ArrayList;
 import java.util.Scanner;
 
 import Parser.DDLParser;
 import Parser.DMLParser;
-import StorageManager.TableSchema;
-import StorageManager.Objects.AttributeSchema;
-import StorageManager.Objects.Catalog;
-
+import Parser.ParserCommon;
 
 
 public class UserInterface {
@@ -55,8 +53,9 @@ public class UserInterface {
     }
 
     public void processUserCommand(String command) {
+        System.out.println("Processing command: " + command);
         try{
-            System.out.println("Processing command: " + command);
+            ArrayList<String> tokens = ParserCommon.Tokenize(command);
             if (command.toLowerCase().startsWith("create table")) {
                 // DDLParser.parseCreateTable(command);
             } else if (command.toLowerCase().startsWith("drop table")) {

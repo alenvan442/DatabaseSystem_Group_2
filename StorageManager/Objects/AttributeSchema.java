@@ -1,10 +1,6 @@
 package StorageManager.Objects;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.RandomAccessFile;
 
 public class AttributeSchema implements java.io.Serializable, SchemaInterface {

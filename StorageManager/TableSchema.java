@@ -2,7 +2,9 @@ package StorageManager;
 
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import StorageManager.Objects.AttributeSchema;
 import StorageManager.Objects.SchemaInterface;
@@ -62,8 +64,20 @@ public class TableSchema implements SchemaInterface {
     }
 
 
-    public void setNumPages(int numPages) {
-      this.numPages = numPages;
+    public void incrementNumPages() {
+      this.numPages += 1;
+    }
+
+    public void decrementNumPages() {
+      this.numPages -= 1;
+    }
+
+    public void incrementNumRecords() {
+      this.numRecords += 1;
+    }
+
+    public void decrementNumRecords() {
+      this.numRecords -= 1;
     }
 
     public List<Integer> getPageOrder() {
@@ -93,10 +107,6 @@ public class TableSchema implements SchemaInterface {
 
     public int getRecords() {
       return numRecords;
-    }
-
-    public void setRecords(int numRecords) {
-      this.numRecords = numRecords;
     }
 
     private int hashName() {

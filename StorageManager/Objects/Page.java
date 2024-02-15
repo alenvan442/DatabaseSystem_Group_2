@@ -1,11 +1,12 @@
 package StorageManager.Objects;
 
+import java.lang.management.MemoryType;
 import java.util.Comparator;
-import java.util.Date;
-import java.util.Dictionary;
 import java.util.List;
+import java.util.Map;
 
 import StorageManager.TableSchema;
+import StorageManager.Objects.MessagePrinter.MessageType;
 
 public class Page implements java.io.Serializable, Comparator<Page> {
     private int numRecords;
@@ -13,19 +14,25 @@ public class Page implements java.io.Serializable, Comparator<Page> {
     private long priority;
     private boolean changed;
     private int tableNumber;
+    private int pageNumber;
 
-    public Page(int numRecords, int tableNumber) {
+    public Page(int numRecords, int tableNumber, int pageNumber) {
         this.numRecords = numRecords;
         this.tableNumber = tableNumber;
+        this.pageNumber = pageNumber;
     }
 
     /*
      * Gets the table number that this page is associated with
-     * 
+     *
      * @return  The associated table number
      */
     public int getTableNumber() {
         return this.tableNumber;
+    }
+
+    public int getPageNumber() {
+        return this.pageNumber;
     }
 
     public int getNumRecords() {
@@ -46,7 +53,7 @@ public class Page implements java.io.Serializable, Comparator<Page> {
 
     /*
      * Returns whether or not this page has been changed
-     * 
+     *
      * @return  bool
      */
     public boolean isChanged() {
@@ -70,58 +77,41 @@ public class Page implements java.io.Serializable, Comparator<Page> {
 
     /*
      * Adds a record to the page in the correct order
-     * 
+     *
      * @param record    The record to be inserted
-     * 
+     *
      * @return          true: insert success
      *                  false: page is full
      */
     public boolean addRecord(Record record) {
-        if (this.spaceLeft() < record.byteSize()) {
+        Catalog catalog = Catalog.getCatalog();
+        // check if record can fit in this page.
+        if ((catalog.getPageSize() - this.computeSize()) < record.computeSize()) {
             return false;
         } else {
-            Dictionary<Integer, TableSchema> schemas = Catalog.getCatalog().getSchemas();
+            Map<Integer, TableSchema> schemas = catalog.getSchemas();
             TableSchema schema = schemas.get(this.tableNumber);
             int primaryIndex = schema.getPrimaryIndex();
-            String primaryType = schema.getAttributes().get(primaryIndex).getAttributeName();
-            boolean added = false;
-            for (int i = 0; i < this.records.size(); i++) {
-                int compare = this.records.get(i).comparison(primaryIndex, 
-                                    record.getValues().get(primaryIndex), primaryType);
-                if (compare == -1) {
-                    // in coming record is greater, so continue
-                    continue;
-                } else {
-                    // in coming record is either equal to, or less than
-                    // so append before
-                    List<Record> updatedList = this.records.subList(0, i);
-                    updatedList.add(record);
-                    for (int j = i; j < this.records.size(); j++) {
-                        updatedList.add(this.records.get(j));
-                    }
-                    this.records = updatedList;
-                    added = true;
-                    break;
-                }
-            }
+            String primaryType = schema.getAttributes().get(primaryIndex).getDataType();
+            Comparator<Record> comparator = recordComparator(primaryIndex, primaryType);
+            // Add record
+            this.records.add(record);
+            // sort
+            this.records.sort(comparator);
 
-            // unable to find a spot, append to end of page
-            if (added == false) {
-                this.records.add(record);
-            }
-            
             this.numRecords++;
+            schema.incrementNumPages();
             this.changed = true;
             this.setPriority();
             return true;
         }
-    } 
+    }
 
     /*
      * Deletes a record at a specific index
-     * 
+     *
      * @param index     The index to delete the record at
-     * 
+     *
      * @return          boolean, indicating success status
      */
     public boolean deleteRecord(int index) {
@@ -136,10 +126,10 @@ public class Page implements java.io.Serializable, Comparator<Page> {
 
     /*
      * Replaces a record at a given index
-     * 
+     *
      * @param index     The index to replace the record at
      * @param record    The record to replace with
-     * 
+     *
      * @return          boolean, indicating success status
      */
     public boolean updateRecord(int index, Record record) {
@@ -155,12 +145,16 @@ public class Page implements java.io.Serializable, Comparator<Page> {
 
     /*
      * returns the number of bytes of space is left in this page
-     * 
+     *
      * @return  int - number of bytes of space left
      */
-    public int spaceLeft() {
-        // TODO
-        return 0;
+    public int computeSize() {
+        // Page: numRecord, PageNumber, records..
+        int size = Integer.BYTES * 2;
+        for (Record record: this.records) {
+            size += record.computeSize();
+        }
+        return size;
     }
 
     /*
@@ -177,6 +171,43 @@ public class Page implements java.io.Serializable, Comparator<Page> {
             return -1;
         }
     }
+
+    /**
+     * Creates a comparator to compare records based on the specified primary key index and data type.
+     *
+     * @param primaryKeyIndex The index of the primary key in each record.
+     * @param dataType        The data type to determine the comparison method. Supported types are "integer", "double",
+     *                        "boolean", "char(x)", and "varchar(x)" where x represents the length.
+     * @return A comparator for comparing records based on the specified primary key index and data type.
+     * @throws IllegalArgumentException If an unsupported data type is provided.
+     */
+    private Comparator<Record> recordComparator(int primaryKeyIndex, String dataType) {
+        return (record1, record2) -> {
+            Object obj1 = record1.getValues().get(primaryKeyIndex);
+            Object obj2 = record2.getValues().get(primaryKeyIndex);
+
+            if (dataType.equalsIgnoreCase("integer")) {
+                Integer int1 = (Integer) obj1;
+                Integer int2 = (Integer) obj2;
+                return int1.compareTo(int2);
+            } else if (dataType.equalsIgnoreCase("double")) {
+                Double double1 = (Double) obj1;
+                Double double2 = (Double) obj2;
+                return double1.compareTo(double2);
+            } else if (dataType.equalsIgnoreCase("boolean")) {
+                Boolean bool1 = (Boolean) obj1;
+                Boolean bool2 = (Boolean) obj2;
+                return Boolean.compare(bool1, bool2);
+            } else if (dataType.toLowerCase().contains("char") || dataType.toLowerCase().contains("varchar")) {
+                String str1 = obj1.toString();
+                String str2 = obj2.toString();
+                return str1.compareTo(str2);
+            } else {
+                throw new IllegalArgumentException("Unsupported data type: " + dataType);
+            }
+        };
+    }
+
 
 
 
