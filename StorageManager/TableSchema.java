@@ -2,13 +2,10 @@ package StorageManager;
 
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import StorageManager.Objects.AttributeSchema;
 import StorageManager.Objects.SchemaInterface;
-import StorageManager.Objects.Page;
 
 public class TableSchema implements SchemaInterface {
     private int tableNumber;
@@ -88,11 +85,11 @@ public class TableSchema implements SchemaInterface {
       this.pageOrder = pageOrder;
     }
 
-    public void addPageIndex(int pageNumber) {
+    public void addPageNumber(int pageNumber) {
       this.pageOrder.add(pageNumber);
     }
 
-    public void addPageIndex(int numberBefore, int pageNumber) {
+    public void addPageNumber(int numberBefore, int pageNumber) {
       int index = 0;
       for (int i = 0; i < this.pageOrder.size(); i++) {
         if (this.pageOrder.get(i) == numberBefore) {

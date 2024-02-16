@@ -1,12 +1,11 @@
 package StorageManager.Objects;
 
-import java.lang.management.MemoryType;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
 import StorageManager.TableSchema;
-import StorageManager.Objects.MessagePrinter.MessageType;
 
 public class Page implements java.io.Serializable, Comparator<Page> {
     private int numRecords;
@@ -19,6 +18,17 @@ public class Page implements java.io.Serializable, Comparator<Page> {
     public Page(int numRecords, int tableNumber, int pageNumber) {
         this.numRecords = numRecords;
         this.tableNumber = tableNumber;
+        this.pageNumber = pageNumber;
+        this.changed = false;
+        this.priority = System.currentTimeMillis();
+        this.records = new ArrayList<>();
+    }
+
+    public Page() {
+
+    }
+
+    public Page(int pageNumber) {
         this.pageNumber = pageNumber;
     }
 
@@ -83,7 +93,7 @@ public class Page implements java.io.Serializable, Comparator<Page> {
      * @return          true: insert success
      *                  false: page is full
      */
-    public boolean addRecord(Record record) {
+    public boolean addNewRecord(Record record) {
         Catalog catalog = Catalog.getCatalog();
         // check if record can fit in this page.
         if ((catalog.getPageSize() - this.computeSize()) < record.computeSize()) {
@@ -208,8 +218,18 @@ public class Page implements java.io.Serializable, Comparator<Page> {
         };
     }
 
-
-
-
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        Page other = (Page) obj;
+        if (pageNumber != other.pageNumber)
+            return false;
+        return true;
+    }
 
 }

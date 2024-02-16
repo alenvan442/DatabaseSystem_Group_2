@@ -49,7 +49,6 @@ public class Catalog implements java.io.Serializable, CatalogInterface{
         // Save catalog to hardware and obtain a random access file
         File schemaFile = new File(this.catalogLocation + "/schema");
         RandomAccessFile catalogAccessFile = new RandomAccessFile(schemaFile, "rw");
-        catalogAccessFile.seek(0);
 
         // Write page size to the catalog file
         catalogAccessFile.writeInt(this.pageSize);
@@ -75,7 +74,6 @@ public class Catalog implements java.io.Serializable, CatalogInterface{
         // Load catalog from hardware and obtain a random access file
         File schemaFile = new File(this.catalogLocation + "/schema");
         RandomAccessFile catalogAccessFile = new RandomAccessFile(schemaFile, "r");
-        catalogAccessFile.seek(0);
 
         // Read page size from the catalog file
         this.pageSize = catalogAccessFile.readInt();

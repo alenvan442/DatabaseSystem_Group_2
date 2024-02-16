@@ -1,15 +1,9 @@
 package StorageManager;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.util.List;
 
 
 import StorageManager.Objects.Record;
-import StorageManager.Objects.MessagePrinter.MessageType;
 
 public interface StorageManagerInterface {
 
@@ -31,7 +25,7 @@ public interface StorageManagerInterface {
      *
      * @return              a list of all records in the table
      */
-    public List<Record> getAllRecords(int tableNumber);
+    public List<Record> getAllRecords(int tableNumber) throws Exception;
 
     /*
      * Inserts a record into a specified table
@@ -77,5 +71,5 @@ public interface StorageManagerInterface {
      * Writes all pages in the buffer to disk
      * This is used upon system shut off
      */
-    public void writeAll();
+    public void writeAll() throws Exception;
 }

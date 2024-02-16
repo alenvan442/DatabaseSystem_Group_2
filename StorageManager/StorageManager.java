@@ -3,6 +3,7 @@ package StorageManager;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -12,6 +13,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.PriorityQueue;
+import java.util.stream.Collectors;
 
 import StorageManager.Objects.AttributeSchema;
 import StorageManager.Objects.Catalog;
@@ -34,7 +36,7 @@ public class StorageManager implements StorageManagerInterface {
      */
     private StorageManager(int bufferSize) {
         this.bufferSize = bufferSize;
-        this.buffer = new PriorityQueue<>(bufferSize);
+        this.buffer = new PriorityQueue<>(bufferSize, new Page());
     }
 
     /*
@@ -85,7 +87,7 @@ public class StorageManager implements StorageManagerInterface {
         int startIndex = (int) (Math.ceil(size / 2) - 1);
         Page _new = new Page(0, page.getTableNumber());
         for (int i = startIndex; i < size; i++) {
-            _new.addRecord(records.get(startIndex));
+            _new.addNewRecord(records.get(startIndex));
             records.remove(startIndex);
         }
 
@@ -105,14 +107,14 @@ public class StorageManager implements StorageManagerInterface {
         if (comparison == 1) {
             // inputted was less than the last record of the first page
             // add to first page
-            page.addRecord(record);
+            page.addNewRecord(record);
         } else if (comparison == 0) {
             // TODO primary key unique constraint not met error
             return null;
         } else {
             // inputted was greater than the last record
             // of the first page, so add to the second page
-            _new.addRecord(record);
+            _new.addNewRecord(record);
         }
 
         return new Page[] {page, _new};
@@ -143,18 +145,103 @@ public class StorageManager implements StorageManagerInterface {
         return null;
     }
 
-    public List<Record> getAllRecords(int tableNumber) {
-        //TODO
-        // start, read in ho wmany pages there are
-        // loop through each page
-        // append every record found
-        return null;
+    private List<Page> sortPagesByPageOrder(List<Page> pages, List<Integer> pageOrder) {
+        List<Page> sortedPages = new ArrayList<>();
+
+        for (Integer pageNumber: pageOrder) {
+            int index = pages.indexOf(new Page(pageNumber));
+            sortedPages.add(pages.get(index));
+        }
+
+        return sortedPages;
+    }
+
+
+    /**
+     * Retrieves all records from a specified table.
+     *
+     * @param tableNumber The number of the table to retrieve records from.
+     * @return A list of records from the specified table.
+     * @throws Exception If an error occurs during the retrieval process.
+    */
+    public List<Record> getAllRecords(int tableNumber) throws Exception {
+        List<Record> records = new ArrayList<>(); // List to store all records
+        List<Page> allPagesForTable; // List to hold all pages for the table
+
+        // First grab every page that belongs to the table from the buffer
+        Catalog catalog = Catalog.getCatalog(); // Retrieve the catalog instance
+        TableSchema tableSchema = catalog.getSchema(tableNumber);
+
+        List<Page> pagesFromBuffer = getPagesFromBufferByTable(tableNumber);
+        List<Integer> pageNumberFromBuffer = pagesFromBuffer.stream().map(Page::getPageNumber).collect(Collectors.toList()); // Extract page numbers from pages
+
+        // Check if all required pages are available in the buffer
+        if (pagesFromBuffer.size() == tableSchema.getNumPages()) {
+            allPagesForTable = this.sortPagesByPageOrder(pagesFromBuffer, tableSchema.getPageOrder());
+        } else {
+            allPagesForTable = new ArrayList<>(pagesFromBuffer); // Initialize with buffer pages
+            List<Integer> allPageNumbers = tableSchema.getPageOrder();
+            List<Integer> pagesStillNeededFromHardware = new ArrayList<>(); // indexes
+            for (Integer pageNumber: allPageNumbers) {
+                if (pageNumberFromBuffer.contains(pageNumber)) {
+                    pagesStillNeededFromHardware.add(allPageNumbers.indexOf(pageNumber));
+                }
+            }
+
+            // get the remaining pages from hardware
+            List<Page> pagesFromHardware = new ArrayList<>();
+            String tablePath = this.getTablePath(tableNumber);
+            File tableFile = new File(tablePath);
+            RandomAccessFile tableAccessFile = new RandomAccessFile(tableFile, "r");
+            for (Integer pageNumberIndex: pagesStillNeededFromHardware) {
+                tableAccessFile.seek(Integer.BYTES + (catalog.getPageSize() * pageNumberIndex)); // start after numPages
+                int numRecords = tableAccessFile.readInt();
+                int pageNumber = tableAccessFile.readInt();
+                Page page = new Page(numRecords, tableNumber, pageNumber);
+                for (int i=0; i < numRecords; ++i) {
+                    Record record = new Record(new ArrayList<>());
+                    for (AttributeSchema attributeSchema : tableSchema.getAttributes()) {
+                        if (attributeSchema.getDataType().equalsIgnoreCase("integer")) {
+                            int value = tableAccessFile.readInt();
+                            record.getValues().add(value);
+                        } else if (attributeSchema.getDataType().equalsIgnoreCase("double")) {
+                            double value = tableAccessFile.readInt();
+                            record.getValues().add(value);
+                        } else if (attributeSchema.getDataType().equalsIgnoreCase("boolean")) {
+                            boolean value = tableAccessFile.readBoolean();
+                            record.getValues().add(value);
+                        } else if (attributeSchema.getDataType().toLowerCase().contains("char") || attributeSchema.getDataType().toLowerCase().contains("varchar")) {
+                            int stringLength = tableAccessFile.readShort();
+                            byte[] stringValueBytes = new byte[stringLength];
+                            tableAccessFile.read(stringValueBytes);
+                            String value = tableAccessFile.toString();
+                            record.getValues().add(value);
+                        }
+                    }
+                    records.add(record);
+                }
+                page.setRecords(records);
+
+                this.buffer.add(page);
+
+                pagesFromHardware.add(this.buffer.poll()); // assuming most recently used pagesare at the back
+            }
+            allPagesForTable.addAll(pagesFromHardware);
+            allPagesForTable = this.sortPagesByPageOrder(allPagesForTable, tableSchema.getPageOrder());
+        }
+
+        for (Page page: allPagesForTable) {
+            records.addAll(page.getRecords());
+        }
+
+        return records;
     }
 
     public void insertRecord(int tableNumber, Record record) throws Exception {
         String tablePath = this.getTablePath(tableNumber);
         File tableFile = new File(tablePath);
         Catalog catalog = Catalog.getCatalog();
+        // get tableSchema from the catalog
         TableSchema tableSchema = catalog.getSchema(tableNumber);
 
             // check to see if the file exists, if not create it
@@ -162,36 +249,34 @@ public class StorageManager implements StorageManagerInterface {
             tableFile.createNewFile();
             // create a new page and insert the new record into it
             Page _new = new Page(0, tableNumber, 1);
-            _new.addRecord(record);
+            tableSchema.addPageNumber(_new.getPageNumber());
+            tableSchema.incrementNumPages();
+            _new.addNewRecord(record);
             // then add the page to the buffer
             this.addBuffer(_new);
         } else {
-            // get tableSchema from the catalog
-            TableSchema schema = this.getTableSchema(tableNumber);
 
             // determine index of the primary key
-            int primaryIndex = schema.getPrimaryIndex();
-            List<AttributeSchema> attrs = schema.getAttributes();
-            String primaryType = attrs.get(primaryIndex).getAttributeName();
+            int primaryIndex = tableSchema.getPrimaryIndex();
+            List<AttributeSchema> attrs = tableSchema.getAttributes();
+            String primaryType = attrs.get(primaryIndex).getDataType();
 
-            if (primaryIndex == -1) {
-                System.out.print("Error! This relation has no primary key!");
-                return;
-            }
+            // if (primaryIndex == -1) {
+            //     System.out.print("Error! This relation has no primary key!");
+            //     return;
+            // }
 
             // get primary key of incoming record
             Object primaryKey = record.getValues().get(primaryIndex);
 
-            // read first 8 byte and determine number of pages in table
-            byte[] buffer = new byte[8];
-            InputStream reader = new FileInputStream(tableFile);
-            reader.read(buffer);
-            reader.close();
-            int numPages = ByteBuffer.wrap(buffer).getInt();
+            // get NumPages
+            RandomAccessFile tableAccessFile = new RandomAccessFile(tableFile, "r");
+            int numPages = tableAccessFile.readInt();
+            tableAccessFile.close();
 
             // if already exists, check constraints
             // check null constraints
-            this.checkNullConstraint(schema, record);
+            // this.checkNullConstraint(schema, record); The parser can handle this check right?
 
             // check unique constraints
             List<Integer> uniqueIndex = new ArrayList<Integer>();
@@ -202,7 +287,7 @@ public class StorageManager implements StorageManagerInterface {
             }
 
             if (uniqueIndex.size() > 0) {
-                this.insertUnique(schema, record, uniqueIndex,
+                this.insertUnique(tableSchema, record, uniqueIndex,
                                 primaryIndex, primaryKey, primaryType);
             } else {
 
@@ -223,7 +308,7 @@ public class StorageManager implements StorageManagerInterface {
                     // if this is the last page in the table, append
                     if (numPages == pageIndex+1) {
                         found = true;
-                        if (page.addRecord(record)) {
+                        if (page.addNewRecord(record)) {
                             // page was added successfully, write it to the buffer
                             this.addBuffer(page);
                         } else {
@@ -303,7 +388,7 @@ public class StorageManager implements StorageManagerInterface {
             return false;
         } else {
             // if inputted is less, add record
-            if (page.addRecord(record)) {
+            if (page.addNewRecord(record)) {
                 // page was added successfully, write it to the buffer
                 this.addBuffer(page);
             } else {
@@ -339,7 +424,7 @@ public class StorageManager implements StorageManagerInterface {
         Page bufferPage = foundPages.get(0);
         if (bufferPage != null) {
             // if record add was successful update priority
-            if (!bufferPage.addRecord(record)) {
+            if (!bufferPage.addNewRecord(record)) {
                 // page is full split it
                 Page[] pages = this.pageSplit(bufferPage, record,
                         primaryIndex, primaryType);
@@ -402,7 +487,7 @@ public class StorageManager implements StorageManagerInterface {
         if (!this.insertBuffer(table.getTableNumber(), primaryIndex, primaryType, record)) {
             // if not, use the page we found earlier
             Page page = pages.get(foundPage);
-            if (page.addRecord(record)) {
+            if (page.addNewRecord(record)) {
                 // page was added successfully, write it to the buffer
                 this.addBuffer(page);
             } else {
@@ -587,6 +672,18 @@ public class StorageManager implements StorageManagerInterface {
     }
 
     //---------------------------- Page Buffer ------------------------------
+
+    private List<Page> getPagesFromBufferByTable(int tableNumber) {
+        List<Page> pagesFound = new ArrayList<>();
+        for (Page page: this.buffer) {
+            if (page.getTableNumber() == tableNumber) {
+                page.setPriority();
+                pagesFound.add(page);
+            }
+        }
+        return pagesFound;
+    }
+
     /*
      * Checks the buffer to determine if a needed page
      * is already in the buffer
@@ -686,6 +783,8 @@ public class StorageManager implements StorageManagerInterface {
         // TODO
         // skip first 8 bytes since the first 8 bytes consist of the number of pages in the table
         // construct a new page class, first 8 bytes of a page is a number of records in the page
+        Catalog catalog = Catalog.getCatalog();
+        TableSchema tableSchema = catalog
         return null;
     }
 
@@ -699,16 +798,43 @@ public class StorageManager implements StorageManagerInterface {
     private List<Page> readTableHardware(int tableNum) {
         // TODO
 
+
         return null;
     }
 
-    private void writePageHardware(Page page) {
+    private void writePageHardware(Page page) throws Exception {
         // if the buffer size exceeds the limit then write the least recently used page to HW
         // may need to change the buffer to either a queue or a stack
         // TODO
+        Catalog catalog = Catalog.getCatalog();
+        TableSchema tableSchema = catalog.getSchema(page.getTableNumber());
+        String filePath = this.getTablePath(page.getTableNumber());
+        File tableFile = new File(filePath);
+        RandomAccessFile tableAccessFile = new RandomAccessFile(tableFile, "rw");
+        tableAccessFile.writeInt(tableSchema.getNumPages());
+        int pageIndex = tableSchema.getPageOrder().indexOf(page.getPageNumber());
+
+        // Go to the point where the page is in the file
+        tableAccessFile.seek(tableAccessFile.getFilePointer() + (catalog.getPageSize() * pageIndex));
+        tableAccessFile.writeInt(page.getNumRecords());
+        tableAccessFile.writeInt(page.getPageNumber());
+        for (Record record: page.getRecords()) {
+            for (Object value : record.getValues()) {
+                if (value instanceof Integer) {
+                    tableAccessFile.writeInt((Integer) value);
+                } else if (value instanceof String) {
+                    tableAccessFile.writeUTF((String) value);
+                } else if (value instanceof Double) {
+                    tableAccessFile.writeDouble((Double) value);
+                } else if (value instanceof Boolean) {
+                    tableAccessFile.writeBoolean((Boolean) value);
+                }
+            }
+        }
+
     }
 
-    public void writeAll() {
+    public void writeAll() throws Exception {
         for (Page page : buffer) {
             if (page.isChanged()) {
                 writePageHardware(page);
