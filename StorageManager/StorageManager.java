@@ -181,50 +181,13 @@ public class StorageManager implements StorageManagerInterface {
         } else {
             allPagesForTable = new ArrayList<>(pagesFromBuffer); // Initialize with buffer pages
             List<Integer> allPageNumbers = tableSchema.getPageOrder();
-            List<Integer> pagesStillNeededFromHardware = new ArrayList<>(); // indexes
-            for (Integer pageNumber: allPageNumbers) {
-                if (pageNumberFromBuffer.contains(pageNumber)) {
-                    pagesStillNeededFromHardware.add(allPageNumbers.indexOf(pageNumber));
-                }
-            }
-
+            
             // get the remaining pages from hardware
             List<Page> pagesFromHardware = new ArrayList<>();
-            String tablePath = this.getTablePath(tableNumber);
-            File tableFile = new File(tablePath);
-            RandomAccessFile tableAccessFile = new RandomAccessFile(tableFile, "r");
-            for (Integer pageNumberIndex: pagesStillNeededFromHardware) {
-                tableAccessFile.seek(Integer.BYTES + (catalog.getPageSize() * pageNumberIndex)); // start after numPages
-                int numRecords = tableAccessFile.readInt();
-                int pageNumber = tableAccessFile.readInt();
-                Page page = new Page(numRecords, tableNumber, pageNumber);
-                for (int i=0; i < numRecords; ++i) {
-                    Record record = new Record(new ArrayList<>());
-                    for (AttributeSchema attributeSchema : tableSchema.getAttributes()) {
-                        if (attributeSchema.getDataType().equalsIgnoreCase("integer")) {
-                            int value = tableAccessFile.readInt();
-                            record.getValues().add(value);
-                        } else if (attributeSchema.getDataType().equalsIgnoreCase("double")) {
-                            double value = tableAccessFile.readInt();
-                            record.getValues().add(value);
-                        } else if (attributeSchema.getDataType().equalsIgnoreCase("boolean")) {
-                            boolean value = tableAccessFile.readBoolean();
-                            record.getValues().add(value);
-                        } else if (attributeSchema.getDataType().toLowerCase().contains("char") || attributeSchema.getDataType().toLowerCase().contains("varchar")) {
-                            int stringLength = tableAccessFile.readShort();
-                            byte[] stringValueBytes = new byte[stringLength];
-                            tableAccessFile.read(stringValueBytes);
-                            String value = tableAccessFile.toString();
-                            record.getValues().add(value);
-                        }
-                    }
-                    records.add(record);
+            for (Integer pageNumber: allPageNumbers) {
+                if (!pageNumberFromBuffer.contains(pageNumber)) {
+                    pagesFromHardware.add(this.readPageHardware(tableNumber, pageNumber));
                 }
-                page.setRecords(records);
-
-                this.buffer.add(page);
-
-                pagesFromHardware.add(this.buffer.poll()); // assuming most recently used pagesare at the back
             }
             allPagesForTable.addAll(pagesFromHardware);
             allPagesForTable = this.sortPagesByPageOrder(allPagesForTable, tableSchema.getPageOrder());
@@ -779,13 +742,48 @@ public class StorageManager implements StorageManagerInterface {
         this.buffer.add(page);
     }
 
-    private Page readPageHardware(int tableNumber, int pageNumber) {
+    private Page readPageHardware(int tableNumber, int pageNumber) throws Exception {
         // TODO
         // skip first 8 bytes since the first 8 bytes consist of the number of pages in the table
         // construct a new page class, first 8 bytes of a page is a number of records in the page
         Catalog catalog = Catalog.getCatalog();
-        TableSchema tableSchema = catalog
-        return null;
+        TableSchema tableSchema = catalog.getSchema(tableNumber);
+        String filePath = this.getTablePath(tableNumber);
+        File tableFile = new File(filePath);
+        RandomAccessFile tableAccessFile = new RandomAccessFile(tableFile, "r");
+        int pageIndex = tableSchema.getPageOrder().indexOf(pageNumber);
+
+        tableAccessFile.seek(Integer.BYTES + (catalog.getPageSize() * pageIndex)); // start after numPages
+        int numRecords = tableAccessFile.readInt();
+        int pageNum = tableAccessFile.readInt();
+        List<Record> records = new ArrayList<>();
+        Page page = new Page(numRecords, tableNumber, pageNum);
+        for (int i=0; i < numRecords; ++i) {
+            Record record = new Record(new ArrayList<>());
+            for (AttributeSchema attributeSchema : tableSchema.getAttributes()) {
+                if (attributeSchema.getDataType().equalsIgnoreCase("integer")) {
+                    int value = tableAccessFile.readInt();
+                    record.getValues().add(value);
+                } else if (attributeSchema.getDataType().equalsIgnoreCase("double")) {
+                    double value = tableAccessFile.readInt();
+                    record.getValues().add(value);
+                } else if (attributeSchema.getDataType().equalsIgnoreCase("boolean")) {
+                    boolean value = tableAccessFile.readBoolean();
+                    record.getValues().add(value);
+                } else if (attributeSchema.getDataType().toLowerCase().contains("char") || attributeSchema.getDataType().toLowerCase().contains("varchar")) {
+                    int stringLength = tableAccessFile.readShort();
+                    byte[] stringValueBytes = new byte[stringLength];
+                    tableAccessFile.read(stringValueBytes);
+                    String value = tableAccessFile.toString();
+                    record.getValues().add(value);
+                }
+            }
+            records.add(record);
+        }
+        page.setRecords(records);
+
+        this.buffer.add(page);
+        return this.buffer.poll();
     }
 
     /*
