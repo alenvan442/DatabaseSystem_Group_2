@@ -84,9 +84,6 @@ public class StorageManager implements StorageManagerInterface {
 
         page.getRecords().subList(splitIndex, page.getRecords().size()).clear();
 
-        // Set the priority of the new page
-        newPage.setPriority();
-
         // Add the new page to the buffer
         this.addPageToBuffer(newPage);
 

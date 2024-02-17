@@ -29,11 +29,6 @@ public class Page implements java.io.Serializable, Comparator<Page>, StorageMana
     public Page() {
 
     }
-
-    public Page(int pageNumber) {
-        this.pageNumber = pageNumber;
-    }
-
     /*
      * Gets the table number that this page is associated with
      *
