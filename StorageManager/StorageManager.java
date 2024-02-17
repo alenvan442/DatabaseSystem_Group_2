@@ -16,6 +16,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
+import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -644,7 +645,7 @@ public class StorageManager implements StorageManagerInterface {
         String filePath = this.getTablePath(tableNumber);
         File tableFile = new File(filePath);
         RandomAccessFile tableAccessFile = new RandomAccessFile(tableFile, "r");
-        int pageIndex = tableSchema.getPageOrder().indexOf(pageNumber);
+        int pageIndex = pageNumber - 1;
 
         tableAccessFile.seek(Integer.BYTES + (catalog.getPageSize() * pageIndex)); // start after numPages
         int numRecords = tableAccessFile.readInt();
@@ -662,10 +663,17 @@ public class StorageManager implements StorageManagerInterface {
         File tableFile = new File(filePath);
         RandomAccessFile tableAccessFile = new RandomAccessFile(tableFile, "rw");
         tableAccessFile.writeInt(tableSchema.getNumPages());
-        int pageIndex = tableSchema.getPageOrder().indexOf(page.getPageNumber());
+        int pageIndex = page.getPageNumber() - 1;
 
         // Go to the point where the page is in the file
         tableAccessFile.seek(tableAccessFile.getFilePointer() + (catalog.getPageSize() * pageIndex));
+
+        // Allocate space for a Page in the table file
+        Random random = new Random();
+        byte[] buffer = new byte[catalog.getPageSize()];
+        random.nextBytes(buffer);
+        tableAccessFile.write(buffer, 0, catalog.getPageSize());
+
         page.writeToHardware(tableAccessFile);
         tableAccessFile.close();
     }
