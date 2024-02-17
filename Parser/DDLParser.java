@@ -81,6 +81,8 @@ public class DDLParser extends ParserCommon {
 					notNull = true;
 				} else if (constraint.equals("primarykey") && !primaryKey) {
 					primaryKey = true;
+					unique = true;
+					notNull = true;
 				} else if (constraint.equals("unique") && !unique) {
 					unique = true;
 				} else {

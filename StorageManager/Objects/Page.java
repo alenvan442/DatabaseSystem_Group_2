@@ -1,13 +1,15 @@
 package StorageManager.Objects;
 
+import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
+import StorageManager.StorageManagerObjectIntereface;
 import StorageManager.TableSchema;
 
-public class Page implements java.io.Serializable, Comparator<Page> {
+public class Page implements java.io.Serializable, Comparator<Page>, StorageManagerObjectIntereface {
     private int numRecords;
     private List<Record> records;
     private long priority;
@@ -158,6 +160,7 @@ public class Page implements java.io.Serializable, Comparator<Page> {
      *
      * @return  int - number of bytes of space left
      */
+    @Override
     public int computeSize() {
         // Page: numRecord, PageNumber, records..
         int size = Integer.BYTES * 2;
@@ -165,6 +168,24 @@ public class Page implements java.io.Serializable, Comparator<Page> {
             size += record.computeSize();
         }
         return size;
+    }
+
+    @Override
+    public void writeToHardware(RandomAccessFile tableAccessFile) throws Exception {
+        tableAccessFile.writeInt(this.numRecords);
+        tableAccessFile.writeInt(this.pageNumber);
+        for (Record record: this.records) {
+           record.writeToHardware(tableAccessFile);
+        }
+    }
+
+    @Override
+    public void readFromHardware(RandomAccessFile tableAccessFile, TableSchema tableSchema) throws Exception {
+        for (int i=0; i < numRecords; ++i) {
+            Record record = new Record(new ArrayList<>());
+            record.readFromHardware(tableAccessFile, tableSchema);
+            this.records.add(record);
+        }
     }
 
     /*
