@@ -79,7 +79,9 @@ public class StorageManager implements StorageManagerInterface {
 
         // Move half of the records to the new page
         for (Record copyRecord: page.getRecords().subList(splitIndex, page.getRecords().size())) {
-            newPage.addNewRecord(copyRecord);
+            if(!newPage.addNewRecord(copyRecord)) {
+                pageSplit(newPage, copyRecord, tableSchema);
+            }
         }
 
         page.getRecords().subList(splitIndex, page.getRecords().size()).clear();
