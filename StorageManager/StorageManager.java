@@ -1,24 +1,13 @@
 package StorageManager;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.io.RandomAccessFile;
-import java.lang.management.MemoryType;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Random;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import StorageManager.Objects.AttributeSchema;
 import StorageManager.Objects.Catalog;
@@ -26,7 +15,6 @@ import StorageManager.Objects.MessagePrinter;
 import StorageManager.Objects.Page;
 import StorageManager.Objects.Record;
 import StorageManager.Objects.MessagePrinter.MessageType;
-import StorageManager.Objects.Utility.Triple;
 
 public class StorageManager implements StorageManagerInterface {
     private static StorageManager storageManager;
@@ -732,48 +720,48 @@ public class StorageManager implements StorageManagerInterface {
 
     }
 
-    public void alterTable(int tableNumber, String op, String attrName, String attrType, boolean notNull, boolean pKey, boolean unique) {
-        //TODO: The method.
-
-        //NOTES FROM PROFESSOR:
-        //WHEN MAKING A NEW COLUMN, MAKE A NEW TABLE AND LOOP THROUGH ADDING ALL THE ATTRS FROM THE OLD TABLE THEN
-        //DELETE THE OLD TABLE.
-        String tablePath = this.getTablePath(tableNumber);
-        File tableFile = new File(tablePath);
+    public Exception alterTable(int tableNumber, String op, String attrName, String attrType,Object val, boolean notNull, boolean pKey, boolean unique) {
         try {
-            if (tableFile.exists()) {
-                /*
-                //TODO: Import File as a table
-                //tableFile.delete();
-                if(op.equals("add")){
-                    //TODO: Add the specified attr to the table
-                }else if(op.equals("drop")){
-                    //TODO: Find the specified attr and drop it
-                }else{
-                    throw new Exception("Invalid: Alter Table Operation.");
-                }
 
-                Page bufferPage = this.checkBuffer(tableNumber, null, true);
-                while(bufferPage!=null){
-                    //TODO: Get the table from the buffer.
-                    if(op.equals("add")){
-                        //TODO: Add the specified attr to the table.
-                    }else if(op.equals("drop")){
-                        //TODO: Find the specified attr and drop it.
-                    }else{
-                        throw new Exception("Invalid: Alter Table Operation");
+            Catalog catalog = Catalog.getCatalog();
+            TableSchema currentSchemea = catalog.getSchema(tableNumber);
+
+            for(int i = 1; i<=currentSchemea.getNumPages(); i++) {
+                    Page currentPage = getPage(tableNumber, i);
+                    Page newPage = new Page(currentPage.getNumRecords(), tableNumber, i);
+                    List<Record> currentPageRecords = currentPage.getRecords();
+                    List<Record> newPageRecords = new ArrayList<>();
+                    List<Object> newVals;
+                    for (int j = 0; j < currentPageRecords.size(); j++) {
+
+                        List<Object> oldVals = currentPageRecords.get(j).getValues();
+                        newVals = oldVals;
+                        if(op.equals("add")) {
+                            newVals.add(new Object());
+                            if(val!=null){
+                                newVals.set(-1,val);
+                            }
+                        }else if(op.equals("drop")){
+                            for(int k=0; k<currentSchemea.getAttributes().size(); k++ ){
+                                if(currentSchemea.getAttributes().get(k).getAttributeName().equals(attrName)){
+                                    newVals.remove(k);
+                                }
+                            }
+
+                        }else{
+                            throw new Exception("unknown op");
+                        }
+                        newPageRecords.add(new Record(newVals));
                     }
-
-                    //buffer.remove(bufferPage);
-                    bufferPage = this.checkBuffer(tableNumber, null, true);
-                
-                }
-                 */
-            }else {
+                    buffer.remove(currentPage);
+                    buffer.add(newPage);
 
             }
+
+
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+        return null;
     }
 }

@@ -25,13 +25,14 @@ public interface CatalogInterface {
    * @param op - the alter operation we performed on this table, ei: drop attr or add attr
    * @param attrName - Name of the Attr that is being altered in the table.
    * @param attrType - Type of the Attr that is being altered in the table.
+   * @param val - Default value being added to the table if applicable.
    * @param notNull - The attribute cannot be null.
    * @param pKey - Whether or not the attribute is a primary key.
    * @param unique - Whether or not the attribute has to be unique.
    * @throws Exception - Should only be thrown if the method is called in an incorrect fashion.
    * @return - If drop - The previous index of the dropped item. If add - the index of the new attr.
    */
-  public int alterTableSchema(int tableNumber,String op, String attrName, String attrType, boolean notNull,
+  public int alterTableSchema(int tableNumber,String op, String attrName, String attrType, Object val,boolean notNull,
                                 boolean pKey, boolean unique) throws Exception;
 
   /**

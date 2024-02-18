@@ -114,7 +114,7 @@ public class Catalog implements java.io.Serializable, CatalogInterface{
      * {@inheritDoc}
      */
     @Override
-    public int alterTableSchema(int tableNumber,String op, String attrName, String attrType, boolean notNull,
+    public int alterTableSchema(int tableNumber,String op, String attrName, String attrType, Object val ,boolean notNull,
                                 boolean pKey, boolean unique) throws Exception {
         TableSchema table = schemas.get(tableNumber);
         int returnIndex = -1;
@@ -148,7 +148,7 @@ public class Catalog implements java.io.Serializable, CatalogInterface{
             throw new Exception("The schema alter add or drop was not accounted for correctly.");
         }
         //call new storage manager method.
-        StorageManager.getStorageManager().alterTable(tableNumber, op, attrName, attrType, notNull, pKey, unique);
+        StorageManager.getStorageManager().alterTable(tableNumber, op, attrName, attrType,val, notNull, pKey, unique);
         return returnIndex;
     }
     /**
