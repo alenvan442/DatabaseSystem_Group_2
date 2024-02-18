@@ -22,10 +22,20 @@ public class Record implements java.io.Serializable, StorageManagerObjectInteref
         this.values = values;
     }
 
-
-    public int comapreTo(Record other, int primaryKeyIndex) {
-        Object thisKey = this.values.get(primaryKeyIndex);
-        Object otherKey = other.values.get(primaryKeyIndex);
+    /*
+     * Compares two values to one another
+     * PreReq: The inputted record as well as this record, are from the same table
+     * 
+     * @param: other    The record to compare
+     * @param: keyIndex The index of the column to compare
+     * 
+     * @return:     0: The two are equal
+     *             <0: this < other
+     *             >0: this > other
+     */
+    public int comapreTo(Record other, int keyIndex) {
+        Object thisKey = this.values.get(keyIndex);
+        Object otherKey = other.values.get(keyIndex);
 
         if (thisKey instanceof String) {
             return ((String) thisKey).compareTo((String) otherKey);
@@ -38,7 +48,37 @@ public class Record implements java.io.Serializable, StorageManagerObjectInteref
         } else if (thisKey instanceof Double) {
             return Double.compare((Double) thisKey, (Double) otherKey);
         } else {
-            throw new IllegalArgumentException("Unsupported primary key type");
+            throw new IllegalArgumentException("Unsupported datatype");
+        }
+    }
+
+    /*
+     * Compares two values to one another
+     * PreReq: The inputted object as well as the object at the index given, 
+     * must be of the same dataType
+     * 
+     * @param: other    The value to compare
+     * @param: keyIndex The index of the column of this record to compare to
+     * 
+     * @return:     0: The two are equal
+     *             <0: this < other
+     *             >0: this > other
+     */
+    public int comapreTo(Object other, int keyIndex) {
+        Object thisKey = this.values.get(keyIndex);
+
+        if (thisKey instanceof String) {
+            return ((String) thisKey).compareTo((String) other);
+        } else if (thisKey instanceof Integer) {
+            return Integer.compare((Integer) thisKey, (Integer) other);
+        } else if (thisKey instanceof Boolean) {
+            boolean thisBool = (Boolean) thisKey;
+            boolean otherBool = (Boolean) other;
+            return Boolean.compare(otherBool, thisBool);
+        } else if (thisKey instanceof Double) {
+            return Double.compare((Double) thisKey, (Double) other);
+        } else {
+            throw new IllegalArgumentException("Unsupported datatype");
         }
     }
 

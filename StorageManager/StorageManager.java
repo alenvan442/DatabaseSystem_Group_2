@@ -1,32 +1,17 @@
 package StorageManager;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.io.RandomAccessFile;
-import java.lang.management.MemoryType;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Random;
-import java.util.Set;
-import java.util.stream.Collectors;
-
 import StorageManager.Objects.AttributeSchema;
 import StorageManager.Objects.Catalog;
 import StorageManager.Objects.MessagePrinter;
 import StorageManager.Objects.Page;
 import StorageManager.Objects.Record;
 import StorageManager.Objects.MessagePrinter.MessageType;
-import StorageManager.Objects.Utility.Triple;
 
 public class StorageManager implements StorageManagerInterface {
     private static StorageManager storageManager;
@@ -86,6 +71,7 @@ public class StorageManager implements StorageManagerInterface {
         }
 
         page.getRecords().subList(splitIndex, page.getRecords().size()).clear();
+        page.setChanged();
 
         // Add the new page to the buffer
         this.addPageToBuffer(newPage);
@@ -109,15 +95,47 @@ public class StorageManager implements StorageManagerInterface {
         return dbLoc + "/tables/" + Integer.toString(tableNumber);
 
     }
+ 
+    public Record getRecord(int tableNumber, Object primaryKey) throws Exception {
+        // used for selecting based on primary key
+        Catalog catalog = Catalog.getCatalog();
+        TableSchema schema = catalog.getSchema(tableNumber);
+        int primaryKeyIndex = schema.getPrimaryIndex();
+        List<Integer> pageOrder = schema.getPageOrder();
+        Page foundPage = null;
 
-    public Record getRecord(int tableNumber, Object primaryKey) {
-        // TODO
-        // start, read in how many pages there are
-        // loop through each page
-        // compare last record of the page with primary key
-        // if primaryKey is greater, continue, otherwise,
-        // otherwise loop through current page
-        return null;
+        for (int i : pageOrder) {
+            Page page = this.getPage(tableNumber, i);
+            Record lastRecord = page.getRecords().getLast();
+            int comparison = lastRecord.comapreTo(primaryKey, primaryKeyIndex); 
+
+            if (comparison == 0) {
+                // found the record, return it
+                return lastRecord;
+            } else if (comparison < 0) {
+                // found the correct page
+                foundPage = page;
+                break;
+            } else {
+                // record was not found, continue
+                continue;
+            }
+        }
+
+        if (foundPage.equals(null)) {
+            // a page with the record was not found
+            return null;
+        } else {
+            List<Record> records = foundPage.getRecords();
+            for (Record i : records) {
+                if (i.comapreTo(primaryKey, primaryKeyIndex) == 0) {
+                    return i;
+                } 
+            }
+            // record was not found
+            return null;
+        }
+
     }
 
     /**
@@ -143,12 +161,11 @@ public class StorageManager implements StorageManagerInterface {
         return records;
     }
 
-    private void checkUniqueContraints(Map<Integer, List<Object>> uniqueAttributes, int tableNumber, int primaryKeyIndex, Record newRecord) throws Exception {
+    private void checkUniqueContraints(List<Integer> uniqueAttributeIndexes, int tableNumber, int primaryKeyIndex, Record newRecord) throws Exception {
         List<Record> records = this.getAllRecords(tableNumber);
         for (Record record : records){
-            for (Integer attributeIndex : uniqueAttributes.keySet()) {
-                uniqueAttributes.get(attributeIndex).add(record.getValues().get(attributeIndex));
-                if (uniqueAttributes.get(attributeIndex).contains(newRecord.getValues().get(attributeIndex))) {
+            for (Integer attributeIndex : uniqueAttributeIndexes) {
+                if (newRecord.comapreTo(record, attributeIndex) == 0) {
                     if (attributeIndex == primaryKeyIndex) {
                         MessagePrinter.printMessage(MessageType.ERROR, String.format("row (%d): Duplicate %s for row (%d)", records.indexOf(record), "primary key", records.indexOf(record)));
                     } else {
@@ -181,28 +198,26 @@ public class StorageManager implements StorageManagerInterface {
         } else {
 
             // determine index of the primary key
-            int primaryIndex = tableSchema.getPrimaryIndex();
+            int primaryKeyIndex = tableSchema.getPrimaryIndex();
             List<AttributeSchema> attrs = tableSchema.getAttributes();
 
             // check unique constraints
-            Map<Integer, List<Object>> uniqueAttributes = new HashMap<>();
+            List<Integer> uniqueAttributes = new ArrayList<>();
             for (int i = 0; i < attrs.size(); i++) {
                 if (attrs.get(i).isUnique()) {
-                    uniqueAttributes.put(i, new ArrayList<>());
+                    uniqueAttributes.add(i);
                 }
             }
 
-             // confirm unique
-             if (uniqueAttributes.size() > 0) {
-                this.checkUniqueContraints(uniqueAttributes, tableNumber, primaryIndex, record);
+            // confirm unique
+            if (uniqueAttributes.size() > 0) {
+                this.checkUniqueContraints(uniqueAttributes, tableNumber, primaryKeyIndex, record);
             }
-
-            int primaryKeyIndex = tableSchema.getPrimaryIndex();
 
             for (Integer pageNumber : tableSchema.getPageOrder()) {
                 Page page = this.getPage(tableNumber, pageNumber);
-                Record firstRecordInPage = page.getRecords().get(0);
-                if (record.comapreTo(firstRecordInPage, primaryKeyIndex) < 0) {
+                Record lastRecordInPage = page.getRecords().getLast();
+                if (record.comapreTo(lastRecordInPage, primaryKeyIndex) < 0) {
                     // record is less than firstRecordInPage
                     if(!page.addNewRecord(record)) {
                         // page was full
@@ -222,314 +237,82 @@ public class StorageManager implements StorageManagerInterface {
         }
     }
 
-    // /*
-    //  * Helper function for the insert
-    //  * This function will take in a page and determine if
-    //  * the incoming record should be inserted there
-    //  *
-    //  * @param page          Page to insert a record to
-    //  * @param record        to be inserted record
-    //  *
-    //  * @return      boolean indicating of a successful insert
-    //  */
-    // private boolean insertHelper(Page page, int primaryIndex, Object primaryKey,
-    //                             String primaryType, Record record) throws Exception {
-    //     // compare the last record in the page
-    //     List<Record> records = page.getRecords();
-    //     Record lastRecord = records.get(records.size() - 1);
-    //     int comparison = lastRecord.comparison(
-    //                         primaryIndex, primaryKey, primaryType);
+    public Page deleteRecord(int tableNumber, Record record) {
 
-    //     if (comparison == -1) {
-    //         // if inputted is greater, continue
-    //         return false;
-    //     } else if (comparison == 0) {
-    //         // an equal primary key was found, primary key unique conflict found
-    //         // TODO unique conflict with primary key
-    //         return false;
-    //     } else {
-    //         // if inputted is less, add record
-    //         if (page.addNewRecord(record)) {
-    //             // page was added successfully, write it to the buffer
-    //             this.addPageToBuffer(page);
-    //         } else {
-    //             // if page is full then split
-    //             Page[] pages = this.pageSplit(page, record,
-    //                     primaryIndex, primaryType);
+        TableSchema schema = Catalog.getCatalog().getSchema(tableNumber);
+        int primaryIndex = schema.getPrimaryIndex();
+        Page foundPage = null;
 
-    //             // write both pages to the buffer
-    //             this.addPageToBuffer(pages[0]);
-    //             this.addPageToBuffer(pages[1]);
-    //         }
-    //         return true;
-    //     }
-    // }
+        try {   
+            // start reading pages
+            // get page order
+            List<Integer> pageOrder = schema.getPageOrder();
 
-    // /*
-    //  * Checks to see if the buffer has a page where
-    //  * the to be inserted record will be inserted in
-    //  * if so, insert, otherwise return false
-    //  *
-    //  * @param tableNumber   The table to insert in
-    //  * @param primaryIndex  Location of thr primary key within the tableSchema
-    //  * @param primaryType   The dataType of the primary key
-    //  * @param record        The to be insertted record
-    //  *
-    //  * @return              boolean indicating result of the isnert
-    //  */
-    // private boolean insertBuffer(int tableNumber, int primaryIndex,
-    //                             String primaryType, Record record) throws Exception {
-    //     // check if buffer has the needed file
-    //     // if so insert and return true
-    //     List<Page> foundPages = this.checkBuffer(tableNumber, record, primaryIndex, true);
-    //     Page bufferPage = foundPages.get(0);
-    //     if (bufferPage != null) {
-    //         // if record add was successful update priority
-    //         if (!bufferPage.addNewRecord(record)) {
-    //             // page is full split it
-    //             Page[] pages = this.pageSplit(bufferPage, record,
-    //                     primaryIndex, primaryType);
+            // find the correct page
+            for (Integer pageIndex : pageOrder) {
+                Page page = this.getPage(tableNumber, pageIndex);
 
-    //             // remove original bufferPage from the buffer
-    //             this.buffer.remove(bufferPage);
+                // compare last record in page
+                List<Record> foundRecords = page.getRecords();
+                Record lastRecord = foundRecords.getLast();
+                int comparison = lastRecord.comapreTo(record, primaryIndex);
+                if (comparison == 0) {
+                    // found the record, delete it
+                    page.deleteRecord(page.getNumRecords()-1);
+                    return page;
+                } else if (comparison > 0) {
+                    // found the correct page
+                    foundPage = page;
+                    break;
+                } else {
+                    // page was not found, continue
+                    continue;
+                }
+            }
 
-    //             // write both pages to the buffer
-    //             this.addPageToBuffer(pages[0]);
-    //             this.addPageToBuffer(pages[1]);
-    //         }
-    //         return true;
-    //     }
-    //     return false;
-    // }
+            if (foundPage.equals(null)) {
+                MessagePrinter.printMessage(MessageType.ERROR, 
+                    String.format("No record of primary key: (%d), was found.", record.getValues().get(primaryIndex)));
+                return null;
+            } else {
+                // a page was found but deletion has yet to happen
+                List<Record> recordsInFound = foundPage.getRecords();
+                for (int i = 0; i < recordsInFound.size(); i++) {
+                    if (record.comapreTo(recordsInFound.get(i), primaryIndex) == 0) {
+                        foundPage.deleteRecord(i);
+                        return foundPage;
+                    }
+                }
+                MessagePrinter.printMessage(MessageType.ERROR, 
+                    String.format("No record of primary key: (%d), was found.", record.getValues().get(primaryIndex)));
+                return null;
+            }
 
-    // /*
-    //  * Helper function for the insert,
-    //  * Gets called if the relation has a unique attribute
-    //  * Will then call insertHelper
-    //  */
-    // private boolean insertUnique(TableSchema table, Record record, List<Integer> uniqueIndex,
-    //                         int primaryIndex, Object primaryKey, String primaryType) {
-    //     // the relation has one or more unique attributes
-    //     // read in the entire relation locally
-    //     List<Page> pages = this.getAllRecords(table.getTableNumber());
-    //     int foundPage = -1;
-    //     List<Object> incomingValues = record.getValues();
-
-    //     // loop through every page to check if the constraint is met
-    //     for (int i = 0; i < pages.size(); i++) {
-
-    //         // as we loop through, determine where the record is supposed to be inserted as well
-    //         if (foundPage == -1) {
-    //             // compare the last record in the page
-    //             List<Record> records = pages.get(i).getRecords();
-    //             Record lastRecord = records.get(records.size() - 1);
-    //             int comparison = lastRecord.comparison(
-    //                                 primaryIndex, primaryKey, primaryType);
-    //             if (comparison == 0) {
-    //                 // TODO primaryKey not unique!
-    //                 return false;
-    //             } else if (comparison == 1) {
-    //                 foundPage = i;
-    //             }
-    //         }
-    //         List<Record> records = pages.get(i).getRecords();
-    //         for (Record j : records) {
-    //             for (int o : uniqueIndex) {
-    //                 if (j.comparison(o, incomingValues.get(o),
-    //                     table.getAttributes().get(o).getDataType()) == 0) {
-    //                     // TODO unique constraint fail
-    //                     return false;
-    //                 }
-    //             }
-    //         }
-    //     }
-    //     // constraints have been passed, attempt insert
-    //     // attempt to insert into a page in the buffer
-    //     if (!this.insertBuffer(table.getTableNumber(), primaryIndex, primaryType, record)) {
-    //         // if not, use the page we found earlier
-    //         Page page = pages.get(foundPage);
-    //         if (page.addNewRecord(record)) {
-    //             // page was added successfully, write it to the buffer
-    //             this.addPageToBuffer(page);
-    //         } else {
-    //             // if page is full then split
-    //             Page[] splitPages = this.pageSplit(page, record,
-    //                     primaryIndex, primaryType);
-
-    //             // write both pages to the buffer
-    //             this.addPageToBuffer(splitPages[0]);
-    //             this.addPageToBuffer(splitPages[1]);
-    //         }
-    //     }
-    //     return true;
-
-    // }
-
-    /*
-     *
-     * @return      A triple consisting of:
-     *                  (1): Page the record was found in
-     *                  (2): The index the record was found in
-     *                  (3): boolean indicating if found in buffer
-     */
-    // private Triple<Page, Integer, Boolean> findRecord(int tableNumber, Record record) {
-    //     // TODO
-    //     // copy and apste deleteRecord here
-    //     // this will find a specific record based on the primary key
-    //     // then return the page it was founded on, as well as the index
-    //     // the record is at
-    //     TableSchema schema = this.getTableSchema(tableNumber);
-    //     int primaryIndex = schema.getPrimaryIndex();
-    //     Object primaryKey = record.getValues().get(primaryIndex);
-    //     String primaryType = schema.getAttributes().get(primaryIndex).getDataType();
-    //     List<Page> bufferPages = this.checkBuffer(tableNumber, record, primaryIndex, false);
-    //     Page foundPage = null;
-    //     int foundIndex = -1;
-
-
-    //     if (bufferPages.size() > 0) {
-    //         // find the page that the record is in
-    //         for (Page page : bufferPages) {
-    //             List<Record> pageRecords = page.getRecords();
-    //             Record lastRecord = pageRecords.get(pageRecords.size()-1);
-    //             int comparison = lastRecord.comparison(primaryIndex, primaryKey, primaryType);
-
-    //             // if th elast record of current page is the record
-    //             // we are looking for, delete it
-    //             if (comparison == 0) {
-    //                 foundPage = page;
-    //                 foundIndex = pageRecords.size()-1;
-    //                 break;
-    //             } else if (comparison == 1) {
-    //                 foundPage = page;
-    //                 break;
-    //             }
-    //         }
-
-    //         if (foundPage.equals(null)) {
-    //             // TODO error, this should not have happened, check buffer failed
-    //         }
-
-    //         // loop through every record of the found page
-    //         // delete the record once we find it
-    //         if (foundIndex != -1) {
-    //             foundIndex = this.findRecordHelper(foundPage, primaryIndex, primaryKey, primaryType);
-    //         }
-
-    //         if (foundIndex == -1) {
-    //             // TODO error, this should not have happened, check buffer failed
-    //         }
-
-    //         return new Triple<Page,Integer, Boolean>(foundPage, foundIndex, true);
-
-    //     } else {
-    //         String tablePath = this.getTablePath(tableNumber);
-    //         File tableFile = new File(tablePath);
-    //         try {
-    //             // read first 8 byte and determine number of pages in table
-    //             byte[] buffer = new byte[8];
-    //             InputStream reader = new FileInputStream(tableFile);
-    //             reader.read(buffer);
-    //             reader.close();
-    //             int numPages = ByteBuffer.wrap(buffer).getInt();
-
-    //             // start reading pages
-    //             // get page order
-    //             List<Integer> pageOrder = schema.getPageOrder();
-
-    //             // find the correct page
-    //             for (Integer pageIndex : pageOrder) {
-    //                 Page page = this.readPageHardware(tableNumber, pageIndex);
-
-    //                 // compare last record un page
-    //                 List<Record> foundRecords = page.getRecords();
-    //                 Record lastRecord = foundRecords.getLast();
-    //                 int comparison = lastRecord.comparison(primaryIndex, primaryKey, primaryType);
-    //                 if (comparison == 0) {
-    //                     // found the record
-    //                     foundPage = page;
-    //                     foundIndex = foundRecords.size()-1;
-    //                     break;
-    //                 } else if (comparison == 1) {
-    //                     // found the correct page
-    //                     foundPage = page;
-    //                     break;
-    //                 } else {
-    //                     // page was not found, continue
-    //                     continue;
-    //                 }
-    //             }
-
-    //             if (foundPage.equals(null)) {
-    //                 // no page was found, meaning no record exists
-    //                 return new Triple<Page,Integer,Boolean>(null, null, null);
-    //             }
-
-    //             if (foundIndex == -1) {
-    //                 // no index was found yet
-    //                 foundIndex = this.findRecordHelper(foundPage, primaryIndex, primaryKey, primaryType);
-    //             }
-
-    //             // if no record was found then foundIndex == -1
-    //             return new Triple<Page,Integer,Boolean>(foundPage, foundIndex, false);
-    //         } catch (Exception e) {
-    //             System.out.println(e.getStackTrace());
-    //             return new Triple<Page,Integer,Boolean>(null, -1, null);
-    //         }
-    //     }
-    // }
-
-    /*
-     * Finds the index of a record within a page
-     */
-    // public Integer findRecordHelper(Page page, int primaryIndex,
-    //                                             Object primaryKey, String primaryType) {
-    //     int foundIndex = -1;
-    //     List<Record> foundRecords = page.getRecords();
-    //     for (int i = 0; i < foundRecords.size(); i++) {
-    //         Record bufferRecord = foundRecords.get(i);
-    //         int comparison = bufferRecord.comparison(primaryIndex, primaryKey, primaryType);
-    //         if (comparison == 0) {
-    //             foundIndex = i;
-    //             break;
-    //         }
-    //     }
-    //     return foundIndex;
-    // }
-
-    public void deleteRecord(int tableNumber, Record record) throws Exception {
-        // Triple<Page, Integer, Boolean> found = this.findRecord(tableNumber, record);
-        // Page foundPage = found.first;
-        // int foundIndex = found.second;
-        // boolean buffer = found.third;
-
-        // if (foundIndex == -1) {
-        //     // TODO
-        //     // no record found
-        //     return;
-        // }
-
-        // foundPage.deleteRecord(foundIndex);
-        // if (!buffer) {
-        //     this.addPageToBuffer(foundPage);
-        // }
+        } catch (Exception e) {
+            System.out.println(e.getStackTrace());
+            return null;
+        }
+        
     }
+
     public void updateRecord(int tableNumber, Record record) throws Exception {
-        // Triple<Page, Integer, Boolean> found = this.findRecord(tableNumber, record);
-        // Page foundPage = found.first;
-        // int foundIndex = found.second;
-        // boolean buffer = found.third;
+        
+        Page deletePage = this.deleteRecord(tableNumber, record); // if the delete was successful then deletePage != null
 
-        // if (foundIndex == -1) {
-        //     // TODO
-        //     // no record found
-        //     return;
-        // }
+        if (deletePage.equals(null)) {
+            // no record found
+            // error message was already thrown in deletePage
+            return;
+        }
 
-        // foundPage.updateRecord(foundIndex, record);
-        // if (!buffer) {
-        //     this.addPageToBuffer(foundPage);
-        // }
+        try {
+            this.insertRecord(tableNumber, record);
+        } catch (Exception _) {
+            // insert failed, restore the deleted record
+            deletePage.addNewRecord(record);
+
+        }
+        
     }
 
     //---------------------------- Page Buffer ------------------------------
@@ -554,92 +337,7 @@ public class StorageManager implements StorageManagerInterface {
         return getLastPageInBuffer(this.buffer);
 
     }
-    /*
-     * Checks the buffer to determine if a needed page
-     * is already in the buffer
-     *
-     * It determines what the needed page is by finding a record
-     * with the same value on the page
-     *
-     * @param table             the table to find a page for
-     * @param record            the record to search for
-     * @param attributeIndex    the index of the attribute to consider
-     *
-     * @return                  returns a list of pages if found, otherwise null
-     */
-    // private List<Page> checkBuffer(int table, Record record, int attributeIndex) {
-    //     // TODO
-    //     List<Page> pagesFound = new ArrayList<>();
-    //     String dataType = this.getTableSchema(table).getAttributes()
-    //                                 .get(attributeIndex).getAttributeName();
-    //     Object incomingVal = record.getValues().get(attributeIndex);
-    //     // loop through each page in the buffer
-    //     for (Page page : this.buffer) {
-    //         // if the page is from the same table
-    //         if (page.getTableNumber() == table && !pagesFound.contains(page)) {
-    //             for (Record i : page.getRecords()) {
-    //                 if (i.comparison(attributeIndex, incomingVal, dataType) == 0) {
-    //                     pagesFound.add(page);
-    //                     break;
-    //                 }
-    //             }
-    //         }
-    //     }
-    //     // loop through each record in the page to determine if the record is int
-    //     return null;
-    // }
 
-    /*
-     * Checks the buffer to determine if a needed page
-     * is already in the buffer
-     *
-     * It determines what the needed page is by finding a page
-     * in which the record would fit in
-     * (typically used for insertion, or finding some record based on an order)
-     *
-     * @param table             the table to find a page for
-     * @param record            the record to search for
-     * @param attributeIndex    the index of the attribute to consider
-     * @param notSpecific       true: find a page where this record should belong in
-     *                          false: call the other checkBuffer method
-     *
-     * @return                  returns a list of pages if found, otherwise null
-     *                          if notsSpecific is true, the list of size 1
-     */
-    // private List<Page> checkBuffer(int table, Record record, int attributeIndex, boolean notSpecific) {
-    //     if (!notSpecific) {
-    //         return this.checkBuffer(table, record, attributeIndex);
-    //     } else {
-    //         List<Page> pagesFound = new ArrayList<>();
-    //         // loop through each page in the buffer
-    //         for (Page page : this.buffer) {
-    //             // if the page is from th esame table
-    //             if (page.getTableNumber() == table) {
-    //                 // compare last record in the page
-    //                 Record last = page.getRecords().getLast();
-    //                 TableSchema schema = this.getTableSchema(table);
-    //                 // if the last record is greater than incoming record, check the first record
-    //                 if (last.comparison(attributeIndex,
-    //                                     record.getValues().get(attributeIndex),
-    //                                     schema.getAttributes().get(attributeIndex)
-    //                                                             .getDataType()) == 1) {
-
-    //                     Record first = page.getRecords().getFirst();
-    //                     // if incoming record is greater than the first record
-    //                     // return page
-    //                     if (first.comparison(attributeIndex,
-    //                                     record.getValues().get(attributeIndex),
-    //                                     schema.getAttributes().get(attributeIndex)
-    //                                                             .getDataType()) == -1) {
-    //                         pagesFound.add(page);
-    //                         return pagesFound;
-    //                     }
-    //                 }
-    //             }
-    //         }
-    //         return null;
-    //     }
-    // }
     private void readPageHardware(int tableNumber, int pageNumber) throws Exception {
         Catalog catalog = Catalog.getCatalog();
         TableSchema tableSchema = catalog.getSchema(tableNumber);
