@@ -90,7 +90,8 @@ public class DMLParser extends ParserCommon{
     }
 
     public static void parseDisplaySchema(ArrayList<String> tokens) throws Exception {
-        if (!tokens.get(0).equalsIgnoreCase("display") && !tokens.get(1).equalsIgnoreCase("schema")) {
+        if (!tokens.get(0).equalsIgnoreCase("display") && !tokens.get(1).equalsIgnoreCase("schema")
+                && !tokens.get(2).equals(";")) {
             MessagePrinter.printMessage(MessageType.ERROR, "");
         }
     }
