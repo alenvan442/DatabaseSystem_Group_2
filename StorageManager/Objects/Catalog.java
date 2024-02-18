@@ -83,15 +83,8 @@ public class Catalog implements java.io.Serializable, CatalogInterface{
 
         // Iterate over each table schema and load it from the catalog file
         for (int i = 0; i < numOfTables; ++i) {
-            // Read the length of the table name
-            int tableNameLength = catalogAccessFile.readShort();
-
-            // Read the bytes representing the table name
-            byte[] tableNameBytes = new byte[tableNameLength];
-            catalogAccessFile.read(tableNameBytes);
-
-            // Convert the byte array to a String representing the table name
-            String tableName = new String(tableNameBytes);
+            // Read table Name
+            String tableName = catalogAccessFile.readUTF();
 
             // Read the table number
             int tableNumber = catalogAccessFile.readInt();

@@ -87,25 +87,11 @@ public class AttributeSchema implements java.io.Serializable, SchemaInterface {
      */
     @Override
     public void loadSchema(RandomAccessFile catalogAccessFile) throws Exception {
-        // Read the length of the attribute name from the catalog file
-        int attributeNameLength = catalogAccessFile.readShort();
+        // Read attribute Name
+        this.attributeName = catalogAccessFile.readUTF();
 
-        // Read bytes representing the attribute name from the catalog file
-        byte[] attributeNameBytes = new byte[attributeNameLength];
-        catalogAccessFile.read(attributeNameBytes);
-
-        // Convert the byte array to a String representing the attribute name
-        this.attributeName = new String(attributeNameBytes);
-
-        // Read the length of the data type from the catalog file
-        int dataTypeLength = catalogAccessFile.readShort();
-
-        // Read bytes representing the data type from the catalog file
-        byte[] dataTypeBytes = new byte[dataTypeLength];
-        catalogAccessFile.read(dataTypeBytes);
-
-        // Convert the byte array to a String representing the data type
-        this.dataType = new String(dataTypeBytes);
+        // Read datatype
+        this.dataType = catalogAccessFile.readUTF();
 
         // Read whether the attribute is not null from the catalog file
         this.notNull = catalogAccessFile.readBoolean();
