@@ -56,7 +56,7 @@ public class StorageManager implements StorageManagerInterface {
      * @param tableSchema  The schema of the table.
      * @throws Exception   If an error occurs during the split operation.
      */
-    private void pageSplit(Page page, Record record, TableSchema tableSchema) throws Exception {
+    private void pageSplit(Page page, Record record, TableSchema tableSchema, int primaryKeyIndex) throws Exception {
         // Create a new page
         Page newPage = new Page(0, tableSchema.getTableNumber(), tableSchema.getNumPages() + 1);
 
@@ -66,12 +66,25 @@ public class StorageManager implements StorageManagerInterface {
         // Move half of the records to the new page
         for (Record copyRecord: page.getRecords().subList(splitIndex, page.getRecords().size())) {
             if(!newPage.addNewRecord(copyRecord)) {
-                pageSplit(newPage, copyRecord, tableSchema);
+                pageSplit(newPage, copyRecord, tableSchema, primaryKeyIndex);
             }
         }
 
         page.getRecords().subList(splitIndex, page.getRecords().size()).clear();
-        page.addNewRecord(record); // this should always be successful
+
+        // decide what page to add record to
+        Record lastRecordInCurrPage = page.getRecords().get(page.getRecords().size() - 1);
+        if (record.compareTo(lastRecordInCurrPage, primaryKeyIndex) < 0) {
+            // record is less than lastRecord in page
+            if (!page.addNewRecord(record)) {
+                pageSplit(page, record, tableSchema, primaryKeyIndex);
+            }
+        } else {
+            if (!newPage.addNewRecord(record)) {
+                pageSplit(newPage, record, tableSchema, primaryKeyIndex);
+            }
+        }
+
         page.setChanged();
 
         // Add the new page to the buffer
@@ -108,7 +121,7 @@ public class StorageManager implements StorageManagerInterface {
         for (int i : pageOrder) {
             Page page = this.getPage(tableNumber, i);
             Record lastRecord = page.getRecords().get(page.getRecords().size() - 1);
-            int comparison = lastRecord.comapreTo(primaryKey, primaryKeyIndex);
+            int comparison = lastRecord.compareTo(primaryKey, primaryKeyIndex);
 
             if (comparison == 0) {
                 // found the record, return it
@@ -129,7 +142,7 @@ public class StorageManager implements StorageManagerInterface {
         } else {
             List<Record> records = foundPage.getRecords();
             for (Record i : records) {
-                if (i.comapreTo(primaryKey, primaryKeyIndex) == 0) {
+                if (i.compareTo(primaryKey, primaryKeyIndex) == 0) {
                     return i;
                 }
             }
@@ -166,7 +179,7 @@ public class StorageManager implements StorageManagerInterface {
         List<Record> records = this.getAllRecords(tableNumber);
         for (Record record : records){
             for (Integer attributeIndex : uniqueAttributeIndexes) {
-                if (newRecord.comapreTo(record, attributeIndex) == 0) {
+                if (newRecord.compareTo(record, attributeIndex) == 0) {
                     if (attributeIndex == primaryKeyIndex) {
                         MessagePrinter.printMessage(MessageType.ERROR, String.format("row (%d): Duplicate %s for row (%d)", records.indexOf(record), "primary key", records.indexOf(record)));
                     } else {
@@ -218,11 +231,11 @@ public class StorageManager implements StorageManagerInterface {
             for (Integer pageNumber : tableSchema.getPageOrder()) {
                 Page page = this.getPage(tableNumber, pageNumber);
                 Record lastRecordInPage = page.getRecords().get(page.getRecords().size() - 1);
-                if (record.comapreTo(lastRecordInPage, primaryKeyIndex) < 0) {
+                if (record.compareTo(lastRecordInPage, primaryKeyIndex) < 0) {
                     // record is less than lastRecordPage
                     if(!page.addNewRecord(record)) {
                         // page was full
-                        this.pageSplit(page, record, tableSchema);
+                        this.pageSplit(page, record, tableSchema, primaryKeyIndex);
                     }
                     break;
                 }
@@ -231,7 +244,7 @@ public class StorageManager implements StorageManagerInterface {
                 if (pageNumber == tableSchema.getPageOrder().get(tableSchema.getPageOrder().size() -1)) {
                     if(!page.addNewRecord(record)) {
                         // page was full
-                        this.pageSplit(page, record, tableSchema);
+                        this.pageSplit(page, record, tableSchema, primaryKeyIndex);
                     }
                 }
             }
@@ -256,7 +269,7 @@ public class StorageManager implements StorageManagerInterface {
                 // compare last record in page
                 List<Record> foundRecords = page.getRecords();
                 Record lastRecord = foundRecords.get(page.getRecords().size() - 1);
-                int comparison = lastRecord.comapreTo(record, primaryIndex);
+                int comparison = lastRecord.compareTo(record, primaryIndex);
                 if (comparison == 0) {
                     // found the record, delete it
                     page.deleteRecord(page.getNumRecords()-1);
@@ -279,7 +292,7 @@ public class StorageManager implements StorageManagerInterface {
                 // a page was found but deletion has yet to happen
                 List<Record> recordsInFound = foundPage.getRecords();
                 for (int i = 0; i < recordsInFound.size(); i++) {
-                    if (record.comapreTo(recordsInFound.get(i), primaryIndex) == 0) {
+                    if (record.compareTo(recordsInFound.get(i), primaryIndex) == 0) {
                         foundPage.deleteRecord(i);
                         return foundPage;
                     }
@@ -380,7 +393,10 @@ public class StorageManager implements StorageManagerInterface {
 
     private void addPageToBuffer(Page page) throws Exception {
         if (this.buffer.size() > this.bufferSize) {
-            this.writePageHardware(this.buffer.poll()); // assuming the first Page in the buffer is LSU
+            Page lruPage = this.buffer.poll(); // assuming the first Page in the buffer is LRU
+            if (page.isChanged()) {
+                this.writePageHardware(lruPage);
+            }
         } else {
             this.buffer.add(page);
         }

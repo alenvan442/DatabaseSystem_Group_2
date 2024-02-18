@@ -25,15 +25,15 @@ public class Record implements java.io.Serializable, StorageManagerObjectInteref
     /*
      * Compares two values to one another
      * PreReq: The inputted record as well as this record, are from the same table
-     * 
+     *
      * @param: other    The record to compare
      * @param: keyIndex The index of the column to compare
-     * 
+     *
      * @return:     0: The two are equal
      *             <0: this < other
      *             >0: this > other
      */
-    public int comapreTo(Record other, int keyIndex) {
+    public int compareTo(Record other, int keyIndex) {
         Object thisKey = this.values.get(keyIndex);
         Object otherKey = other.values.get(keyIndex);
 
@@ -54,17 +54,17 @@ public class Record implements java.io.Serializable, StorageManagerObjectInteref
 
     /*
      * Compares two values to one another
-     * PreReq: The inputted object as well as the object at the index given, 
+     * PreReq: The inputted object as well as the object at the index given,
      * must be of the same dataType
-     * 
+     *
      * @param: other    The value to compare
      * @param: keyIndex The index of the column of this record to compare to
-     * 
+     *
      * @return:     0: The two are equal
      *             <0: this < other
      *             >0: this > other
      */
-    public int comapreTo(Object other, int keyIndex) {
+    public int compareTo(Object other, int keyIndex) {
         Object thisKey = this.values.get(keyIndex);
 
         if (thisKey instanceof String) {
