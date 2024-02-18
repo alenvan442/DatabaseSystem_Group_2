@@ -143,21 +143,22 @@ public class StorageManager implements StorageManagerInterface {
         return records;
     }
 
-    private void checkUniqueContraints(Map<Integer, List<Object>> uniqueAttributes, int tableNumber, int primaryKeyIndex) throws Exception {
+    private void checkUniqueContraints(Map<Integer, List<Object>> uniqueAttributes, int tableNumber, int primaryKeyIndex, Record newRecord) throws Exception {
         List<Record> records = this.getAllRecords(tableNumber);
         for (Record record : records){
             for (Integer attributeIndex : uniqueAttributes.keySet()) {
-                if (uniqueAttributes.get(attributeIndex).contains(record.getValues().get(attributeIndex))) {
+                uniqueAttributes.get(attributeIndex).add(record.getValues().get(attributeIndex));
+                if (uniqueAttributes.get(attributeIndex).contains(newRecord.getValues().get(attributeIndex))) {
                     if (attributeIndex == primaryKeyIndex) {
                         MessagePrinter.printMessage(MessageType.ERROR, String.format("row (%d): Duplicate %s for row (%d)", records.indexOf(record), "primary key", records.indexOf(record)));
                     } else {
                         MessagePrinter.printMessage(MessageType.ERROR, String.format("row (%d): Duplicate %s for row (%d)", records.indexOf(record), "value", records.indexOf(record)));
                     }
-
                 }
-                uniqueAttributes.get(attributeIndex).add(record.getValues().get(attributeIndex));
             }
         }
+
+
     }
 
     public void insertRecord(int tableNumber, Record record) throws Exception {
@@ -193,7 +194,7 @@ public class StorageManager implements StorageManagerInterface {
 
              // confirm unique
              if (uniqueAttributes.size() > 0) {
-                this.checkUniqueContraints(uniqueAttributes, tableNumber, primaryIndex);
+                this.checkUniqueContraints(uniqueAttributes, tableNumber, primaryIndex, record);
             }
 
             int primaryKeyIndex = tableSchema.getPrimaryIndex();
