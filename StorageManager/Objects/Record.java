@@ -54,11 +54,13 @@ public class Record implements java.io.Serializable, StorageManagerObjectInteref
             if (value instanceof Integer) {
                 size += Integer.BYTES;
             } else if (value instanceof String) {
-                size += ((String) value) == "null" ? 0 : ((String) value).length();
+                size += ((String) value).length();
             } else if (value instanceof Boolean) {
                 size += 1;
             } else if (value instanceof Double) {
                 size += Double.BYTES;
+            } else {
+                size += 1;
             }
         }
         return size;
@@ -75,6 +77,9 @@ public class Record implements java.io.Serializable, StorageManagerObjectInteref
                 tableAccessFile.writeDouble((Double) value);
             } else if (value instanceof Boolean) {
                 tableAccessFile.writeBoolean((Boolean) value);
+            } else {
+                // null value
+                tableAccessFile.writeByte(-1);
             }
         }
     }
@@ -82,6 +87,18 @@ public class Record implements java.io.Serializable, StorageManagerObjectInteref
     @Override
     public void readFromHardware(RandomAccessFile tableAccessFile, TableSchema tableSchema) throws IOException {
         for (AttributeSchema attributeSchema : tableSchema.getAttributes()) {
+            if (!attributeSchema.isNotNull()) {
+                // check for null value
+                byte nullMarker = tableAccessFile.readByte();
+
+                if (nullMarker == -1) {
+                    this.values.add(null);
+                    continue;
+                } else {
+                    tableAccessFile.seek(tableAccessFile.getFilePointer() - 1);
+                }
+
+            }
             if (attributeSchema.getDataType().equalsIgnoreCase("integer")) {
                 int value = tableAccessFile.readInt();
                 this.values.add(value);
@@ -92,10 +109,7 @@ public class Record implements java.io.Serializable, StorageManagerObjectInteref
                 boolean value = tableAccessFile.readBoolean();
                 this.values.add(value);
             } else if (attributeSchema.getDataType().toLowerCase().contains("char") || attributeSchema.getDataType().toLowerCase().contains("varchar")) {
-                int stringLength = tableAccessFile.readShort();
-                byte[] stringValueBytes = new byte[stringLength];
-                tableAccessFile.read(stringValueBytes);
-                String value = tableAccessFile.toString();
+                String value = tableAccessFile.readUTF();
                 this.values.add(value);
             }
         }
