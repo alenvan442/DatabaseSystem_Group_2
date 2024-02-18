@@ -1,9 +1,11 @@
 package Parser;
 
 import StorageManager.Objects.AttributeSchema;
+import StorageManager.Objects.Utility.Pair;
 import StorageManager.TableSchema;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class DDLParser extends ParserCommon {
 
@@ -122,9 +124,26 @@ public class DDLParser extends ParserCommon {
 
 	}
 
-	public static void parseAlterTable(String ddlStatement) throws Exception {
+	/**
+	 *
+	 * @param ddlStatement the alter statement passed in
+	 * @returns altervals, a hashmap of strings with the following values:
+	 * tableName: Name of the table to be altered
+	 * adddrop: "add" | "drop" defining the function to complete
+	 * attriname: Name of the attribute to be altered
+	 * type: type of the new attribute, defaults will be checked parser-side
+	 * deflt: default value to change all existing rows in the table to for the new attri.
+	 * will be passed as a string regardless of type.
+	 * @throws Exception
+	 */
+	public static HashMap<String, String> parseAlterTable(String ddlStatement) throws Exception {
 		ArrayList<String> tokens = Tokenize(ddlStatement);
-
+		HashMap<String, String> altervals = new HashMap<>();
+		String tableName = "";
+		String adddrop = "";
+		String attriname = "";
+		String type = "";
+		String deflt = "";
 	}
 
 }
