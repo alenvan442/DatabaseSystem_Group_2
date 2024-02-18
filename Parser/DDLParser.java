@@ -16,7 +16,7 @@ public class DDLParser extends ParserCommon {
 		if (!tokens.get(0).toLowerCase().equals("create") || !tokens.get(1).toLowerCase().equals("table")) {
 			throw new Exception("this should be a create table statement???");
 		}
-		if (Character.isLetter(tokens.get(2).charAt(0))) // verifying first is a letter ensures this is a legal label via the
+		if (Character.isLetter(tokens.get(2).charAt(0)) && keywordCheck(tokens.get(2))) // verifying first is a letter ensures this is a legal label via the
 											// tokenizer's constraints
 		{
 			tableName = tokens.get(2).toLowerCase();
@@ -35,13 +35,13 @@ public class DDLParser extends ParserCommon {
 			boolean notNull = false;
 			boolean primaryKey = false;
 			boolean unique = false;
-			if (Character.isLetter(tokens.get(i).charAt(0))) // verifying first is a letter ensures this is a legal label via the
+			if (Character.isLetter(tokens.get(i).charAt(0)) && keywordCheck(tokens.get(i))) // verifying first is a letter ensures this is a legal label via the
 												// tokenizer's constraints
 			{
 				attributeName = tokens.get(i).toLowerCase();
 				i++;
 			} else {
-				throw new Exception("Attribute names must be alphanumeric and begin with a letter!"); // can't use a
+				throw new Exception("Attribute names must be alphanumeric, begin with a letter, and cannot be a keyword!"); // can't use a
 																										// double!
 			}
 			String type = tokens.get(i).toLowerCase();
@@ -114,12 +114,12 @@ public class DDLParser extends ParserCommon {
 		if (!tokens.get(0).toLowerCase().equals("drop") || !tokens.get(1).toLowerCase().equals("table")) {
 			throw new Exception("this should be a drop table statement???");
 		}
-		if (Character.isLetter(tokens.get(2).charAt(0))) 	// verifying first is a letter ensures this is a legal label via the
-															// tokenizer's constraints
+		if (Character.isLetter(tokens.get(2).charAt(0)) && keywordCheck(tokens.get(2))) 	// verifying first is a letter ensures this is a legal label via the
+			// tokenizer's constraints
 		{
 			return tokens.get(2).toLowerCase();
 		} else {
-			throw new Exception("Table names must be alphanumeric and begin with a letter!"); // can't use a double!
+			throw new Exception("Table names must be alphanumeric,begin with a letter, and cannot be a keyword!"); // can't use a double!
 		}
 
 	}
