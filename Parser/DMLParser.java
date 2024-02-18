@@ -2,8 +2,10 @@ package Parser;
 
 import StorageManager.Objects.AttributeSchema;
 import StorageManager.Objects.Catalog;
+import StorageManager.Objects.MessagePrinter;
 import StorageManager.Objects.Page;
 import StorageManager.Objects.Table;
+import StorageManager.Objects.MessagePrinter.MessageType;
 import StorageManager.StorageManager;
 import StorageManager.TableSchema;
 
@@ -87,44 +89,28 @@ public class DMLParser extends ParserCommon{
 
     }
 
-    public static void parseDisplay(String dmlStatement) throws Exception {
+    public static void parseDisplaySchema(ArrayList<String> tokens) throws Exception {
+        if (!tokens.get(0).equalsIgnoreCase("display") && !tokens.get(1).equalsIgnoreCase("schema")) {
+            MessagePrinter.printMessage(MessageType.ERROR, "");
+        }
+    }
+
+    public static String parseDisplayInfo(ArrayList<String> tokens) throws Exception {
         // Command: display schema
         // It will show: database location, page size, buffer, size, and table schema
         // Command: display info <name>
         // It will show: table name, table schema, # of pages, # of records
 
-        ArrayList<String> tokens = Tokenize(dmlStatement);
-        Catalog catalog = Catalog.getCatalog();
-
-        if (tokens.getFirst().equalsIgnoreCase("display")
-                && tokens.get(1).equalsIgnoreCase("schema"))
-        {
-            System.out.println("Database Location: " + catalog.getDbLocation());
-            System.out.println("Page Size: " + catalog.getPageSize());
-            System.out.println("Buffer Size: " + catalog.getBufferSize());
-            System.out.println("Table Schema: " + catalog.getSchemas());
-        }
-        else if (tokens.getFirst().equalsIgnoreCase("display")
-                && tokens.get(1).equalsIgnoreCase("info")
-                && tokens.size() == 3)
+        if (tokens.get(0).equalsIgnoreCase("display")
+        && tokens.get(1).equalsIgnoreCase("info")
+        && tokens.get(3).equals(";")
+        && tokens.size() == 4)
         {
             String tableName = tokens.get(2).toLowerCase();
-
-            for (TableSchema tableSchema: catalog.getSchemas().values()) {
-                if (tableSchema.getTableName().contains(tableName)) {
-                    System.out.println("Table Name: " + tableName);
-                    System.out.println("Table Schema: " + tableSchema.getTableName());
-                    System.out.println("Number of Pages: " + tableSchema.getNumPages());
-                    System.out.println("Number of Records: " + tableSchema.getRecords());
-                }
-                else{
-                    throw new Exception("Table not found");
-                }
-            }
-        }
-        else
-        {
-            throw new Exception("Invalid Display Command. Format: display info <name>");
+            return tableName;
+        } else {
+            MessagePrinter.printMessage(MessageType.ERROR, "incorrect format");
+            return null;
         }
     }
 
