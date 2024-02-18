@@ -49,7 +49,6 @@ public class Catalog implements java.io.Serializable, CatalogInterface{
         // Save catalog to hardware and obtain a random access file
         File schemaFile = new File(this.catalogLocation + "/schema");
         RandomAccessFile catalogAccessFile = new RandomAccessFile(schemaFile, "rw");
-        catalogAccessFile.seek(0);
 
         // Write page size to the catalog file
         catalogAccessFile.writeInt(this.pageSize);
@@ -75,7 +74,6 @@ public class Catalog implements java.io.Serializable, CatalogInterface{
         // Load catalog from hardware and obtain a random access file
         File schemaFile = new File(this.catalogLocation + "/schema");
         RandomAccessFile catalogAccessFile = new RandomAccessFile(schemaFile, "r");
-        catalogAccessFile.seek(0);
 
         // Read page size from the catalog file
         this.pageSize = catalogAccessFile.readInt();
@@ -85,15 +83,8 @@ public class Catalog implements java.io.Serializable, CatalogInterface{
 
         // Iterate over each table schema and load it from the catalog file
         for (int i = 0; i < numOfTables; ++i) {
-            // Read the length of the table name
-            int tableNameLength = catalogAccessFile.readShort();
-
-            // Read the bytes representing the table name
-            byte[] tableNameBytes = new byte[tableNameLength];
-            catalogAccessFile.read(tableNameBytes);
-
-            // Convert the byte array to a String representing the table name
-            String tableName = new String(tableNameBytes);
+            // Read table Name
+            String tableName = catalogAccessFile.readUTF();
 
             // Read the table number
             int tableNumber = catalogAccessFile.readInt();
@@ -124,7 +115,7 @@ public class Catalog implements java.io.Serializable, CatalogInterface{
      */
     @Override
     public int alterTableSchema(int tableNumber,String op, String attrName, String attrType, boolean notNull,
-                                boolean pKey, boolean unique, Object defaultValue) throws Exception {
+                                boolean pKey, boolean unique) throws Exception {
         TableSchema table = schemas.get(tableNumber);
         int returnIndex = -1;
 
@@ -145,7 +136,7 @@ public class Catalog implements java.io.Serializable, CatalogInterface{
                 }
             }
             if(!has) {
-                attrList.add(new AttributeSchema(attrName, attrType, notNull, pKey, unique, defaultValue));
+                attrList.add(new AttributeSchema(attrName, attrType, notNull, pKey, unique));
                 returnIndex = attrList.size()-1;
             }
         }else{

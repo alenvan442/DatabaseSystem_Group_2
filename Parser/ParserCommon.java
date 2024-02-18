@@ -41,7 +41,7 @@ public class ParserCommon { // extend me!
 	// Numbers, which can be integer or double with exactly 1 "." in any place, the
 	// char/varchar case must check for double seperately.
 	// any tokens outside these options will throw an error.
-	protected ArrayList<String> Tokenize(String ddlStatement) throws Exception {
+	public static ArrayList<String> Tokenize(String ddlStatement) throws Exception {
 		Scanner scanner = new Scanner(ddlStatement);
 		ArrayList<String> tokens = new ArrayList<>();
 		String currentToken = "";
@@ -49,18 +49,36 @@ public class ParserCommon { // extend me!
 		boolean label = false;
 		boolean number = false;
 		boolean hasdecimal = false;
+		boolean string = false;
 		while (scanner.hasNext()) {
-			if (nextByte == '(' && !label && !number) {
+			if (nextByte == '(' && !label && !number && !string) {
 				tokens.add("(");
 				nextByte = (char) scanner.nextByte();
-			} else if (nextByte == ')' && !label && !number) {
+			} else if (nextByte == ')' && !label && !number && !string) {
 				tokens.add(")");
 				nextByte = (char) scanner.nextByte();
-			} else if (nextByte == ';' && !label && !number) {
+			} else if (nextByte == ';' && !label && !number && !string) {
 				tokens.add(";");
 				nextByte = (char) scanner.nextByte();
-			} else if (nextByte == ',' && !label && !number) {
+			} else if (nextByte == ',' && !label && !number && !string) {
 				tokens.add(",");
+				nextByte = (char) scanner.nextByte();
+			} else if (nextByte == '\"' && !label && !number || string){ //have to parse string vals as well
+				if(string)
+				{
+					if(nextByte != '\"')
+					{
+						currentToken += nextByte;
+					} else
+					{
+						tokens.add(currentToken);
+						currentToken = "";
+					}
+				} else
+				{
+					currentToken += nextByte;
+					string = true;
+				}
 				nextByte = (char) scanner.nextByte();
 			} else if ((Character.isDigit(nextByte) || (nextByte == '.' && !hasdecimal)) && !label) // only ONE decimal
 																									// point per double!

@@ -1,45 +1,48 @@
 package Parser;
 
-import java.util.Scanner;
+import StorageManager.Objects.AttributeSchema;
+import StorageManager.TableSchema;
 
-public static class DDLParser extends ParserCommon {
+import java.util.ArrayList;
 
-	public static Pair<String, ArrayList<AttributeSchema>> parseCreateTable(String ddlStatement) {
+public class DDLParser extends ParserCommon {
+
+	public static TableSchema parseCreateTable(String ddlStatement) throws Exception {
 		ArrayList<AttributeSchema> attributes = new ArrayList<AttributeSchema>();
 		String tableName;
-		Arraylist<String> tokens = Tokenize(ddlStatement);
-		if (!tokens[0].toLower.equals("create") || !tokens[1].toLower.equals("table")) {
+		ArrayList<String> tokens = Tokenize(ddlStatement);
+		if (!tokens.get(0).toLowerCase().equals("create") || !tokens.get(1).toLowerCase().equals("table")) {
 			throw new Exception("this should be a create table statement???");
 		}
-		if (tokens[2].charAt(0).isLetter()) // verifying first is a letter ensures this is a legal label via the
+		if (Character.isLetter(tokens.get(2).charAt(0))) // verifying first is a letter ensures this is a legal label via the
 											// tokenizer's constraints
 		{
-			tableName = tokens[2].toLower();
+			tableName = tokens.get(2).toLowerCase();
 		} else {
 			throw new Exception("Table names must be alphanumeric and begin with a letter!"); // can't use a double!
 		}
-		if (!tokens[3].equals("(")) {
+		if (!tokens.get(3).equals("(")) {
 			throw new Exception("Open parenthesis expected in create table stmt!");
 		}
 		int i = 4;
-		while (!tokens[i].equals(")") && i < 99999) // I doubt anyone will write a statement 99999 tokens long, this is
-													// just a loop failsafe for if there is no closing ")"
+		while (!tokens.get(i).equals(")") && i < 99999) // I doubt anyone will write a statement 99999 tokens long, this is
+														// just a loop failsafe for if there is no closing ")"
 		{
 			String attributeName = "";
 			String dataType = "";
 			boolean notNull = false;
 			boolean primaryKey = false;
 			boolean unique = false;
-			if (tokens[i].charAt(0).isLetter()) // verifying first is a letter ensures this is a legal label via the
+			if (Character.isLetter(tokens.get(i).charAt(0))) // verifying first is a letter ensures this is a legal label via the
 												// tokenizer's constraints
 			{
-				attributeName = tokens[2].toLower();
+				attributeName = tokens.get(i).toLowerCase();
 				i++;
 			} else {
 				throw new Exception("Attribute names must be alphanumeric and begin with a letter!"); // can't use a
 																										// double!
 			}
-			String type = tokens[i].toLower();
+			String type = tokens.get(i).toLowerCase();
 			if (!(type.equals("integer") || type.equals("double") || type.equals("boolean") || type.equals("char")
 					|| type.equals("varchar"))) {
 				throw new Exception(
@@ -48,18 +51,18 @@ public static class DDLParser extends ParserCommon {
 			if (type.equals("char") || type.equals("varchar")) {
 				dataType += type;
 				i++;
-				if (!tokens[i].equals("(")) {
+				if (!tokens.get(i).equals("(")) {
 					throw new Exception("Open parenthesis expected for char or varchar type");
 				}
 				dataType += "(";
 				i++;
-				String[] Size = tokens[i].split("."); // we need to ensure this is an integer not decimal
+				String[] Size = tokens.get(i).split("."); // we need to ensure this is an integer not decimal
 				if (!(Size.length == 1)) {
 					throw new Exception("char or varchar size must be integer");
 				}
-				dataType += tokens[i];
+				dataType += tokens.get(i);
 				i++;
-				if (!tokens[i].equals(")")) {
+				if (!tokens.get(i).equals(")")) {
 					throw new Exception("Close parenthesis expected for char or varchar type");
 				}
 				dataType += ")";
@@ -71,13 +74,15 @@ public static class DDLParser extends ParserCommon {
 			int constraints = 0;
 			boolean comma = false;
 			while (!comma && constraints <= 4) {
-				String constraint = tokens[i].toLower();
+				String constraint = tokens.get(i).toLowerCase();
 				if (constraint.equals(",")) {
 					comma = true;
 				} else if (constraint.equals("notnull") && !notNull) {
 					notNull = true;
 				} else if (constraint.equals("primarykey") && !primaryKey) {
 					primaryKey = true;
+					unique = true;
+					notNull = true;
 				} else if (constraint.equals("unique") && !unique) {
 					unique = true;
 				} else {
@@ -90,24 +95,35 @@ public static class DDLParser extends ParserCommon {
 			}
 			attributes.add(new AttributeSchema(attributeName, dataType, notNull, primaryKey, unique));
 		}
-		if (!tokens[i].equals(")")) {
+		if (!tokens.get(i).equals(")")) {
 			throw new Exception("Attribute list must be closed with \")\"!"); // just a few escape characters
 		}
 		i++;
-		if (!tokens[i].equals(";")) {
+		if (!tokens.get(i).equals(";")) {
 			throw new Exception("Commands must end with a \";\"!");
 		}
-		TableSchema schema = new TableSchema(tableName, attributes);
+		TableSchema schema = new TableSchema(tableName);
+		schema.setAttributes(attributes);
 		return schema;
 	}
 
-	public static void parseDropTable(String ddlStatement) {
-		Arraylist<String> tokens = Tokenize(ddlStatement);
+	public static String parseDropTable(String ddlStatement) throws Exception {
+		ArrayList<String> tokens = Tokenize(ddlStatement);
+		if (!tokens.get(0).toLowerCase().equals("drop") || !tokens.get(1).toLowerCase().equals("table")) {
+			throw new Exception("this should be a drop table statement???");
+		}
+		if (Character.isLetter(tokens.get(2).charAt(0))) 	// verifying first is a letter ensures this is a legal label via the
+															// tokenizer's constraints
+		{
+			return tokens.get(2).toLowerCase();
+		} else {
+			throw new Exception("Table names must be alphanumeric and begin with a letter!"); // can't use a double!
+		}
 
 	}
 
-	public static void parseAlterTable(String ddlStatement) {
-		Arraylist<String> tokens = Tokenize(ddlStatement);
+	public static void parseAlterTable(String ddlStatement) throws Exception {
+		ArrayList<String> tokens = Tokenize(ddlStatement);
 
 	}
 

@@ -1,15 +1,9 @@
 package StorageManager;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.util.List;
 
-
+import StorageManager.Objects.Page;
 import StorageManager.Objects.Record;
-import StorageManager.Objects.MessagePrinter.MessageType;
 
 public interface StorageManagerInterface {
 
@@ -31,7 +25,7 @@ public interface StorageManagerInterface {
      *
      * @return              a list of all records in the table
      */
-    public List<Record> getAllRecords(int tableNumber);
+    public List<Record> getAllRecords(int tableNumber) throws Exception;
 
     /*
      * Inserts a record into a specified table
@@ -45,7 +39,7 @@ public interface StorageManagerInterface {
      * @param record        the record to insert
      *
      */
-    public void insertRecord(int tableNumber, Record record);
+    public void insertRecord(int tableNumber, Record record) throws Exception;
 
     /*
      * Deletes a record from the DB
@@ -56,7 +50,7 @@ public interface StorageManagerInterface {
      * @param tableNumber   the table to delete from
      * @param primaryKey    the value of the primaryKey to search for
      */
-    public void deleteRecord(int tableNumber, Record record);
+    public void deleteRecord(int tableNumber, Record record) throws Exception;
 
     /*
      * Update a record in the DB
@@ -71,11 +65,14 @@ public interface StorageManagerInterface {
      * @param primaryKey    value fo the primaryKey to search for
      * @param record        a record with the updated values
      */
-    public void updateRecord(int tableNumber, Record record);
+    public void updateRecord(int tableNumber, Record record) throws Exception;
+
+
+    public Page getPage(int tableNumber, int pageNumber) throws Exception;
 
     /*
      * Writes all pages in the buffer to disk
      * This is used upon system shut off
      */
-    public void writeAll();
+    public void writeAll() throws Exception;
 }
