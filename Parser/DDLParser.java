@@ -1,7 +1,6 @@
 package Parser;
 
 import StorageManager.Objects.AttributeSchema;
-import StorageManager.Objects.Utility.Pair;
 import StorageManager.TableSchema;
 
 import java.util.ArrayList;
