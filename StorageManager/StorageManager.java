@@ -770,6 +770,7 @@ public class StorageManager implements StorageManagerInterface {
         File tableFile = new File(tablePath);
         try {
             if (tableFile.exists()) {
+                /*
                 //TODO: Import File as a table
                 //tableFile.delete();
                 if(op.equals("add")){
@@ -793,7 +794,9 @@ public class StorageManager implements StorageManagerInterface {
 
                     //buffer.remove(bufferPage);
                     bufferPage = this.checkBuffer(tableNumber, null, true);
+                
                 }
+                 */
             }else {
 
             }
