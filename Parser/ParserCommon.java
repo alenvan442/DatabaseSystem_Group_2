@@ -8,9 +8,9 @@ public class ParserCommon { // extend me!
 
 	// keywordCheck returns false if the passed label is a protected keyword, true
 	// otherwise
-	protected boolean keywordCheck(String label){
+	protected static boolean keywordCheck(String label){
 		label = label.toLowerCase();
-		return !(label.equals("integer") ||
+		return (label.equals("integer") ||
 				label.equals("double") ||
 				label.equals("boolean") ||
 				label.equals("char") ||
