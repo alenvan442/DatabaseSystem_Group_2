@@ -71,6 +71,7 @@ public class StorageManager implements StorageManagerInterface {
         }
 
         page.getRecords().subList(splitIndex, page.getRecords().size()).clear();
+        page.addNewRecord(record); // this should always be successful
         page.setChanged();
 
         // Add the new page to the buffer
@@ -95,7 +96,7 @@ public class StorageManager implements StorageManagerInterface {
         return dbLoc + "/tables/" + Integer.toString(tableNumber);
 
     }
- 
+
     public Record getRecord(int tableNumber, Object primaryKey) throws Exception {
         // used for selecting based on primary key
         Catalog catalog = Catalog.getCatalog();
@@ -106,8 +107,8 @@ public class StorageManager implements StorageManagerInterface {
 
         for (int i : pageOrder) {
             Page page = this.getPage(tableNumber, i);
-            Record lastRecord = page.getRecords().getLast();
-            int comparison = lastRecord.comapreTo(primaryKey, primaryKeyIndex); 
+            Record lastRecord = page.getRecords().get(page.getRecords().size() - 1);
+            int comparison = lastRecord.comapreTo(primaryKey, primaryKeyIndex);
 
             if (comparison == 0) {
                 // found the record, return it
@@ -130,7 +131,7 @@ public class StorageManager implements StorageManagerInterface {
             for (Record i : records) {
                 if (i.comapreTo(primaryKey, primaryKeyIndex) == 0) {
                     return i;
-                } 
+                }
             }
             // record was not found
             return null;
@@ -216,9 +217,9 @@ public class StorageManager implements StorageManagerInterface {
 
             for (Integer pageNumber : tableSchema.getPageOrder()) {
                 Page page = this.getPage(tableNumber, pageNumber);
-                Record lastRecordInPage = page.getRecords().getLast();
+                Record lastRecordInPage = page.getRecords().get(page.getRecords().size() - 1);
                 if (record.comapreTo(lastRecordInPage, primaryKeyIndex) < 0) {
-                    // record is less than firstRecordInPage
+                    // record is less than lastRecordPage
                     if(!page.addNewRecord(record)) {
                         // page was full
                         this.pageSplit(page, record, tableSchema);
@@ -243,7 +244,7 @@ public class StorageManager implements StorageManagerInterface {
         int primaryIndex = schema.getPrimaryIndex();
         Page foundPage = null;
 
-        try {   
+        try {
             // start reading pages
             // get page order
             List<Integer> pageOrder = schema.getPageOrder();
@@ -254,7 +255,7 @@ public class StorageManager implements StorageManagerInterface {
 
                 // compare last record in page
                 List<Record> foundRecords = page.getRecords();
-                Record lastRecord = foundRecords.getLast();
+                Record lastRecord = foundRecords.get(page.getRecords().size() - 1);
                 int comparison = lastRecord.comapreTo(record, primaryIndex);
                 if (comparison == 0) {
                     // found the record, delete it
@@ -271,7 +272,7 @@ public class StorageManager implements StorageManagerInterface {
             }
 
             if (foundPage.equals(null)) {
-                MessagePrinter.printMessage(MessageType.ERROR, 
+                MessagePrinter.printMessage(MessageType.ERROR,
                     String.format("No record of primary key: (%d), was found.", record.getValues().get(primaryIndex)));
                 return null;
             } else {
@@ -283,7 +284,7 @@ public class StorageManager implements StorageManagerInterface {
                         return foundPage;
                     }
                 }
-                MessagePrinter.printMessage(MessageType.ERROR, 
+                MessagePrinter.printMessage(MessageType.ERROR,
                     String.format("No record of primary key: (%d), was found.", record.getValues().get(primaryIndex)));
                 return null;
             }
@@ -292,11 +293,11 @@ public class StorageManager implements StorageManagerInterface {
             System.out.println(e.getStackTrace());
             return null;
         }
-        
+
     }
 
     public void updateRecord(int tableNumber, Record record) throws Exception {
-        
+
         Page deletePage = this.deleteRecord(tableNumber, record); // if the delete was successful then deletePage != null
 
         if (deletePage.equals(null)) {
@@ -307,12 +308,12 @@ public class StorageManager implements StorageManagerInterface {
 
         try {
             this.insertRecord(tableNumber, record);
-        } catch (Exception _) {
+        } catch (Exception e) {
             // insert failed, restore the deleted record
             deletePage.addNewRecord(record);
 
         }
-        
+
     }
 
     //---------------------------- Page Buffer ------------------------------
@@ -464,7 +465,7 @@ public class StorageManager implements StorageManagerInterface {
 
                     //buffer.remove(bufferPage);
                     bufferPage = this.checkBuffer(tableNumber, null, true);
-                
+
                 }
                  */
             }else {
