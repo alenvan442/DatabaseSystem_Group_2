@@ -148,7 +148,7 @@ public class Catalog implements java.io.Serializable, CatalogInterface{
             throw new Exception("The schema alter add or drop was not accounted for correctly.");
         }
         //call new storage manager method.
-        StorageManager.getStorageManager().alterTable(tableNumber, op, attrName, attrType,val, notNull, pKey, unique);
+        StorageManager.getStorageManager().alterTable(tableNumber, op, attrName, val);
         return returnIndex;
     }
     /**

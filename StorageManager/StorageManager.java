@@ -412,63 +412,73 @@ public class StorageManager implements StorageManagerInterface {
         this.buffer.removeAll(buffer);
     }
 
+    /**
+     * Method to drop whole tables from the DB
+     * @param tableNumber - the tablenumber for the table we are removing
+     */
     public void dropTable(int tableNumber) {
-        //TODO: Current Implementation assumes that if the table exists in the buffer, it DOES not exist as a file and
-        //TODO: Vice Versa.
-
-        //LOOP THROUGH THE BUFFER
-        //DELETE ALL PAGES IN THE BUFFER THAT REFERENCE A TABLE WE ARE DROPPING.
 
         //Checks the hardware for a tablefile. If it finds it remove it.
         String tablePath = this.getTablePath(tableNumber);
         File tableFile = new File(tablePath);
         try {
+            //if its on the file system remove it.
             if (tableFile.exists()) {
                 tableFile.delete();
-
-                for (Page page : this.buffer) {
-                    if(tableNumber == page.getTableNumber()){
-                        buffer.remove(page);
-                    }
-                }
-                /*
-                Page bufferPage = this.checkBuffer(tableNumber, null, true);
-                while(bufferPage!=null){
-                    buffer.remove(bufferPage);
-                    bufferPage = this.checkBuffer(tableNumber, null, true);
-                }
-
-                 */
-            }else {
-
             }
+
+            //for every page in the buffer that has this table number, remove it.
+            for (Page page : this.buffer) {
+                if(tableNumber == page.getTableNumber()){
+                    buffer.remove(page);
+                }
+            }
+
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
 
     }
 
-    public Exception alterTable(int tableNumber, String op, String attrName, String attrType,Object val, boolean notNull, boolean pKey, boolean unique) {
+    /**
+     * Method meant to alter table attributes universally
+     * @param tableNumber - the number of the table we are altering
+     * @param op - the operation we are performing on the table, add or drop
+     * @param attrName - attrName name of the attr we are altering
+     * @param val - the default value if appliacable, otherwise null.
+     * @return - null
+     */
+    public Exception alterTable(int tableNumber, String op, String attrName, Object val) {
         try {
 
             Catalog catalog = Catalog.getCatalog();
             TableSchema currentSchemea = catalog.getSchema(tableNumber);
 
+            //loops through all of the pages the table has.
             for(int i = 1; i<=currentSchemea.getNumPages(); i++) {
                     Page currentPage = getPage(tableNumber, i);
                     Page newPage = new Page(currentPage.getNumRecords(), tableNumber, i);
                     List<Record> currentPageRecords = currentPage.getRecords();
                     List<Record> newPageRecords = new ArrayList<>();
                     List<Object> newVals;
-                    for (int j = 0; j < currentPageRecords.size(); j++) {
 
+                    //For each record in those tables
+                    for (int j = 0; j < currentPageRecords.size(); j++) {
                         List<Object> oldVals = currentPageRecords.get(j).getValues();
                         newVals = oldVals;
+
+                        //if we are adding, create a copy of the attr there and copy the values over to it.
+                        // add the new attr to the end of the List<Object> (represnting data tuples)
+
                         if(op.equals("add")) {
                             newVals.add(new Object());
+
+                            //if theres a default val, set it for each instances
                             if(val!=null){
                                 newVals.set(-1,val);
                             }
+
+                            //if we are dropping just remove the attr col
                         }else if(op.equals("drop")){
                             for(int k=0; k<currentSchemea.getAttributes().size(); k++ ){
                                 if(currentSchemea.getAttributes().get(k).getAttributeName().equals(attrName)){
@@ -479,6 +489,7 @@ public class StorageManager implements StorageManagerInterface {
                         }else{
                             throw new Exception("unknown op");
                         }
+                        //put the records into  a page.
                         newPageRecords.add(new Record(newVals));
                     }
                     buffer.remove(currentPage);
