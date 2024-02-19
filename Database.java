@@ -44,7 +44,18 @@ public class Database {
     }
 
     private void shutdown() {
-
+        Catalog catalog = Catalog.getCatalog();
+        StorageManager storageManager = StorageManager.getStorageManager();
+        try {
+            System.out.println("Safely shutting down the database...\r\n" +
+                                "Purging page buffer...");
+            storageManager.writeAll();
+            System.out.println("Saving catalog...\n\n");
+            catalog.saveCatalog();
+        } catch (Exception e) {
+            System.out.println("Database Failed to shut down successfully");
+        }
+        System.out.println("Exiting the database...");
     }
 
 }
