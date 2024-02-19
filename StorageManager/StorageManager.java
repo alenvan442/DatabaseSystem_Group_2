@@ -386,6 +386,7 @@ public class StorageManager implements StorageManagerInterface {
         byte[] buffer = new byte[catalog.getPageSize()];
         random.nextBytes(buffer);
         tableAccessFile.write(buffer, 0, catalog.getPageSize());
+        tableAccessFile.seek(tableAccessFile.getFilePointer() -  catalog.getPageSize()); // move pointer back
 
         page.writeToHardware(tableAccessFile);
         tableAccessFile.close();
