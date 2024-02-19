@@ -123,7 +123,7 @@ public class DDLParser extends ParserCommon {
 
 	/**
 	 *
-	 * @param ddlStatement the alter statement passed in
+	 * @param tokens the alter statement passed in
 	 * @returns altervals, a hashmap of strings with the following values:
 	 * tableName: Name of the table to be altered
 	 * adddrop: "add" | "drop" defining the function to complete
