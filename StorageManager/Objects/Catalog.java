@@ -172,6 +172,17 @@ public class Catalog implements java.io.Serializable, CatalogInterface{
         return schemas.get(tableNumber);
     }
 
+    public TableSchema getSchema(String tableName) throws Exception {
+        for (Integer tableNuber: this.schemas.keySet()) {
+            TableSchema tableSchema = getSchema(tableNuber);
+            if (tableSchema.getTableName() == tableName) {
+                return tableSchema;
+            }
+        }
+        MessagePrinter.printMessage(MessageType.ERROR, String.format("table: %s does not exist", tableName));
+        return null;
+    }
+
     public void setSchemas(List<TableSchema> schemas) {
         Map<Integer, TableSchema> _new = new Hashtable<Integer,TableSchema>();
         for (TableSchema tableSchema : schemas) {

@@ -4,6 +4,7 @@ import java.util.Scanner;
 import Parser.DDLParser;
 import Parser.DMLParser;
 import Parser.ParserCommon;
+import StorageManager.Objects.Catalog;
 
 
 public class UserInterface {
@@ -52,7 +53,7 @@ public class UserInterface {
         }
     }
 
-    public void processUserCommand(String command) {
+    private void processUserCommand(String command) {
         System.out.println("Processing command: " + command);
         try{
             ArrayList<String> tokens = ParserCommon.Tokenize(command);
@@ -64,8 +65,11 @@ public class UserInterface {
                 DDLParser.parseAlterTable(command);
             } else if (command.toLowerCase().startsWith("insert into")) {
                 DMLParser.parseInsert(command);
-            } else if (command.toLowerCase().startsWith("display schema") || command.toLowerCase().startsWith("display info")) {
-                DMLParser.parseDisplay(command);
+            } else if (command.toLowerCase().startsWith("display schema")) {
+                DMLParser.parseDisplaySchema(tokens);
+                displaySchemaResult();
+            } else if (command.toLowerCase().startsWith("display info")) {
+                String tableName  = DMLParser.parseDisplayInfo(tokens);
             } else {
                 System.out.println("Not a valid command");
             }
@@ -73,4 +77,17 @@ public class UserInterface {
             System.out.println(e.getMessage());
         }
     }
+
+
+    private void displaySchemaResult() {
+        Catalog catalog = Catalog.getCatalog();
+
+        System.out.println("Database Location: " + catalog.getDbLocation());
+        System.out.println("Page Size: " + catalog.getPageSize());
+        System.out.println("Buffer Size: " + catalog.getBufferSize());
+        System.out.println("Table Schema: " + catalog.getSchemas());
+
+    }
+
+
 }
