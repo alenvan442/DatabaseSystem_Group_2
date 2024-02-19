@@ -42,7 +42,6 @@ public class ParserCommon { // extend me!
 	// char/varchar case must check for double seperately.
 	// any tokens outside these options will throw an error.
 	public static ArrayList<String> Tokenize(String ddlStatement) throws Exception {
-		Scanner scanner = new Scanner(ddlStatement);
 		ArrayList<String> tokens = new ArrayList<>();
 		String currentToken = "";
 

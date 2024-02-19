@@ -8,10 +8,9 @@ import java.util.HashMap;
 
 public class DDLParser extends ParserCommon {
 
-	public static TableSchema parseCreateTable(String ddlStatement) throws Exception {
+	public static TableSchema parseCreateTable(ArrayList<String> tokens) throws Exception {
 		ArrayList<AttributeSchema> attributes = new ArrayList<AttributeSchema>();
 		String tableName;
-		ArrayList<String> tokens = Tokenize(ddlStatement);
 		if (!tokens.get(0).toLowerCase().equals("create") || !tokens.get(1).toLowerCase().equals("table")) {
 			throw new Exception("this should be a create table statement???");
 		}
@@ -108,8 +107,7 @@ public class DDLParser extends ParserCommon {
 		return schema;
 	}
 
-	public static String parseDropTable(String ddlStatement) throws Exception {
-		ArrayList<String> tokens = Tokenize(ddlStatement);
+	public static String parseDropTable(ArrayList<String> tokens) throws Exception {
 		if (!tokens.get(0).toLowerCase().equals("drop") || !tokens.get(1).toLowerCase().equals("table")) {
 			throw new Exception("this should be a drop table statement???");
 		}
@@ -135,8 +133,7 @@ public class DDLParser extends ParserCommon {
 	 * will be passed as a string regardless of type.
 	 * @throws Exception
 	 */
-	public static HashMap<String, String> parseAlterTable(String ddlStatement) throws Exception {
-		ArrayList<String> tokens = Tokenize(ddlStatement);
+	public static HashMap<String, String> parseAlterTable(ArrayList<String> tokens) throws Exception {
 		HashMap<String, String> altervals = new HashMap<>();
 		String tableName = "";
 		String adddrop = "";
