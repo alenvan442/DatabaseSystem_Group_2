@@ -56,9 +56,9 @@ public class UserInterface {
             if (command.toLowerCase().startsWith("create table")) {
                 TableSchema TableSchema = DDLParser.parseCreateTable(tokens);
             } else if (command.toLowerCase().startsWith("drop table")) {
-                DDLParser.parseDropTable(command);
+                DDLParser.parseDropTable(tokens);
             } else if (command.toLowerCase().startsWith("alter table")) {
-                DDLParser.parseAlterTable(command);
+                DDLParser.parseAlterTable(tokens);
             } else if (command.toLowerCase().startsWith("insert into")) {
                 DMLParser.parseInsert(command);
             } else if (command.toLowerCase().startsWith("display schema")) {

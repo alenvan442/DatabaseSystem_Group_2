@@ -42,27 +42,23 @@ public class ParserCommon { // extend me!
 	// char/varchar case must check for double seperately.
 	// any tokens outside these options will throw an error.
 	public static ArrayList<String> Tokenize(String ddlStatement) throws Exception {
-		Scanner scanner = new Scanner(ddlStatement);
 		ArrayList<String> tokens = new ArrayList<>();
 		String currentToken = "";
-		char nextByte = (char)scanner.nextByte();
+
 		boolean label = false;
 		boolean number = false;
 		boolean hasdecimal = false;
 		boolean string = false;
-		while (scanner.hasNext()) {
+		for (int stmti = 0; stmti < ddlStatement.length() ; stmti++) {
+			char nextByte = ddlStatement.charAt(stmti);
 			if (nextByte == '(' && !label && !number && !string) {
 				tokens.add("(");
-				nextByte = (char) scanner.nextByte();
 			} else if (nextByte == ')' && !label && !number && !string) {
 				tokens.add(")");
-				nextByte = (char) scanner.nextByte();
 			} else if (nextByte == ';' && !label && !number && !string) {
 				tokens.add(";");
-				nextByte = (char) scanner.nextByte();
 			} else if (nextByte == ',' && !label && !number && !string) {
 				tokens.add(",");
-				nextByte = (char) scanner.nextByte();
 			} else if (nextByte == '\"' && !label && !number || string){ //have to parse string vals as well
 				if(string)
 				{
@@ -73,13 +69,13 @@ public class ParserCommon { // extend me!
 					{
 						tokens.add(currentToken);
 						currentToken = "";
+						stmti--;
 					}
 				} else
 				{
 					currentToken += nextByte;
 					string = true;
 				}
-				nextByte = (char) scanner.nextByte();
 			} else if ((Character.isDigit(nextByte) || (nextByte == '.' && !hasdecimal)) && !label) // only ONE decimal
 																									// point per double!
 			{
@@ -88,7 +84,6 @@ public class ParserCommon { // extend me!
 				}
 				currentToken += nextByte;
 				number = true;
-				nextByte = (char) scanner.nextByte();
 			} else if (Character.isLetterOrDigit(nextByte)) // covering both labels and values in the same block since
 															// values only come after "default" anyway
 			{
@@ -98,7 +93,6 @@ public class ParserCommon { // extend me!
 				}
 				currentToken += nextByte;
 				label = true; // we need to block the other paths to know when to flush.
-				nextByte = (char) scanner.nextByte();
 			} else { // flush the label or number token string
 				if (currentToken.equals("")) {
 					throw new Exception("Invalid Token!");
@@ -108,6 +102,7 @@ public class ParserCommon { // extend me!
 				number = false;
 				label = false;
 				hasdecimal = false;
+				stmti--;
 			}
 		}
 		return tokens;
