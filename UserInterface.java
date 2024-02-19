@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Scanner;
 
 import Parser.DDLParser;
@@ -53,18 +54,24 @@ public class UserInterface {
     private void processUserCommand(String command) {
         try{
             ArrayList<String> tokens = ParserCommon.Tokenize(command);
-            if (command.toLowerCase().startsWith("create table")) {
+            if (tokens.get(0).toLowerCase().equals("create") &&
+                tokens.get(1).toLowerCase().equals("table")) {
                 TableSchema TableSchema = DDLParser.parseCreateTable(tokens);
-            } else if (command.toLowerCase().startsWith("drop table")) {
+            } else if (tokens.get(0).toLowerCase().equals("drop") &&
+                    tokens.get(1).toLowerCase().equals("table")) {
                 DDLParser.parseDropTable(tokens);
-            } else if (command.toLowerCase().startsWith("alter table")) {
-                DDLParser.parseAlterTable(tokens);
-            } else if (command.toLowerCase().startsWith("insert into")) {
+            } else if (tokens.get(0).toLowerCase().equals("alter") &&
+            tokens.get(1).toLowerCase().equals("table")) {
+                HashMap<String, String> tableHash = DDLParser.parseAlterTable(tokens);
+            } else if (tokens.get(0).toLowerCase().equals("insert") &&
+                        tokens.get(1).toLowerCase().equals("into")) {
                 DMLParser.parseInsert(command);
-            } else if (command.toLowerCase().startsWith("display schema")) {
+            } else if (tokens.get(0).toLowerCase().equals("display") &&
+            tokens.get(1).toLowerCase().equals("schema")) {
                 DMLParser.parseDisplaySchema(tokens);
                 displaySchemaResult();
-            } else if (command.toLowerCase().startsWith("display info")) {
+            } else if (tokens.get(0).toLowerCase().equals("display") &&
+            tokens.get(1).toLowerCase().equals("info")) {
                 String tableName  = DMLParser.parseDisplayInfo(tokens);
             } else {
                 System.out.println("Not a valid command");
