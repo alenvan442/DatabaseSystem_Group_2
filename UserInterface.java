@@ -4,8 +4,6 @@ import java.util.Scanner;
 import Parser.DDLParser;
 import Parser.DMLParser;
 import Parser.ParserCommon;
-import Parser.Token;
-import Parser.Tokenizer;
 import StorageManager.TableSchema;
 import StorageManager.Objects.Catalog;
 
