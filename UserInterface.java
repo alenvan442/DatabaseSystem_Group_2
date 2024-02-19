@@ -54,7 +54,7 @@ public class UserInterface {
 
     private void processUserCommand(String command) {
         try{
-            ArrayList<Token> tokens = Tokenizer.tokenizer(command);
+            ArrayList<String> tokens = ParserCommon.Tokenize(command);
             if (command.toLowerCase().startsWith("create table")) {
                 TableSchema TableSchema = DDLParser.parseCreateTable(tokens);
             } else if (command.toLowerCase().startsWith("drop table")) {
@@ -70,6 +70,7 @@ public class UserInterface {
                 String tableName  = DMLParser.parseDisplayInfo(tokens);
             } else {
                 System.out.println("Not a valid command");
+            }
         } catch (Exception e) {
             System.out.println(e.getMessage());
         }
