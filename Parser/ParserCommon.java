@@ -10,7 +10,7 @@ public class ParserCommon { // extend me!
 	// otherwise
 	protected static boolean keywordCheck(String label){
 		label = label.toLowerCase();
-		return (label.equals("integer") ||
+		return (!(label.equals("integer") ||
 				label.equals("double") ||
 				label.equals("boolean") ||
 				label.equals("char") ||
@@ -27,7 +27,7 @@ public class ParserCommon { // extend me!
 				label.equals("into") ||
 				label.equals("values") ||
 				label.equals("add") ||
-				label.equals("default"));
+				label.equals("default")));
 	}
 
 	// Tokenize Splits the ddlStatement into a list of strings, while checking some

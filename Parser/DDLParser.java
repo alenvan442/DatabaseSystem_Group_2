@@ -73,10 +73,14 @@ public class DDLParser extends ParserCommon {
 			// from here we can have up to 3 constraints
 			int constraints = 0;
 			boolean comma = false;
-			while (!comma && constraints <= 4) {
+			boolean end = false;
+			while (!comma && constraints < 4) {
 				String constraint = tokens.get(i).toLowerCase();
 				if (constraint.equals(",")) {
 					comma = true;
+				} else if (constraint.equals(")")) {
+					end = true;
+					break;
 				} else if (constraint.equals("notnull") && !notNull) {
 					notNull = true;
 				} else if (constraint.equals("primarykey") && !primaryKey) {
@@ -89,8 +93,9 @@ public class DDLParser extends ParserCommon {
 					throw new Exception(
 							"Unrecognized constraint, valid constraints are notnull, primarykey, and unique");
 				}
+				i++;
 			}
-			if (!comma) {
+			if (!comma && !end) {
 				throw new Exception("Attributes must be comma-seperated");
 			}
 			attributes.add(new AttributeSchema(attributeName, dataType, notNull, primaryKey, unique));
