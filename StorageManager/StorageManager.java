@@ -181,15 +181,24 @@ public class StorageManager implements StorageManagerInterface {
             for (Integer attributeIndex : uniqueAttributeIndexes) {
                 if (newRecord.compareTo(record, attributeIndex) == 0) {
                     if (attributeIndex == primaryKeyIndex) {
-                        MessagePrinter.printMessage(MessageType.ERROR, String.format("row (%d): Duplicate %s for row (%d)", records.indexOf(record), "primary key", records.indexOf(record)));
+                        MessagePrinter.printMessage(MessageType.ERROR, String.format("row (%d): Duplicate %s for row (%d)", printRow(record), "primary key", printRow(record)));
                     } else {
-                        MessagePrinter.printMessage(MessageType.ERROR, String.format("row (%d): Duplicate %s for row (%d)", records.indexOf(record), "value", records.indexOf(record)));
+                        MessagePrinter.printMessage(MessageType.ERROR, String.format("row (%d): Duplicate %s for row (%d)", printRow(record), "value", printRow(record)));
                     }
                 }
             }
         }
+    }
 
-
+    private String printRow(Record record) {
+        StringBuilder row = new StringBuilder();
+        Boolean addSpace = false;
+        for (Object value: record.getValues()) {
+          if (addSpace) row.append(" ");
+          row.append(value.toString());
+          addSpace = true;
+        }
+        return row.toString();
     }
 
     public void insertRecord(int tableNumber, Record record) throws Exception {

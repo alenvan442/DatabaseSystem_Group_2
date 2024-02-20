@@ -179,7 +179,7 @@ public class Catalog implements java.io.Serializable, CatalogInterface{
                 return tableSchema;
             }
         }
-        MessagePrinter.printMessage(MessageType.ERROR, String.format("table: %s does not exist", tableName));
+        MessagePrinter.printMessage(MessageType.ERROR, String.format("No such table %s", tableName));
         return null;
     }
 

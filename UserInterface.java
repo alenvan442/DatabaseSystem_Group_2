@@ -57,6 +57,7 @@ public class UserInterface {
             if (tokens.get(0).toLowerCase().equals("create") &&
                 tokens.get(1).toLowerCase().equals("table")) {
                 TableSchema TableSchema = DDLParser.parseCreateTable(tokens);
+                
             } else if (tokens.get(0).toLowerCase().equals("drop") &&
                     tokens.get(1).toLowerCase().equals("table")) {
                 DDLParser.parseDropTable(tokens);
