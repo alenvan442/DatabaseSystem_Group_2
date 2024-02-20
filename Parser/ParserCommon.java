@@ -59,6 +59,7 @@ public class ParserCommon { // extend me!
 				tokens.add(";");
 			} else if (nextByte == ',' && !label && !number && !string) {
 				tokens.add(",");
+			} else if (nextByte == ' ' && !label && !number && !string) { //if space then ignore
 			} else if (nextByte == '\"' && !label && !number || string){ //have to parse string vals as well
 				if(string)
 				{
