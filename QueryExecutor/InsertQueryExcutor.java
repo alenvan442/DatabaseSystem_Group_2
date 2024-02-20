@@ -1,10 +1,12 @@
 package QueryExecutor;
 
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import StorageManager.StorageManager;
 import StorageManager.TableSchema;
 import StorageManager.Objects.AttributeSchema;
 import StorageManager.Objects.Catalog;
@@ -36,6 +38,23 @@ public class InsertQueryExcutor implements QueryExecutorInterface{
     for (Record record : this.records) {
       checkCorrectNumbberOfValues(attributeSchemas, record);
       checkDataTypes(attributeSchemas, record);
+
+      // determine index of the primary key
+      int primaryKeyIndex = tableSchema.getPrimaryIndex();
+      List<AttributeSchema> attrs = tableSchema.getAttributes();
+
+      // check unique constraints
+      List<Integer> uniqueAttributes = new ArrayList<>();
+      for (int i = 0; i < attrs.size(); i++) {
+          if (attrs.get(i).isUnique()) {
+              uniqueAttributes.add(i);
+          }
+      }
+
+      // confirm unique
+      if (uniqueAttributes.size() > 0) {
+          this.checkUniqueContraints(uniqueAttributes, tableSchema.getTableNumber(), primaryKeyIndex, record);
+      }
     }
 
   }
@@ -121,6 +140,33 @@ public class InsertQueryExcutor implements QueryExecutorInterface{
       }
     }
   }
+
+
+  private void checkUniqueContraints(List<Integer> uniqueAttributeIndexes, int tableNumber, int primaryKeyIndex, Record newRecord) throws Exception {
+    List<Record> records = StorageManager.getStorageManager().getAllRecords(tableNumber);
+    for (Record record : records){
+        for (Integer attributeIndex : uniqueAttributeIndexes) {
+            if (newRecord.compareTo(record, attributeIndex) == 0) {
+                if (attributeIndex == primaryKeyIndex) {
+                    MessagePrinter.printMessage(MessageType.ERROR, String.format("row (%d): Duplicate %s for row (%d)", printRow(record), "primary key", printRow(record)));
+                } else {
+                    MessagePrinter.printMessage(MessageType.ERROR, String.format("row (%d): Duplicate %s for row (%d)", printRow(record), "value", printRow(record)));
+                }
+            }
+        }
+    }
+  }
+
+  private String printRow(Record record) {
+    StringBuilder row = new StringBuilder();
+    Boolean addSpace = false;
+    for (Object value: record.getValues()) {
+      if (addSpace) row.append(" ");
+      row.append(value.toString());
+      addSpace = true;
+    }
+    return row.toString();
+}
 
   private String getDataType(Object object, AttributeSchema attributeSchema) {
     if (object instanceof Integer) {

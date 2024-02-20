@@ -1,8 +1,8 @@
 .DS_Store
 *.class
 out/production/CSCI421---Group-2/.vscode/launch.json
-DB/catalog/schema
-DB/tables/tables
+database/catalog/schema
+database/tables/tables
 out/production/CSCI421---Group-2/Database.class
 out/production/CSCI421---Group-2/DB/catalog/schema
 out/production/CSCI421---Group-2/DB/tables/tables
