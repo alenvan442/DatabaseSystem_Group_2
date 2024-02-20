@@ -1,5 +1,8 @@
 public class Main {
   public static void main(String[] args) {
+    args[0] = "/Users/sobdh/Homework/DSI/test";
+    args[1] = "1024";
+    args[2] = "1024";
     if (args.length != 3) {
       System.err.println("java Main <db_loc> <page_size> <buffer_size>");
       System.exit(0);
