@@ -167,11 +167,11 @@ public class InsertQueryExcutor implements QueryExecutorInterface {
       for (Integer attributeIndex : uniqueAttributeIndexes) {
         if (newRecord.compareTo(record, attributeIndex) == 0) {
           if (attributeIndex == primaryKeyIndex) {
-            MessagePrinter.printMessage(MessageType.ERROR, String.format("row (%d): Duplicate %s for row (%d)",
+            MessagePrinter.printMessage(MessageType.ERROR, String.format("row (%s): Duplicate %s for row (%s)",
                 printRow(record), "primary key", printRow(record)));
           } else {
             MessagePrinter.printMessage(MessageType.ERROR,
-                String.format("row (%d): Duplicate %s for row (%d)", printRow(record), "value", printRow(record)));
+                String.format("row (%s): Duplicate %s for row (%s)", printRow(record), "value", printRow(record)));
           }
         }
       }

@@ -107,7 +107,7 @@ public class Page implements java.io.Serializable, Comparator<Page>, StorageMana
             this.records.sort(comparator);
 
             this.numRecords++;
-            schema.incrementNumPages();
+            schema.incrementNumRecords();
             this.changed = true;
             this.setPriority();
             return true;
