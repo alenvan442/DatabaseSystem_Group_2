@@ -3,22 +3,21 @@ package Parser;
 import StorageManager.Objects.MessagePrinter;
 import StorageManager.Objects.Record;
 import StorageManager.Objects.MessagePrinter.MessageType;
+import StorageManager.Objects.Utility.Pair;
 import StorageManager.Objects.AttributeSchema;
 import StorageManager.Objects.Catalog;
 import StorageManager.TableSchema;
 import java.util.ArrayList;
 import java.util.List;
-import javafx.util.Pair;
+
 
 
 public class DMLParser extends ParserCommon{
 
-    public static Pair<String, Record> parseInsert(String dmlStatement) throws Exception {
+    public static Pair<String, Record> parseInsert(ArrayList<String> tokens) throws Exception {
         // Format: insert into <name> values <tuples>;
         // Catalog catalog = Catalog.getCatalog();
         String tableName = "";
-
-        ArrayList<String> tokens = Tokenize(dmlStatement);
 
         if (!tokens.getFirst().equalsIgnoreCase("insert")
                 && !tokens.get(1).equalsIgnoreCase("into")
