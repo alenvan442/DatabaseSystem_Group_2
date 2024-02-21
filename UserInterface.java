@@ -1,17 +1,21 @@
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.Set;
 
 import Parser.DDLParser;
 import Parser.DMLParser;
 import Parser.ParserCommon;
 import QueryExecutor.DDLQueryExecutor;
+import QueryExecutor.InsertQueryExcutor;
 import QueryExecutor.SelectQueryExecutor;
 import StorageManager.TableSchema;
 import StorageManager.Objects.AttributeSchema;
 import StorageManager.Objects.Catalog;
 import StorageManager.Objects.MessagePrinter;
+import StorageManager.Objects.Record;
 import StorageManager.Objects.MessagePrinter.MessageType;
 
 public class UserInterface {
@@ -76,14 +80,17 @@ public class UserInterface {
                         tableAlterInfo.get("adddrop"));
                 ddlQueryExecutor.excuteQuery();
             } else if (tokens.get(0).toLowerCase().equals("insert") &&
-                tokens.get(1).toLowerCase().equals("into")) {
-                DMLParser.parseInsert(tokens);
+                    tokens.get(1).toLowerCase().equals("into")) {
+                Map<String, List<Record>> insertMap = DMLParser.parseInsert(tokens);
+                InsertQueryExcutor insertQueryExcutor = new InsertQueryExcutor(
+                        insertMap.entrySet().iterator().next().getKey(),
+                        insertMap.entrySet().iterator().next().getValue(), command);
+                insertQueryExcutor.excuteQuery();
             } else if (tokens.get(0).toLowerCase().equals("select")) {
                 String tableName = DMLParser.parseSelect(tokens);
                 SelectQueryExecutor selectQueryExecutor = new SelectQueryExecutor(tableName, command);
                 selectQueryExecutor.excuteQuery();
-            }
-            else if (tokens.get(0).toLowerCase().equals("display") &&
+            } else if (tokens.get(0).toLowerCase().equals("display") &&
                     tokens.get(1).toLowerCase().equals("schema")) {
                 DMLParser.parseDisplaySchema(tokens);
                 displaySchemaResult();
@@ -103,17 +110,18 @@ public class UserInterface {
         Catalog catalog = Catalog.getCatalog();
         TableSchema tableSchema = catalog.getSchema(tableName);
         System.out.println("Table name: " + tableSchema.getTableName() + "\n");
-                for (AttributeSchema attributeSchema : tableSchema.getAttributes()) {
-                    System.out.println(
-                            "\t" + attributeSchema.getAttributeName() + ": " + attributeSchema.getDataType() + " "
-                                    + (attributeSchema.isPrimaryKey() ? "primaryKey"
-                                            : attributeSchema.isNotNull() ? "notnull"
-                                                    : attributeSchema.isUnique() ? "unique" : "") + "\n");
+        for (AttributeSchema attributeSchema : tableSchema.getAttributes()) {
+            System.out.println(
+                    "\t" + attributeSchema.getAttributeName() + ": " + attributeSchema.getDataType() + " "
+                            + (attributeSchema.isPrimaryKey() ? "primaryKey"
+                                    : attributeSchema.isNotNull() ? "notnull"
+                                            : attributeSchema.isUnique() ? "unique" : "")
+                            + "\n");
 
-                }
-                System.out.println("Pages: " + tableSchema.getNumPages() + "\n" +
-                                    "Records: " + tableSchema.getRecords());
-                MessagePrinter.printMessage(MessageType.SUCCESS, null);
+        }
+        System.out.println("Pages: " + tableSchema.getNumPages() + "\n" +
+                "Records: " + tableSchema.getRecords());
+        MessagePrinter.printMessage(MessageType.SUCCESS, null);
     }
 
     private void displaySchemaResult() throws Exception {
@@ -137,11 +145,12 @@ public class UserInterface {
                             "\t" + attributeSchema.getAttributeName() + ": " + attributeSchema.getDataType() + " "
                                     + (attributeSchema.isPrimaryKey() ? "primaryKey"
                                             : attributeSchema.isNotNull() ? "notnull"
-                                                    : attributeSchema.isUnique() ? "unique" : "") + "\n");
+                                                    : attributeSchema.isUnique() ? "unique" : "")
+                                    + "\n");
 
                 }
                 System.out.println("Pages: " + tableSchema.getNumPages() + "\n" +
-                                    "Records: " + tableSchema.getRecords());
+                        "Records: " + tableSchema.getRecords());
                 MessagePrinter.printMessage(MessageType.SUCCESS, null);
 
             }
