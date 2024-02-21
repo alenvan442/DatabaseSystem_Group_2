@@ -68,9 +68,10 @@ public class ParserCommon { // extend me!
 						currentToken += nextByte;
 					} else
 					{
+						currentToken += nextByte;
 						tokens.add(currentToken);
 						currentToken = "";
-						stmti--;
+						string = false;
 					}
 				} else
 				{

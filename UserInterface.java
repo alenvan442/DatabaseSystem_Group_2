@@ -1,13 +1,18 @@
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Scanner;
 
 import Parser.DDLParser;
 import Parser.DMLParser;
 import Parser.ParserCommon;
+import QueryExecutor.DDLQueryExecutor;
+import QueryExecutor.SelectQueryExecutor;
 import StorageManager.TableSchema;
+import StorageManager.Objects.AttributeSchema;
 import StorageManager.Objects.Catalog;
-
+import StorageManager.Objects.MessagePrinter;
+import StorageManager.Objects.MessagePrinter.MessageType;
 
 public class UserInterface {
     private Scanner scanner;
@@ -26,7 +31,7 @@ public class UserInterface {
                 String line = scanner.nextLine().trim();
 
                 if (line.equalsIgnoreCase("<quit>")) {
-                        return;
+                    return;
                 }
 
                 userInpBuilder.append(line).append(" ");
@@ -37,7 +42,6 @@ public class UserInterface {
             }
 
             String userInput = userInpBuilder.toString().trim();
-
 
             if (!userInput.endsWith(";")) {
                 System.err.println("ERROR: Each command must end with a semicolon (;).");
@@ -52,28 +56,41 @@ public class UserInterface {
     }
 
     private void processUserCommand(String command) {
-        try{
+        try {
             ArrayList<String> tokens = ParserCommon.Tokenize(command);
             if (tokens.get(0).toLowerCase().equals("create") &&
-                tokens.get(1).toLowerCase().equals("table")) {
+                    tokens.get(1).toLowerCase().equals("table")) {
                 TableSchema TableSchema = DDLParser.parseCreateTable(tokens);
-                
+                DDLQueryExecutor ddlQueryExecutor = new DDLQueryExecutor("create", TableSchema);
+                ddlQueryExecutor.excuteQuery();
             } else if (tokens.get(0).toLowerCase().equals("drop") &&
                     tokens.get(1).toLowerCase().equals("table")) {
-                DDLParser.parseDropTable(tokens);
+                String tableName = DDLParser.parseDropTable(tokens);
+                DDLQueryExecutor ddlQueryExecutor = new DDLQueryExecutor(tableName, "drop");
+                ddlQueryExecutor.excuteQuery();
             } else if (tokens.get(0).toLowerCase().equals("alter") &&
-            tokens.get(1).toLowerCase().equals("table")) {
-                HashMap<String, String> tableHash = DDLParser.parseAlterTable(tokens);
+                    tokens.get(1).toLowerCase().equals("table")) {
+                HashMap<String, String> tableAlterInfo = DDLParser.parseAlterTable(tokens);
+                DDLQueryExecutor ddlQueryExecutor = new DDLQueryExecutor(tableAlterInfo.get("tableName"), "alter",
+                        tableAlterInfo.get("deflt"), tableAlterInfo.get("attriname"), tableAlterInfo.get("type"),
+                        tableAlterInfo.get("adddrop"));
+                ddlQueryExecutor.excuteQuery();
             } else if (tokens.get(0).toLowerCase().equals("insert") &&
-                        tokens.get(1).toLowerCase().equals("into")) {
-                DMLParser.parseInsert(command);
-            } else if (tokens.get(0).toLowerCase().equals("display") &&
-            tokens.get(1).toLowerCase().equals("schema")) {
+                tokens.get(1).toLowerCase().equals("into")) {
+                DMLParser.parseInsert(tokens);
+            } else if (tokens.get(0).toLowerCase().equals("select")) {
+                String tableName = DMLParser.parseSelect(tokens);
+                SelectQueryExecutor selectQueryExecutor = new SelectQueryExecutor(tableName, command);
+                selectQueryExecutor.excuteQuery();
+            }
+            else if (tokens.get(0).toLowerCase().equals("display") &&
+                    tokens.get(1).toLowerCase().equals("schema")) {
                 DMLParser.parseDisplaySchema(tokens);
                 displaySchemaResult();
             } else if (tokens.get(0).toLowerCase().equals("display") &&
-            tokens.get(1).toLowerCase().equals("info")) {
-                String tableName  = DMLParser.parseDisplayInfo(tokens);
+                    tokens.get(1).toLowerCase().equals("info")) {
+                String tableName = DMLParser.parseDisplayInfo(tokens);
+                displayInfoResult(tableName);
             } else {
                 System.out.println("Not a valid command");
             }
@@ -82,21 +99,54 @@ public class UserInterface {
         }
     }
 
+    private void displayInfoResult(String tableName) throws Exception {
+        Catalog catalog = Catalog.getCatalog();
+        TableSchema tableSchema = catalog.getSchema(tableName);
+        System.out.println("Table name: " + tableSchema.getTableName() + "\n");
+                for (AttributeSchema attributeSchema : tableSchema.getAttributes()) {
+                    System.out.println(
+                            "\t" + attributeSchema.getAttributeName() + ": " + attributeSchema.getDataType() + " "
+                                    + (attributeSchema.isPrimaryKey() ? "primaryKey"
+                                            : attributeSchema.isNotNull() ? "notnull"
+                                                    : attributeSchema.isUnique() ? "unique" : "") + "\n");
 
-    private void displayInfoResult() {
-
+                }
+                System.out.println("Pages: " + tableSchema.getNumPages() + "\n" +
+                                    "Records: " + tableSchema.getRecords());
+                MessagePrinter.printMessage(MessageType.SUCCESS, null);
     }
 
-
-    private void displaySchemaResult() {
+    private void displaySchemaResult() throws Exception {
         Catalog catalog = Catalog.getCatalog();
 
-        System.out.println("Database Location: " + catalog.getDbLocation());
-        System.out.println("Page Size: " + catalog.getPageSize());
-        System.out.println("Buffer Size: " + catalog.getBufferSize());
-        System.out.println("Table Schema: " + catalog.getSchemas());
+        System.out.println("DB Location: " + catalog.getDbLocation() + "\n" +
+                "Page Size: " + catalog.getPageSize() + "\n" +
+                "Buffer Size: " + catalog.getBufferSize() + "\n");
+
+        Map<Integer, TableSchema> tables = catalog.getSchemas();
+        if (tables.isEmpty()) {
+            System.out.println("No tables to display");
+            MessagePrinter.printMessage(MessageType.SUCCESS, null);
+        } else {
+            System.out.println("Tables:\n");
+            for (Integer tableNumber : tables.keySet()) {
+                TableSchema tableSchema = tables.get(tableNumber);
+                System.out.println("Table name: " + tableSchema.getTableName() + "\n");
+                for (AttributeSchema attributeSchema : tableSchema.getAttributes()) {
+                    System.out.println(
+                            "\t" + attributeSchema.getAttributeName() + ": " + attributeSchema.getDataType() + " "
+                                    + (attributeSchema.isPrimaryKey() ? "primaryKey"
+                                            : attributeSchema.isNotNull() ? "notnull"
+                                                    : attributeSchema.isUnique() ? "unique" : "") + "\n");
+
+                }
+                System.out.println("Pages: " + tableSchema.getNumPages() + "\n" +
+                                    "Records: " + tableSchema.getRecords());
+                MessagePrinter.printMessage(MessageType.SUCCESS, null);
+
+            }
+        }
 
     }
-
 
 }

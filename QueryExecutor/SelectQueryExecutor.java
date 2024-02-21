@@ -7,7 +7,9 @@ import StorageManager.StorageManager;
 import StorageManager.TableSchema;
 import StorageManager.Objects.AttributeSchema;
 import StorageManager.Objects.Catalog;
+import StorageManager.Objects.MessagePrinter;
 import StorageManager.Objects.Record;
+import StorageManager.Objects.MessagePrinter.MessageType;
 
 public class SelectQueryExecutor implements QueryExecutorInterface {
   private String name;
@@ -34,6 +36,7 @@ public class SelectQueryExecutor implements QueryExecutorInterface {
 
     // buid result string
     System.out.println("\n"+ buildResultString(record, attributeNames));
+    MessagePrinter.printMessage(MessageType.SUCCESS, null);
   }
 
   private String buildResultString(List<Record> records, List<String> attributeNames) {
@@ -59,7 +62,7 @@ public class SelectQueryExecutor implements QueryExecutorInterface {
       for (Object value : record.getValues()) {
         resultString.append("| " + value.toString());
       }
-      resultString.append("|\n");
+      resultString.append("|\n\n");
     }
 
     return resultString.toString();

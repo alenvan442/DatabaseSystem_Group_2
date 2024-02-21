@@ -184,7 +184,7 @@ public class DDLParser extends ParserCommon {
 				type += ")";
 			}
 			if (tokens.size() == 7 || (type.equals("char") || type.equals("varchar")) && tokens.size() == 10) { // checking for a default value
-				deflt = tokens.getLast().toLowerCase();
+				deflt = tokens.get(tokens.size() - 1).toLowerCase();
 				String[] Size = tokens.get(8).split(".");
 				int charsize = Integer.parseInt(tokens.get(8)); //what token "8" is depends on the case but I'm just setting up vars for both here
 				if (!deflt.equals("null")) {
