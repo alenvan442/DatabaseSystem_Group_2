@@ -161,7 +161,7 @@ public class TableSchema implements SchemaInterface {
     this.numPages = catalogAccessFile.readInt();
 
     // Read page order from the catalog file
-    for (int i = 0; i < this.numPages; ++i) {
+    for (int i = 0; i < this.numPages; i++) {
         this.pageOrder.add(catalogAccessFile.readInt());
     }
 

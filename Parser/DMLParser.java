@@ -19,11 +19,11 @@ public class DMLParser extends ParserCommon{
         tokens.remove(0);
 
         String nameRegex = "^[a-zA-Z][a-zA-Z0-9]*$";
-        if (tokens.get(0).matches(nameRegex)) {
+        if (!tokens.get(0).matches(nameRegex)) {
             MessagePrinter.printMessage(MessageType.ERROR, "Invalid table name");
         }
 
-        tokens.remove(0);
+        tableName = tokens.remove(0);
 
         if (!tokens.get(0).equalsIgnoreCase("values")){
             MessagePrinter.printMessage(MessageType.ERROR, "Expected values");
@@ -33,6 +33,9 @@ public class DMLParser extends ParserCommon{
         if (!tokens.get(0).equals("(")) {
             MessagePrinter.printMessage(MessageType.ERROR, "Expected '('");
         }
+
+        tokens.remove(0); // remove opening bracket
+
         String integerRegex = "^-?\\d+$";
         String doubleRegex = "^-?\\d*\\.?\\d+$";
         String stringRegex = "^\"[a-zA-Z0-9]*\"$";
@@ -41,7 +44,7 @@ public class DMLParser extends ParserCommon{
         List<Record> records = new ArrayList<>();
         while (true) {
             Record record = new Record(new ArrayList<>());
-            while (!tokens.get(0).equals(")")) {
+            while (!tokens.get(0).equals(")") || tokens.size() == 0) {
 
                 // is integer
                 if (tokens.get(0).matches(integerRegex)) {
@@ -80,6 +83,12 @@ public class DMLParser extends ParserCommon{
                 MessagePrinter.printMessage(MessageType.ERROR, tokens.get(0) + "is a invalid input");
             }
 
+            if (tokens.size() == 0) {
+                // closing bracket was missing
+                MessagePrinter.printMessage(MessageType.ERROR, "Expected ')'");
+            }
+
+            tokens.remove(0); // remove closing bracket
             records.add(record);
 
             if (tokens.get(0).equals(",")) {

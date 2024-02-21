@@ -231,7 +231,7 @@ public class Catalog implements java.io.Serializable, CatalogInterface {
     public TableSchema getSchema(String tableName) throws Exception {
         for (Integer tableNuber : this.schemas.keySet()) {
             TableSchema tableSchema = getSchema(tableNuber);
-            if (tableSchema.getTableName() == tableName) {
+            if (tableSchema.getTableName().equals(tableName)) {
                 return tableSchema;
             }
         }
