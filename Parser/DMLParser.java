@@ -91,6 +91,8 @@ public class DMLParser extends ParserCommon{
                 continue;
             } else if (tokens.get(0).equals(";")) {
                 break;
+            } else {
+                MessagePrinter.printMessage(MessageType.ERROR, "Expected a ';'");
             }
         }
         Map<String, List<Record>> map = new HashMap<>();
