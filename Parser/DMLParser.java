@@ -7,50 +7,107 @@ import StorageManager.Objects.AttributeSchema;
 import StorageManager.Objects.Catalog;
 import StorageManager.TableSchema;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import javafx.util.Pair;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 public class DMLParser extends ParserCommon{
 
-    public static Pair<String, Record> parseInsert(String dmlStatement) throws Exception {
+    public static Map<String, List<Record>> parseInsert(ArrayList<String> tokens) throws Exception {
         // Format: insert into <name> values <tuples>;
         // Catalog catalog = Catalog.getCatalog();
         String tableName = "";
+        tokens.remove(0);
+        tokens.remove(0);
 
-        ArrayList<String> tokens = Tokenize(dmlStatement);
-
-        if (!tokens.getFirst().equalsIgnoreCase("insert")
-                && !tokens.get(1).equalsIgnoreCase("into")
-                && !tokens.get(3).equalsIgnoreCase("values"))
-        {
-            MessagePrinter.printMessage(MessageType.ERROR, "incorrect insert format");
-        }
-        if (Character.isLetter(tokens.get(2).charAt(0))
-                && keywordCheck(tokens.get(2)))
-        {
-            tableName = tokens.get(2).toLowerCase();
-        }
-        else {
-            MessagePrinter.printMessage(MessageType.ERROR, "table name must be alphabets");
+        String nameRegex = "^[a-zA-Z][a-zA-Z0-9]*$";
+        if (tokens.get(0).matches(nameRegex)) {
+            MessagePrinter.printMessage(MessageType.ERROR, "Invalid table name");
         }
 
-        List<Object> records = new ArrayList<>();
+        tokens.remove(0);
 
-        // might need to do the following
-        // get the Catalog, access the map include the schema,
-        // attributes have the match the one in table, else throw error
-        // access tableName to get the attribute
-        // insert, update, check if values are passed in
+        if (!tokens.get(0).equalsIgnoreCase("values")){
+            MessagePrinter.printMessage(MessageType.ERROR, "Expected values");
+        }
+        tokens.remove(0);
 
-        return new Pair<>(tableName, new Record(records));
+        if (!tokens.get(0).equals("(")) {
+            MessagePrinter.printMessage(MessageType.ERROR, "Expected '('");
+        }
+        String integerRegex = "^-?\\d+$";
+        String doubleRegex = "^-?\\d*\\.?\\d+$";
+        String stringRegex = "^\"[a-zA-Z0-9]*\"$";
+        String booleanRegex = "^(true|false)$";
+
+        List<Record> records = new ArrayList<>();
+        while (true) {
+            Record record = new Record(new ArrayList<>());
+            while (!tokens.get(0).equals(")")) {
+
+                // is integer
+                if (tokens.get(0).matches(integerRegex)) {
+                    record.getValues().add(Integer.parseInt(tokens.get(0)));
+                    tokens.remove(0);
+                    continue;
+                }
+
+                // is double
+                if (tokens.get(0).matches(doubleRegex)) {
+                    record.getValues().add(Double.parseDouble(tokens.get(0)));
+                    tokens.remove(0);
+                    continue;
+                }
+
+                // is boolean
+                if (tokens.get(0).matches(booleanRegex)) {
+                    record.getValues().add(Boolean.parseBoolean(tokens.get(0)));
+                    tokens.remove(0);
+                    continue;
+                }
+
+                // is string literal
+                if (tokens.get(0).matches(stringRegex)) {
+                    record.getValues().add(tokens.get(0).substring(1, tokens.get(0).length() - 1));
+                    tokens.remove(0);
+                    continue;
+                }
+
+                if (tokens.get(0).equalsIgnoreCase("null")) {
+                    record.getValues().add(tokens.get(0));
+                    tokens.remove(0);
+                    continue;
+                }
+
+                MessagePrinter.printMessage(MessageType.ERROR, tokens.get(0) + "is a invalid input");
+            }
+
+            records.add(record);
+
+            if (tokens.get(0).equals(",")) {
+                tokens.remove(0);
+                if (!tokens.get(0).equals("(")) {
+                    MessagePrinter.printMessage(MessageType.ERROR, "Expected '(' after ','");
+                }
+                tokens.remove(0);
+                continue;
+            } else if (tokens.get(0).equals(";")) {
+                break;
+            }
+        }
+        Map<String, List<Record>> map = new HashMap<>();
+        map.put(tableName, records);
+        return map;
     }
 
     public static String parseSelect(ArrayList<String> tokens) throws Exception{
         // Format: select * from <name>;
         String tableName = "";
 
-        if (tokens.size() != 4 || !tokens.getFirst().equalsIgnoreCase("select")
+        if (tokens.size() != 4 || !tokens.get(0).equalsIgnoreCase("select")
                              || !tokens.get(1).equalsIgnoreCase("*")
                             || !tokens.get(2).equals("from")
                             || tokens.get(3).isEmpty()
