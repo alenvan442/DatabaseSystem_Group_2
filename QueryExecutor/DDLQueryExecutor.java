@@ -49,6 +49,7 @@ public class DDLQueryExecutor implements QueryExecutorInterface{
       case "drop":
         TableSchema tableSchema = catalog.getSchema(this.name);
         catalog.dropTableSchema(tableSchema.getTableNumber());
+        break;
       case "alter":
         tableSchema = catalog.getSchema(this.name);
         

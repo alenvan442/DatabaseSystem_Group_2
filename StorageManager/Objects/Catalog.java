@@ -112,6 +112,11 @@ public class Catalog implements java.io.Serializable, CatalogInterface {
     public void dropTableSchema(int tableNumber) {
         schemas.remove(tableNumber);
         StorageManager.getStorageManager().dropTable(tableNumber);
+        try {
+            MessagePrinter.printMessage(MessageType.SUCCESS, null);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
         // call StorageManager
     }
 
