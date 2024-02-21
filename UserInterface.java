@@ -109,14 +109,13 @@ public class UserInterface {
     private void displayInfoResult(String tableName) throws Exception {
         Catalog catalog = Catalog.getCatalog();
         TableSchema tableSchema = catalog.getSchema(tableName);
-        System.out.println("Table name: " + tableSchema.getTableName() + "\n");
+        System.out.println("Table name: " + tableSchema.getTableName());
         for (AttributeSchema attributeSchema : tableSchema.getAttributes()) {
             System.out.println(
                     "\t" + attributeSchema.getAttributeName() + ": " + attributeSchema.getDataType() + " "
                             + (attributeSchema.isPrimaryKey() ? "primaryKey"
                                     : attributeSchema.isNotNull() ? "notnull"
-                                            : attributeSchema.isUnique() ? "unique" : "")
-                            + "\n");
+                                            : attributeSchema.isUnique() ? "unique" : ""));
 
         }
         System.out.println("Pages: " + tableSchema.getNumPages() + "\n" +
@@ -139,14 +138,13 @@ public class UserInterface {
             System.out.println("Tables:\n");
             for (Integer tableNumber : tables.keySet()) {
                 TableSchema tableSchema = tables.get(tableNumber);
-                System.out.println("Table name: " + tableSchema.getTableName() + "\n");
+                System.out.println("Table name: " + tableSchema.getTableName());
                 for (AttributeSchema attributeSchema : tableSchema.getAttributes()) {
                     System.out.println(
                             "\t" + attributeSchema.getAttributeName() + ": " + attributeSchema.getDataType() + " "
                                     + (attributeSchema.isPrimaryKey() ? "primaryKey"
                                             : attributeSchema.isNotNull() ? "notnull"
-                                                    : attributeSchema.isUnique() ? "unique" : "")
-                                    + "\n");
+                                                    : attributeSchema.isUnique() ? "unique" : ""));
 
                 }
                 System.out.println("Pages: " + tableSchema.getNumPages() + "\n" +

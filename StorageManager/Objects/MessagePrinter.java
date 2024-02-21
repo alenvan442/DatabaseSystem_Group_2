@@ -11,7 +11,7 @@ public class MessagePrinter{
   public static void printMessage(MessageType messageType, String message) throws Exception {
       switch (messageType) {
           case SUCCESS:
-              System.out.println("\n" + MessageType.SUCCESS);
+              System.out.println(MessageType.SUCCESS);
               break;
           case ERROR:
               throw new Exception(message + "\n" + MessageType.ERROR);
