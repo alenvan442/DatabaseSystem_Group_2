@@ -213,7 +213,7 @@ public class Catalog implements java.io.Serializable, CatalogInterface {
         for (TableSchema schema : this.schemas.values()) {
             if (tableSchema.getTableName().equals(schema.getTableName())) {
                 MessagePrinter.printMessage(MessageType.ERROR,
-                        "Table of name" + schema.getTableName() + "already exists");
+                        "Table of name " + schema.getTableName() + " already exists");
             }
         }
         this.schemas.put(tableSchema.getTableNumber(), tableSchema);

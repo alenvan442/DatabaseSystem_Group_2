@@ -11,10 +11,10 @@ public class MessagePrinter{
   public static void printMessage(MessageType messageType, String message) throws Exception {
       switch (messageType) {
           case SUCCESS:
-              System.out.println(MessageType.SUCCESS);
+              System.out.println(MessageType.SUCCESS + "\n");
               break;
           case ERROR:
-              throw new Exception(message + "\n" + MessageType.ERROR);
+              throw new Exception(message + "\n" + MessageType.ERROR + "\n");
           default:
               throw new Exception("Unsupported message type: " + messageType);
       }

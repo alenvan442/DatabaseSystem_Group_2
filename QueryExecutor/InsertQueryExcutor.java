@@ -41,7 +41,7 @@ public class InsertQueryExcutor implements QueryExecutorInterface {
     TableSchema tableSchema = catalog.getSchema(this.name);
     List<AttributeSchema> attributeSchemas = tableSchema.getAttributes();
     for (Record record : this.records) {
-      checkCorrectNumbberOfValues(attributeSchemas, record);
+      checkCorrectNumberOfValues(attributeSchemas, record);
       checkDataTypes(attributeSchemas, record);
 
       // determine index of the primary key
@@ -66,7 +66,7 @@ public class InsertQueryExcutor implements QueryExecutorInterface {
 
   }
 
-  private void checkCorrectNumbberOfValues(List<AttributeSchema> attributeSchemas, Record record) throws Exception {
+  private void checkCorrectNumberOfValues(List<AttributeSchema> attributeSchemas, Record record) throws Exception {
     // check for correct number of values
     if (attributeSchemas.size() != record.getValues().size()) {
       StringBuilder expected = new StringBuilder();
@@ -75,7 +75,10 @@ public class InsertQueryExcutor implements QueryExecutorInterface {
 
       Pattern pattern = Pattern.compile("\\((.*?)\\)");
       Matcher matcher = pattern.matcher(query);
-      row = matcher.group(0);
+      while (matcher.find()) {
+        row = matcher.group(0);
+      }
+
 
       boolean addSpace = false;
       for (AttributeSchema attributeSchema : attributeSchemas) {
@@ -89,8 +92,7 @@ public class InsertQueryExcutor implements QueryExecutorInterface {
       for (Object value : record.getValues()) {
         if (addSpace)
           got.append(" ");
-        String valueDataType = getDataType(value,
-            attributeSchemas.get(record.getValues().indexOf(value)).getDataType());
+        String valueDataType = getDataType(value, null);
         got.append(valueDataType);
         addSpace = true;
       }
@@ -114,28 +116,28 @@ public class InsertQueryExcutor implements QueryExecutorInterface {
       if (expected.equals("integer")) {
         if (!(record.getValues().get(i) instanceof Integer)) {
           MessagePrinter.printMessage(MessageType.ERROR,
-              String.format("Invalid data type: expected (%s) got (%s)", expected, got));
+              String.format("Invalid data type: expected (%s) got (%s).", expected, got));
         }
       } else if (expected.equals("double")) {
         if (!(record.getValues().get(i) instanceof Double)) {
           MessagePrinter.printMessage(MessageType.ERROR,
-              String.format("Invalid data type: expected (%s) got (%s)", expected, got));
+              String.format("Invalid data type: expected (%s) got (%s).", expected, got));
         }
       } else if (expected.equals("boolean")) {
         if (!(record.getValues().get(i) instanceof Boolean)) {
           MessagePrinter.printMessage(MessageType.ERROR,
-              String.format("Invalid data type: expected (%s) got (%s)", expected, got));
+              String.format("Invalid data type: expected (%s) got (%s).", expected, got));
         }
       } else if (expected.contains("char") || expected.contains("varchar")) {
         if (!(record.getValues().get(i) instanceof String)) {
           MessagePrinter.printMessage(MessageType.ERROR,
-              String.format("Invalid data type: expected (%s) got (%s)", expected, got));
+              String.format("Invalid data type: expected (%s) got (%s).", expected, got));
         } else {
           checkSizeOfStrings(((String) record.getValues().get(i)), expected);
         }
       } else {
         MessagePrinter.printMessage(MessageType.ERROR,
-            String.format("Invalid data type: expected ($s) got (%s)", expected, got));
+            String.format("Invalid data type: expected ($s) got (%s).", expected, got));
       }
     }
   }
@@ -143,10 +145,18 @@ public class InsertQueryExcutor implements QueryExecutorInterface {
   private void checkSizeOfStrings(String value, String dataType) throws Exception {
     Pattern pattern = Pattern.compile("\\((\\d+)\\)");
     Matcher matcher = pattern.matcher(dataType);
-    int size = Integer.parseInt(matcher.group(0));
+    int size = 0;
+    while (matcher.find()) {
+      size = Integer.parseInt(matcher.group(0));
+    }
     pattern = Pattern.compile("\\((.*?)\\)");
     matcher = pattern.matcher(this.query);
-    String row = matcher.group(0);
+
+    String row = "";
+    while (matcher.find()) {
+      row = matcher.group(0);
+    }
+
     if (dataType.contains("char")) {
       if (value.length() != size) {
         MessagePrinter.printMessage(MessageType.ERROR,
@@ -198,7 +208,7 @@ public class InsertQueryExcutor implements QueryExecutorInterface {
     } else if (object instanceof Boolean) {
       return "boolean";
     } else if (object instanceof String) {
-      if (dataType.contains("char")) {
+      if (dataType == null || dataType.contains("char")) {
         return "char(" + ((String) object).length() + ")";
       } else {
         return "varchar(" + ((String) object).length() + ")";

@@ -43,10 +43,8 @@ public class SelectQueryExecutor implements QueryExecutorInterface {
     StringBuilder resultString = new StringBuilder();
 
     for (int i=0; i < attributeNames.size(); ++i) {
-      resultString.append("-------");
+      resultString.append("-------\n");
     }
-
-    resultString.append("\n");
 
     for (String attributeName : attributeNames) {
       resultString.append("| " + attributeName + " ");
@@ -55,14 +53,14 @@ public class SelectQueryExecutor implements QueryExecutorInterface {
     resultString.append("|\n");
 
     for (int i=0; i < attributeNames.size(); ++i) {
-      resultString.append("-------");
+      resultString.append("-------\n");
     }
 
     for (Record record : records) {
       for (Object value : record.getValues()) {
-        resultString.append("| " + value.toString());
+        resultString.append("|    " + value.toString());
       }
-      resultString.append("|\n\n");
+      resultString.append("|\n");
     }
 
     return resultString.toString();

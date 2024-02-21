@@ -113,11 +113,11 @@ public class DMLParser extends ParserCommon{
         // Format: select * from <name>;
         String tableName = "";
 
-        if (tokens.size() != 4 || !tokens.get(0).equalsIgnoreCase("select")
+        if (tokens.size() != 5 || !tokens.get(0).equalsIgnoreCase("select")
                              || !tokens.get(1).equalsIgnoreCase("*")
                             || !tokens.get(2).equals("from")
                             || tokens.get(3).isEmpty()
-                            || tokens.get(4).equals(";"))
+                            || !tokens.get(4).equals(";"))
         {
             MessagePrinter.printMessage(MessageType.ERROR, "incorrect select format");
         }

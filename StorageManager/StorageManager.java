@@ -302,8 +302,8 @@ public class StorageManager implements StorageManagerInterface {
     //---------------------------- Page Buffer ------------------------------
 
     private Page getLastPageInBuffer(PriorityQueue<Page> buffer) {
-        Page[] bufferArray = (Page[]) buffer.toArray();
-        return bufferArray[bufferArray.length - 1];
+        Object[] bufferArray = buffer.toArray();
+        return ((Page)bufferArray[bufferArray.length - 1]);
     }
 
     @Override
