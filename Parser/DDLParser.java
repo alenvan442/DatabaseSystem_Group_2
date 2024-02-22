@@ -153,7 +153,7 @@ public class DDLParser extends ParserCommon {
 			throw new Exception("Table names must be alphanumeric, begin with a letter, and not a keyword!"); // can't use a double!
 		}
 		adddrop = tokens.get(3).toLowerCase();
-		if(!adddrop.equals("add") || !adddrop.equals("drop")) {
+		if(!adddrop.equals("add") && !adddrop.equals("drop")) {
 			throw new Exception("Field 4 must be \"add\" or \"drop\"");
 		}
 		attriname = tokens.get(4).toLowerCase();
@@ -185,7 +185,7 @@ public class DDLParser extends ParserCommon {
 			}
 			if (tokens.size() == 7 || (type.equals("char") || type.equals("varchar")) && tokens.size() == 10) { // checking for a default value
 				deflt = tokens.get(tokens.size() - 1).toLowerCase();
-				String[] Size = tokens.get(8).split(".");
+				String[] Size = tokens.get(8).split("[.]");
 				int charsize = Integer.parseInt(tokens.get(8)); //what token "8" is depends on the case but I'm just setting up vars for both here
 				if (!deflt.equals("null")) {
 					switch (type) {
