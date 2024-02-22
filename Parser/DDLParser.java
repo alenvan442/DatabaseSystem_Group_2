@@ -184,9 +184,9 @@ public class DDLParser extends ParserCommon {
 				type += ")";
 			}
 			if ((tokens.size() >=9 && !type.equals("char") && !type.equals("varchar")) || (type.equals("char") || type.equals("varchar")) && tokens.size() >= 12) { // checking for a default value, hellish boolean
-				deflt = tokens.get(tokens.size() - 1).toLowerCase();
-				String[] Size = tokens.get(8).split("[.]");
-				int charsize = Integer.parseInt(tokens.get(8)); //what token "8" is depends on the case but I'm just setting up vars for both here
+				deflt = tokens.get(tokens.size() - 2).toLowerCase();
+				String[] Size = tokens.get(7).split("[.]");
+				int charsize;
 				if (!deflt.equals("null")) {
 					switch (type) {
 						case "integer": // we need to ensure this is an integer not decimal
@@ -200,18 +200,20 @@ public class DDLParser extends ParserCommon {
 							}
 							break;
 						case "boolean":
-							if (!deflt.equals("true") || !deflt.equals("false")) {
+							if (!(deflt.equals("true") || deflt.equals("false"))) {
 								throw new Exception("default is not a boolean!");
 							}
 							break;
 						case "char":
 							deflt = deflt.substring(1, deflt.length() - 1);//removing quotes, if they aren't quotes then size constraint will (probably) trip
+							charsize = Integer.parseInt(tokens.get(7)); //what token "8" is depends on the case but I'm just setting up vars for both here
 							if (charsize != deflt.length()) {
 								throw new Exception("Char default must match specified size!");
 							}
 							break;
 						case "varchar":
 							deflt = deflt.substring(1, deflt.length() - 1);//removing quotes, if they aren't quotes then size constraint will (probably) trip
+							charsize = Integer.parseInt(tokens.get(7)); //what token "8" is depends on the case but I'm just setting up vars for both here
 							if (charsize > deflt.length()) {
 								throw new Exception("Varchar default must be less than or equal to the specified size!");
 							}

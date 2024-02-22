@@ -21,3 +21,7 @@ out/production/CSCI421---Group-2/StorageManager/TableSchema.class
 out/production/CSCI421---Group-2/StorageManager/TableSchemaInterface.class
 out/production/CSCI421---Group-2/UserInterface.class
 database/
+out/production/CSCI421---Group-2/.vscode/settings.json
+DB/catalog/schema
+*.class
+out/production/CSCI421---Group-2/Parser/DDLParser.class
