@@ -52,6 +52,8 @@ public class DDLQueryExecutor implements QueryExecutorInterface{
         break;
       case "alter":
         tableSchema = catalog.getSchema(this.name);
+        catalog.alterTableSchema(tableSchema.getTableNumber(), this.attributeAction,this.attributeName,this.dataType,
+                this.defaultValue,false,false,false);
         
       default:
         break;
