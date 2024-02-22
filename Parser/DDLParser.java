@@ -153,10 +153,10 @@ public class DDLParser extends ParserCommon {
 			throw new Exception("Table names must be alphanumeric, begin with a letter, and not a keyword!"); // can't use a double!
 		}
 		adddrop = tokens.get(3).toLowerCase();
-		if(adddrop != "add" || adddrop != "drop") {
+		if(!adddrop.equals("add") || !adddrop.equals("drop")) {
 			throw new Exception("Field 4 must be \"add\" or \"drop\"");
 		}
-		attriname =  tokens.get(4).toLowerCase();
+		attriname = tokens.get(4).toLowerCase();
 		if(!(Character.isLetter(attriname.charAt(0)) && keywordCheck(attriname))){// verifying first is a letter ensures this is a legal label via the
 			throw new Exception("Attribute names must be alphanumeric, begin with a letter, and not a keyword!"); // can't use a double!
 		}
