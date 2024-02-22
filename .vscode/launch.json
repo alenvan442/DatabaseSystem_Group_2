@@ -10,7 +10,7 @@
       "request": "launch",
       "mainClass": "Main",
       "projectName": "CSCI421---Group-2_6a656bbe",
-      "args": ["./database", "1000", "1000"]
+      "args": ["database", "800", "25"]
     }
   ]
 }

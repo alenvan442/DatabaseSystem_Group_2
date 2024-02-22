@@ -27,39 +27,37 @@ public class InsertQueryExcutor implements QueryExecutorInterface {
 
   @Override
   public void excuteQuery() throws Exception {
-    int tableNumber = validateQuery();
 
     for (Record record : this.records) {
+      int tableNumber = validateQuery(record);
       StorageManager.getStorageManager().insertRecord(tableNumber, record);
     }
 
     MessagePrinter.printMessage(MessageType.SUCCESS, null);
   }
 
-  private int validateQuery() throws Exception {
+  private int validateQuery(Record record) throws Exception {
     Catalog catalog = Catalog.getCatalog();
     TableSchema tableSchema = catalog.getSchema(this.name);
     List<AttributeSchema> attributeSchemas = tableSchema.getAttributes();
-    for (Record record : this.records) {
-      checkCorrectNumberOfValues(attributeSchemas, record);
-      checkDataTypes(attributeSchemas, record);
+    checkCorrectNumberOfValues(attributeSchemas, record);
+    checkDataTypes(attributeSchemas, record);
 
-      // determine index of the primary key
-      int primaryKeyIndex = tableSchema.getPrimaryIndex();
-      List<AttributeSchema> attrs = tableSchema.getAttributes();
+    // determine index of the primary key
+    int primaryKeyIndex = tableSchema.getPrimaryIndex();
+    List<AttributeSchema> attrs = tableSchema.getAttributes();
 
-      // check unique constraints
-      List<Integer> uniqueAttributes = new ArrayList<>();
-      for (int i = 0; i < attrs.size(); i++) {
-        if (attrs.get(i).isUnique()) {
-          uniqueAttributes.add(i);
-        }
+    // check unique constraints
+    List<Integer> uniqueAttributes = new ArrayList<>();
+    for (int i = 0; i < attrs.size(); i++) {
+      if (attrs.get(i).isUnique()) {
+        uniqueAttributes.add(i);
       }
+    }
 
-      // confirm unique
-      if (uniqueAttributes.size() > 0) {
-        this.checkUniqueContraints(uniqueAttributes, tableSchema.getTableNumber(), primaryKeyIndex, record);
-      }
+    // confirm unique
+    if (uniqueAttributes.size() > 0) {
+      this.checkUniqueContraints(uniqueAttributes, tableSchema.getTableNumber(), primaryKeyIndex, record);
     }
 
     return tableSchema.getTableNumber();
@@ -111,33 +109,41 @@ public class InsertQueryExcutor implements QueryExecutorInterface {
         }
       }
 
+      Pattern pattern = Pattern.compile("\\((.*?)\\)");
+      Matcher matcher = pattern.matcher(this.query);
+
+      String row = "";
+      while (matcher.find()) {
+        row = matcher.group(0);
+      }
+
       String expected = attributeSchemas.get(i).getDataType();
       String got = getDataType(record.getValues().get(i), attributeSchemas.get(i).getDataType());
       if (expected.equals("integer")) {
         if (!(record.getValues().get(i) instanceof Integer)) {
           MessagePrinter.printMessage(MessageType.ERROR,
-              String.format("Invalid data type: expected (%s) got (%s).", expected, got));
+              String.format("row %s: Invalid data type: expected (%s) got (%s).", row, expected, got));
         }
       } else if (expected.equals("double")) {
         if (!(record.getValues().get(i) instanceof Double)) {
           MessagePrinter.printMessage(MessageType.ERROR,
-              String.format("Invalid data type: expected (%s) got (%s).", expected, got));
+            String.format("row %s: Invalid data type: expected (%s) got (%s).", row, expected, got));
         }
       } else if (expected.equals("boolean")) {
         if (!(record.getValues().get(i) instanceof Boolean)) {
           MessagePrinter.printMessage(MessageType.ERROR,
-              String.format("Invalid data type: expected (%s) got (%s).", expected, got));
+            String.format("row %s: Invalid data type: expected (%s) got (%s).", row, expected, got));
         }
       } else if (expected.contains("char") || expected.contains("varchar")) {
         if (!(record.getValues().get(i) instanceof String)) {
           MessagePrinter.printMessage(MessageType.ERROR,
-              String.format("Invalid data type: expected (%s) got (%s).", expected, got));
+            String.format("row %s: Invalid data type: expected (%s) got (%s).", row, expected, got));
         } else {
           checkSizeOfStrings(((String) record.getValues().get(i)), expected);
         }
       } else {
         MessagePrinter.printMessage(MessageType.ERROR,
-            String.format("Invalid data type: expected ($s) got (%s).", expected, got));
+            String.format("row %s: Invalid data type: expected (%s) got (%s).", row, expected, got));
       }
     }
   }

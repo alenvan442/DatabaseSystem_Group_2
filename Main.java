@@ -11,7 +11,10 @@ public class Main {
       try {
         database.start();
       } catch (Exception e) {
-        System.out.println("Failed to start database");
+        System.err.println("Failed to start database");
+        if (e.getMessage() != null) {
+          System.err.println(e.getMessage());
+        }
         System.exit(0);
       }
     }

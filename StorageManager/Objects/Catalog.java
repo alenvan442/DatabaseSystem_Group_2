@@ -2,7 +2,7 @@ package StorageManager.Objects;
 
 import java.io.File;
 import java.io.RandomAccessFile;
-import java.lang.management.MemoryType;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
@@ -51,7 +51,7 @@ public class Catalog implements java.io.Serializable, CatalogInterface {
      */
     public void saveCatalog() throws Exception {
         // Save catalog to hardware and obtain a random access file
-        File schemaFile = new File(this.catalogLocation + "/schema");
+        File schemaFile = new File(this.catalogLocation);
         RandomAccessFile catalogAccessFile = new RandomAccessFile(schemaFile, "rw");
 
         // Write page size to the catalog file
@@ -77,7 +77,7 @@ public class Catalog implements java.io.Serializable, CatalogInterface {
     @Override
     public void loadCatalog() throws Exception {
         // Load catalog from hardware and obtain a random access file
-        File schemaFile = new File(this.catalogLocation + "/schema");
+        File schemaFile = new File(this.catalogLocation);
         RandomAccessFile catalogAccessFile = new RandomAccessFile(schemaFile, "r");
 
         // Read page size from the catalog file
@@ -201,14 +201,22 @@ public class Catalog implements java.io.Serializable, CatalogInterface {
     @Override
     public void createTable(TableSchema tableSchema) throws Exception {
 
+        if (tableSchema.getAttributes().isEmpty()) {
+            MessagePrinter.printMessage(MessageType.ERROR, "Table with no attributes");
+        }
+
         // check for one primary key
         boolean primaryKeyFound = false;
+        List<String> attributeNames = new ArrayList();
         for (AttributeSchema attributeSchema : tableSchema.getAttributes()) {
             if (attributeSchema.isPrimaryKey() && !primaryKeyFound) {
                 primaryKeyFound = true;
             } else if (attributeSchema.isPrimaryKey() && primaryKeyFound) {
                 MessagePrinter.printMessage(MessageType.ERROR, "More than one primary key");
+            } else if (attributeNames.contains(attributeSchema.getAttributeName())) {
+                MessagePrinter.printMessage(MessageType.ERROR, String.format("Dublicate attribute name \"%s\"", attributeSchema.getAttributeName()));
             }
+            attributeNames.add(attributeSchema.getAttributeName());
         }
 
         if (!primaryKeyFound) {

@@ -1,7 +1,10 @@
 import java.io.File;
+import java.security.MessageDigest;
 
 import StorageManager.StorageManager;
 import StorageManager.Objects.Catalog;
+import StorageManager.Objects.MessagePrinter;
+import StorageManager.Objects.MessagePrinter.MessageType;
 
 public class Database {
     private UserInterface userInterface;
@@ -19,20 +22,25 @@ public class Database {
         System.out.println("Welcolm to CASE-C QL");
         System.out.println("Looking at " + dbLocation);
         File dbDirectory = new File(dbLocation);
-        if (dbDirectory.exists() && dbDirectory.isDirectory()) {
-            System.out.println("Database found...");
+        File schemaFile = new File(dbDirectory.getAbsolutePath().concat("/schema"));
+        if (!dbDirectory.exists()) {
+            MessagePrinter.printMessage(MessageType.ERROR, "Failed to find database at " + dbDirectory.getAbsolutePath());
+        }
+        if (schemaFile.exists()) {
+            System.out.println("Database found..." + "\n" +
+            "Restarting the database...\n" +
+            "\tIgnoring provided pages size, using stored page size");
             StorageManager.createStorageManager(bufferSize);
-            Catalog.createCatalog(dbLocation, dbDirectory.getAbsolutePath().concat("/catalog"), -1, bufferSize);
+            Catalog.createCatalog(dbDirectory.getAbsolutePath(), schemaFile.getAbsolutePath(), -1, bufferSize);
+            System.out.println("Page Size: " + Catalog.getCatalog().getPageSize());
+            System.out.println("Buffer Size: " + bufferSize);
         } else {
-            System.out.println("Creating new db at " + dbLocation);
+            System.out.println("Creating new db at " + dbDirectory.getAbsolutePath());
             File tableDirectory = new File(dbDirectory.getAbsolutePath().concat("/tables"));
-            File catalogDirectory = new File(dbDirectory.getAbsolutePath().concat("/catalog"));
-            File tableFile = new File(tableDirectory.getAbsolutePath().concat("/tables"));
-            File schemaFile = new File(catalogDirectory.getAbsolutePath() + "/schema");
-            boolean success = dbDirectory.mkdir() &&  tableDirectory.mkdir() && catalogDirectory.mkdir() && schemaFile.createNewFile();
+            boolean success = tableDirectory.mkdir() && schemaFile.createNewFile();
             if (success){
                 StorageManager.createStorageManager(bufferSize);
-                Catalog.createCatalog(dbDirectory.getAbsolutePath(), dbDirectory.getAbsolutePath().concat("/catalog"), pageSize, bufferSize);
+                Catalog.createCatalog(dbDirectory.getAbsolutePath(), schemaFile.getAbsolutePath(), pageSize, bufferSize);
                 System.out.println("New db created sucessfully");
                 System.out.println("Page Size: " + pageSize);
                 System.out.println("Buffer Size: " + bufferSize);
