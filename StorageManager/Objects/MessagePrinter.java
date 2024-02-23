@@ -8,16 +8,15 @@ public class MessagePrinter{
   }
 
   // Method to print messages
-  public static void printMessage(MessageType messageType, String message) {
+  public static void printMessage(MessageType messageType, String message) throws Exception {
       switch (messageType) {
           case SUCCESS:
-              System.out.println(message + "\nSUCCESS");
+              System.out.println(MessageType.SUCCESS + "\n");
               break;
           case ERROR:
-              System.err.println(message + "\nERROR");
-              break;
+              throw new Exception(message + "\n" + MessageType.ERROR + "\n");
           default:
-              throw new IllegalArgumentException("Unsupported message type: " + messageType);
+              throw new Exception("Unsupported message type: " + messageType);
       }
   }
 }

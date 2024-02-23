@@ -8,7 +8,15 @@ public class Main {
       int pageSize =  Integer.parseInt(args[1]);
       int bufferSize = Integer.parseInt(args[2]);
       Database database = new Database(dbLocation, pageSize, bufferSize);
-      database.start();
+      try {
+        database.start();
+      } catch (Exception e) {
+        System.err.println("Failed to start database");
+        if (e.getMessage() != null) {
+          System.err.println(e.getMessage());
+        }
+        System.exit(0);
+      }
     }
   }
 }

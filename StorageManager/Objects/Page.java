@@ -1,36 +1,53 @@
 package StorageManager.Objects;
 
+import java.io.RandomAccessFile;
+import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
-public class Page implements java.io.Serializable, Comparator<Page> {
+import StorageManager.StorageManagerObjectIntereface;
+import StorageManager.TableSchema;
+
+public class Page implements java.io.Serializable, Comparator<Page>, StorageManagerObjectIntereface {
     private int numRecords;
     private List<Record> records;
     private long priority;
     private boolean changed;
     private int tableNumber;
+    private int pageNumber;
 
-    public Page(int numRecords, int tableNumber) {
+    public Page(int numRecords, int tableNumber, int pageNumber) {
         this.numRecords = numRecords;
         this.tableNumber = tableNumber;
+        this.pageNumber = pageNumber;
+        this.changed = false;
+        this.priority = System.currentTimeMillis();
+        this.records = new ArrayList<>();
     }
 
+    public Page() {
+
+    }
     /*
      * Gets the table number that this page is associated with
-     * 
+     *
      * @return  The associated table number
      */
     public int getTableNumber() {
         return this.tableNumber;
     }
 
+    public int getPageNumber() {
+        return this.pageNumber;
+    }
+
     public int getNumRecords() {
         return numRecords;
     }
 
-    public void setNumRecords(int numRecords) {
-        this.numRecords = numRecords;
+    public void setNumRecords() {
+        this.numRecords = this.records.size();
     }
 
     public List<Record> getRecords() {
@@ -39,11 +56,12 @@ public class Page implements java.io.Serializable, Comparator<Page> {
 
     public void setRecords(List<Record> records) {
         this.records = records;
+        this.setNumRecords();
     }
 
     /*
      * Returns whether or not this page has been changed
-     * 
+     *
      * @return  bool
      */
     public boolean isChanged() {
@@ -66,32 +84,104 @@ public class Page implements java.io.Serializable, Comparator<Page> {
     }
 
     /*
-     * Adds a record to the page
-     * 
+     * Adds a record to the page in the correct order
+     *
      * @param record    The record to be inserted
-     * 
+     *
      * @return          true: insert success
      *                  false: page is full
      */
-    public boolean addRecord(Record record) {
-        if (this.spaceLeft() < record.byteSize()) {
+    public boolean addNewRecord(Record record) {
+        Catalog catalog = Catalog.getCatalog();
+        // check if record can fit in this page.
+        if ((catalog.getPageSize() - this.computeSize()) < record.computeSize()) {
             return false;
         } else {
-            // TODO, insert the record in order
-            this.numRecords++;
+            Map<Integer, TableSchema> schemas = catalog.getSchemas();
+            TableSchema schema = schemas.get(this.tableNumber);
+            int primaryIndex = schema.getPrimaryIndex();
+            String primaryType = schema.getAttributes().get(primaryIndex).getDataType();
+            Comparator<Record> comparator = recordComparator(primaryIndex, primaryType);
+            // Add record
+            this.records.add(record);
+            // sort
+            this.records.sort(comparator);
+
+            this.setNumRecords();
             this.changed = true;
+            this.setPriority();
             return true;
         }
-    } 
+    }
+
+    /*
+     * Deletes a record at a specific index
+     *
+     * @param index     The index to delete the record at
+     *
+     * @return          boolean, indicating success status
+     */
+    public boolean deleteRecord(int index) {
+        Record removed = this.records.remove(index);
+        if (!removed.equals(null)) {
+            this.changed = true;
+            this.setPriority();
+            this.setNumRecords();
+            return true;
+        }
+        return false;
+    }
+
+    /*
+     * Replaces a record at a given index
+     *
+     * @param index     The index to replace the record at
+     * @param record    The record to replace with
+     *
+     * @return          boolean, indicating success status
+     */
+    public boolean updateRecord(int index, Record record) {
+        if (this.getRecords().remove(index).equals(null)) {
+            return false;
+        } else {
+            this.getRecords().add(index, record);
+            this.changed = true;
+            this.setPriority();
+            return true;
+        }
+    }
 
     /*
      * returns the number of bytes of space is left in this page
-     * 
+     *
      * @return  int - number of bytes of space left
      */
-    public int spaceLeft() {
-        // TODO
-        return 0;
+    @Override
+    public int computeSize() {
+        // Page: numRecord, PageNumber, records..
+        int size = Integer.BYTES * 2;
+        for (Record record: this.records) {
+            size += record.computeSize();
+        }
+        return size;
+    }
+
+    @Override
+    public void writeToHardware(RandomAccessFile tableAccessFile) throws Exception {
+        tableAccessFile.writeInt(this.numRecords);
+        tableAccessFile.writeInt(this.pageNumber);
+        for (Record record: this.records) {
+           record.writeToHardware(tableAccessFile);
+        }
+    }
+
+    @Override
+    public void readFromHardware(RandomAccessFile tableAccessFile, TableSchema tableSchema) throws Exception {
+        for (int i=0; i < numRecords; ++i) {
+            Record record = new Record(new ArrayList<>());
+            record.readFromHardware(tableAccessFile, tableSchema);
+            this.records.add(record);
+        }
     }
 
     /*
@@ -109,7 +199,54 @@ public class Page implements java.io.Serializable, Comparator<Page> {
         }
     }
 
+    /**
+     * Creates a comparator to compare records based on the specified primary key index and data type.
+     *
+     * @param primaryKeyIndex The index of the primary key in each record.
+     * @param dataType        The data type to determine the comparison method. Supported types are "integer", "double",
+     *                        "boolean", "char(x)", and "varchar(x)" where x represents the length.
+     * @return A comparator for comparing records based on the specified primary key index and data type.
+     * @throws IllegalArgumentException If an unsupported data type is provided.
+     */
+    private Comparator<Record> recordComparator(int primaryKeyIndex, String dataType) {
+        return (record1, record2) -> {
+            Object obj1 = record1.getValues().get(primaryKeyIndex);
+            Object obj2 = record2.getValues().get(primaryKeyIndex);
 
+            if (dataType.equalsIgnoreCase("integer")) {
+                Integer int1 = (Integer) obj1;
+                Integer int2 = (Integer) obj2;
+                return int1.compareTo(int2);
+            } else if (dataType.equalsIgnoreCase("double")) {
+                Double double1 = (Double) obj1;
+                Double double2 = (Double) obj2;
+                return double1.compareTo(double2);
+            } else if (dataType.equalsIgnoreCase("boolean")) {
+                Boolean bool1 = (Boolean) obj1;
+                Boolean bool2 = (Boolean) obj2;
+                return Boolean.compare(bool1, bool2);
+            } else if (dataType.toLowerCase().contains("char") || dataType.toLowerCase().contains("varchar")) {
+                String str1 = obj1.toString();
+                String str2 = obj2.toString();
+                return str1.compareTo(str2);
+            } else {
+                throw new IllegalArgumentException("Unsupported data type: " + dataType);
+            }
+        };
+    }
 
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        Page other = (Page) obj;
+        if (pageNumber != other.pageNumber)
+            return false;
+        return true;
+    }
 
 }

@@ -62,10 +62,7 @@ public class AttributeSchema implements java.io.Serializable, SchemaInterface {
     }
 
     /**
-     * Saves the attribute schema information to the specified random access file.
-     *
-     * @param catalogAccessFile the random access file where the attribute schema information will be saved
-     * @throws IOException if an I/O error occurs while writing to the random access file
+     * {@inheritDoc}
      */
     @Override
     public void saveSchema(RandomAccessFile catalogAccessFile) throws IOException {
@@ -86,32 +83,15 @@ public class AttributeSchema implements java.io.Serializable, SchemaInterface {
     }
 
     /**
-     * Loads the attribute schema information from the specified random access file.
-     *
-     * @param catalogAccessFile the random access file from which the attribute schema information will be loaded
-     * @throws IOException if an I/O error occurs while reading from the random access file
+     * {@inheritDoc}
      */
     @Override
-    public void loadSchema(RandomAccessFile catalogAccessFile) throws IOException {
-        // Read the length of the attribute name from the catalog file
-        int attributeNameLength = catalogAccessFile.readShort();
+    public void loadSchema(RandomAccessFile catalogAccessFile) throws Exception {
+        // Read attribute Name
+        this.attributeName = catalogAccessFile.readUTF();
 
-        // Read bytes representing the attribute name from the catalog file
-        byte[] attributeNameBytes = new byte[attributeNameLength];
-        catalogAccessFile.read(attributeNameBytes);
-
-        // Convert the byte array to a String representing the attribute name
-        this.attributeName = new String(attributeNameBytes);
-
-        // Read the length of the data type from the catalog file
-        int dataTypeLength = catalogAccessFile.readShort();
-
-        // Read bytes representing the data type from the catalog file
-        byte[] dataTypeBytes = new byte[dataTypeLength];
-        catalogAccessFile.read(dataTypeBytes);
-
-        // Convert the byte array to a String representing the data type
-        this.dataType = new String(dataTypeBytes);
+        // Read datatype
+        this.dataType = catalogAccessFile.readUTF();
 
         // Read whether the attribute is not null from the catalog file
         this.notNull = catalogAccessFile.readBoolean();

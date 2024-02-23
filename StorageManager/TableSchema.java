@@ -1,10 +1,6 @@
 package StorageManager;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,10 +15,18 @@ public class TableSchema implements SchemaInterface {
     private List<Integer> pageOrder;
     private int numRecords;
 
-
     public TableSchema(String tableName, int tableNumber) {
       this.tableName = tableName;
-      this.tableNumber = tableNumber == -1 ? this.hashName(): tableNumber;
+      this.tableNumber = tableNumber;
+      this.numPages = 0;
+      this.pageOrder = new ArrayList<Integer>();
+      this.numRecords = 0;
+      this.attributes = new ArrayList<AttributeSchema>();
+    }
+
+    public TableSchema(String tableName) {
+      this.tableName = tableName;
+      this.tableNumber = this.hashName();
       this.numPages = 0;
       this.pageOrder = new ArrayList<Integer>();
       this.numRecords = 0;
@@ -57,8 +61,16 @@ public class TableSchema implements SchemaInterface {
     }
 
 
-    public void setNumPages(int numPages) {
-      this.numPages = numPages;
+    public void setNumPages() {
+      this.numPages = this.pageOrder.size();
+    }
+
+    public void incrementNumRecords() {
+      this.numRecords += 1;
+    }
+
+    public void decrementNumRecords() {
+      this.numRecords -= 1;
     }
 
     public List<Integer> getPageOrder() {
@@ -69,12 +81,27 @@ public class TableSchema implements SchemaInterface {
       this.pageOrder = pageOrder;
     }
 
-    public int getRecords() {
-      return numRecords;
+    public void addPageNumber(int pageNumber) {
+      this.pageOrder.add(pageNumber);
+      this.setNumPages();
     }
 
-    public void setRecords(int numRecords) {
-      this.numRecords = numRecords;
+    public void addPageNumber(int numberBefore, int pageNumber) {
+      int index = 0;
+      for (int i = 0; i < this.pageOrder.size(); i++) {
+        if (this.pageOrder.get(i) == numberBefore) {
+          index = i;
+          break;
+        }
+      }
+
+      this.pageOrder.add(index+1, pageNumber);
+      this.setNumPages();
+
+    }
+
+    public int getRecords() {
+      return numRecords;
     }
 
     private int hashName() {
@@ -89,13 +116,10 @@ public class TableSchema implements SchemaInterface {
   }
 
     /**
-   * Saves the table schema information to the specified random access file.
-   *
-   * @param catalogAccessFile the random access file where the table schema information will be saved
-   * @throws IOException if an I/O error occurs while writing to the random access file
+   * {@inheritDoc}
    */
   @Override
-  public void saveSchema(RandomAccessFile catalogAccessFile) throws IOException {
+  public void saveSchema(RandomAccessFile catalogAccessFile) throws Exception {
     // Write table name to the catalog file as UTF string
     catalogAccessFile.writeUTF(this.tableName);
 
@@ -126,19 +150,16 @@ public class TableSchema implements SchemaInterface {
     this.attributes.add(attributeSchema);
   }
 
-    /**
-   * Loads the table schema information from the specified random access file.
-   *
-   * @param catalogAccessFile the random access file from which the table schema information will be loaded
-   * @throws IOException if an I/O error occurs while reading from the random access file
+  /**
+    * {@inheritDoc}
    */
   @Override
-  public void loadSchema(RandomAccessFile catalogAccessFile) throws IOException {
+  public void loadSchema(RandomAccessFile catalogAccessFile) throws Exception {
     // Read the number of pages from the catalog file
     this.numPages = catalogAccessFile.readInt();
 
     // Read page order from the catalog file
-    for (int i = 0; i < this.numPages; ++i) {
+    for (int i = 0; i < this.numPages; i++) {
         this.pageOrder.add(catalogAccessFile.readInt());
     }
 
@@ -160,4 +181,16 @@ public class TableSchema implements SchemaInterface {
         this.attributes.add(attributeSchema);
     }
   }
+
+    public int getPrimaryIndex() {
+      // determine index of the primary key
+      int primaryIndex = -1;
+      for (int i = 0; i < this.attributes.size(); i++) {
+          if (this.attributes.get(i).isPrimaryKey()) {
+              primaryIndex = i;
+          }
+      }
+      return primaryIndex;
+    }
+
 }

@@ -1,7 +1,10 @@
 import java.io.File;
+import java.security.MessageDigest;
 
 import StorageManager.StorageManager;
 import StorageManager.Objects.Catalog;
+import StorageManager.Objects.MessagePrinter;
+import StorageManager.Objects.MessagePrinter.MessageType;
 
 public class Database {
     private UserInterface userInterface;
@@ -15,25 +18,34 @@ public class Database {
         this.dbLocation = dbLocation;
     }
 
-    public void start() {
+    public void start() throws Exception {
         System.out.println("Welcolm to CASE-C QL");
         System.out.println("Looking at " + dbLocation);
         File dbDirectory = new File(dbLocation);
-        if (dbDirectory.exists() && dbDirectory.isDirectory()) {
-            System.out.println("Database found...");
+        File schemaFile = new File(dbDirectory.getAbsolutePath().concat("/schema"));
+        if (!dbDirectory.exists()) {
+            MessagePrinter.printMessage(MessageType.ERROR, "Failed to find database at " + dbDirectory.getAbsolutePath());
+        }
+        if (schemaFile.exists()) {
+            System.out.println("Database found..." + "\n" +
+            "Restarting the database...\n" +
+            "\tIgnoring provided pages size, using stored page size");
             StorageManager.createStorageManager(bufferSize);
-            Catalog.createCatalog(dbLocation, dbDirectory.getAbsolutePath().concat("/catalog"), -1, bufferSize);
+            Catalog.createCatalog(dbDirectory.getAbsolutePath(), schemaFile.getAbsolutePath(), -1, bufferSize);
+            System.out.println("Page Size: " + Catalog.getCatalog().getPageSize());
+            System.out.println("Buffer Size: " + bufferSize);
         } else {
-            System.out.println("Creating new db at " + dbLocation);
+            System.out.println("Creating new db at " + dbDirectory.getAbsolutePath());
             File tableDirectory = new File(dbDirectory.getAbsolutePath().concat("/tables"));
-            File catalogDirectory = new File(dbDirectory.getAbsolutePath().concat("/catalog"));
-            boolean success = dbDirectory.mkdir() &&  tableDirectory.mkdir() && catalogDirectory.mkdir();
+            boolean success = tableDirectory.mkdir() && schemaFile.createNewFile();
             if (success){
                 StorageManager.createStorageManager(bufferSize);
-                Catalog.createCatalog(dbDirectory.getAbsolutePath(), dbDirectory.getAbsolutePath().concat("/catalog"), pageSize, bufferSize);
-                System.out.println("New db created sucessfully");
+                Catalog.createCatalog(dbDirectory.getAbsolutePath(), schemaFile.getAbsolutePath(), pageSize, bufferSize);
+                System.out.println("New db created successfully");
                 System.out.println("Page Size: " + pageSize);
                 System.out.println("Buffer Size: " + bufferSize);
+            } else {
+                MessagePrinter.printMessage(MessageType.ERROR, "Unable to successfully create the database.");
             }
         }
         userInterface = new UserInterface();
@@ -42,7 +54,18 @@ public class Database {
     }
 
     private void shutdown() {
-
+        Catalog catalog = Catalog.getCatalog();
+        StorageManager storageManager = StorageManager.getStorageManager();
+        try {
+            System.out.println("Safely shutting down the database...\r\n" +
+                                "Purging page buffer...");
+            storageManager.writeAll();
+            System.out.println("Saving catalog...\n\n");
+            catalog.saveCatalog();
+        } catch (Exception e) {
+            System.out.println("Database Failed to shut down successfully");
+        }
+        System.out.println("Exiting the database...");
     }
 
 }
