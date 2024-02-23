@@ -435,55 +435,38 @@ public class StorageManager implements StorageManagerInterface {
 
             Catalog catalog = Catalog.getCatalog();
             TableSchema currentSchemea = catalog.getSchema(tableNumber);
+            TableSchema newSchema = new TableSchema(currentSchemea.getTableName());
+            newSchema.setAttributes(currentSchemea.getAttributes());
 
-            //loops through all of the pages the table has.
-            for(int i = 1; i<=currentSchemea.getNumPages(); i++) {
-                    Page currentPage = getPage(tableNumber, i);
-                    Page newPage = new Page(currentPage.getNumRecords(), tableNumber, i);
-                    List<Record> currentPageRecords = currentPage.getRecords();
-                    List<Record> newPageRecords = new ArrayList<>();
-                    List<Object> newVals;
+            // get all rows in old table
+            List<Record> oldRecords = this.getAllRecords(tableNumber);
 
-                    //For each record in those tables
-                    for (int j = 0; j < currentPageRecords.size(); j++) {
-                        List<Object> oldVals = currentPageRecords.get(j).getValues();
-                        newVals = oldVals;
+            // drop old table and create new one
+            catalog.dropTableSchema(tableNumber);
+            catalog.createTable(newSchema);
 
-                        //if we are adding, create a copy of the attr there and copy the values over to it.
-                        // add the new attr to the end of the List<Object> (represnting data tuples)
+            // determine value to add in the new column and add it
+            Object newVal = isDeflt.equals("true") ? val : null;
 
-                        if(op.equals("add")) {
-                            newVals.add(new Object());
-                            //System.out.println(newVals);
-                            //if theres a default val, set it for each instances
-                            if(isDeflt.equals("true")){
-                                newVals.set(newVals.size()-1,val);
-                                //System.out.println(newVals);
-                            }
-
-                            //if we are dropping just remove the attr col
-                        }else if(op.equals("drop")){
-                            for(int k=0; k<currentSchemea.getAttributes().size(); k++ ){
-                                if(currentSchemea.getAttributes().get(k).getAttributeName().equals(attrName)){
-                                    newVals.remove(k);
-                                }
-                            }
-
-                        }else{
-                            throw new Exception("unknown op");
+            for (Record record : oldRecords) {
+                if (op.equals("add")) {
+                    // if add col, add the new value to the record
+                    record.addValue(newVal);
+                } else if (op.equals("drop")) {
+                    // if drop col, remove the col to be removed
+                    List<Object> oldVals = record.getValues();
+                    for(int k=0; k<currentSchemea.getAttributes().size(); k++ ){
+                        if(currentSchemea.getAttributes().get(k).getAttributeName().equals(attrName)){
+                            oldVals.remove(k);
+                            break;
                         }
-                        //put the records into  a page.
-                        newPageRecords.add(new Record(newVals));
                     }
-                    for(int j=0; j<newPageRecords.size(); j++){
-                        newPage.addNewRecord(newPageRecords.get(j));
-                    }
-                    buffer.remove(currentPage);
-                    buffer.add(newPage);
-
+                    record.setValues(oldVals);
+                } else {
+                    throw new Exception("unknown op");
+                }
+                this.insertRecord(tableNumber, record);
             }
-
-
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

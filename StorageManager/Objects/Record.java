@@ -22,6 +22,10 @@ public class Record implements java.io.Serializable, StorageManagerObjectInteref
         this.values = values;
     }
 
+    public void addValue(Object val) {
+        this.values.add(val);
+    }
+
     /*
      * Compares two values to one another
      * PreReq: The inputted record as well as this record, are from the same table
