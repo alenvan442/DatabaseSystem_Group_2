@@ -25,3 +25,5 @@ out/production/CSCI421---Group-2/.vscode/settings.json
 DB/catalog/schema
 *.class
 out/production/CSCI421---Group-2/Parser/DDLParser.class
+DB/tables/312
+out/production/CSCI421---Group-2/DB/tables/312
