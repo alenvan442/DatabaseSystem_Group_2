@@ -44,7 +44,7 @@ public class DMLParser extends ParserCommon{
         List<Record> records = new ArrayList<>();
         while (true) {
             Record record = new Record(new ArrayList<>());
-            while (!tokens.get(0).equals(")") || tokens.size() == 0) {
+            while (tokens.size() != 0 && !tokens.get(0).equals(")")) {
 
                 // is integer
                 if (tokens.get(0).matches(integerRegex)) {
@@ -80,7 +80,7 @@ public class DMLParser extends ParserCommon{
                     continue;
                 }
 
-                MessagePrinter.printMessage(MessageType.ERROR, tokens.get(0) + "is a invalid input");
+                MessagePrinter.printMessage(MessageType.ERROR, tokens.get(0) + "is an invalid input");
             }
 
             if (tokens.size() == 0) {

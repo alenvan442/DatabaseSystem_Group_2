@@ -28,7 +28,7 @@ public class DDLParser extends ParserCommon {
 			MessagePrinter.printMessage(MessageType.ERROR, "Open parenthesis expected in create table stmt!");
 		}
 		int i = 4;
-		while (!tokens.get(i).equals(")") && i < 99999) // I doubt anyone will write a statement 99999 tokens long, this is
+		while (!tokens.get(i).equals(")") && i < tokens.size()) // I doubt anyone will write a statement 99999 tokens long, this is
 														// just a loop failsafe for if there is no closing ")"
 		{
 			String attributeName = "";
@@ -58,7 +58,7 @@ public class DDLParser extends ParserCommon {
 				}
 				dataType += "(";
 				i++;
-				String[] size = tokens.get(i).split("."); // we need to ensure this is an integer not decimal
+				String[] size = tokens.get(i).split("[.]"); // we need to ensure this is an integer not decimal
 				if (size.length != 0) {
 					MessagePrinter.printMessage(MessageType.ERROR, "char or varchar size must be integer");
 				}
@@ -91,6 +91,8 @@ public class DDLParser extends ParserCommon {
 					notNull = true;
 				} else if (constraint.equals("unique") && !unique) {
 					unique = true;
+				} else if (constraint.equals(";")) {
+					throw new Exception("Missing ending bracket.");
 				} else {
 					MessagePrinter.printMessage(MessageType.ERROR, "Unrecognized constraint, valid constraints are notnull, primarykey, and unique");
 				}

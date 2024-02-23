@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Random;
-import StorageManager.Objects.AttributeSchema;
 import StorageManager.Objects.Catalog;
 import StorageManager.Objects.MessagePrinter;
 import StorageManager.Objects.Page;
@@ -59,7 +58,8 @@ public class StorageManager implements StorageManagerInterface {
     private void pageSplit(Page page, Record record, TableSchema tableSchema, int primaryKeyIndex) throws Exception {
         // Create a new page
         Page newPage = new Page(0, tableSchema.getTableNumber(), tableSchema.getNumPages() + 1);
-
+        tableSchema.addPageNumber(page.getPageNumber(), newPage.getPageNumber());
+        
         // Calculate the split index
         int splitIndex = (int) Math.floor(page.getRecords().size() / 2);
 
@@ -85,14 +85,12 @@ public class StorageManager implements StorageManagerInterface {
             }
         }
 
+        page.setNumRecords();
+        newPage.setNumRecords();
         page.setChanged();
 
         // Add the new page to the buffer
         this.addPageToBuffer(newPage);
-
-        // Update page order
-        Integer currentPageIndex = tableSchema.getPageOrder().indexOf(page.getPageNumber());
-        tableSchema.getPageOrder().add(currentPageIndex, newPage.getPageNumber());
     }
 
 
@@ -188,15 +186,14 @@ public class StorageManager implements StorageManagerInterface {
             // create a new page and insert the new record into it
             Page _new = new Page(0, tableNumber, 1);
             tableSchema.addPageNumber(_new.getPageNumber());
-            tableSchema.incrementNumPages();
             _new.addNewRecord(record);
+            tableSchema.incrementNumRecords();
             // then add the page to the buffer
             this.addPageToBuffer(_new);
         } else {
 
             // determine index of the primary key
             int primaryKeyIndex = tableSchema.getPrimaryIndex();
-            List<AttributeSchema> attrs = tableSchema.getAttributes();
 
             for (Integer pageNumber : tableSchema.getPageOrder()) {
                 Page page = this.getPage(tableNumber, pageNumber);
@@ -207,6 +204,7 @@ public class StorageManager implements StorageManagerInterface {
                         // page was full
                         this.pageSplit(page, record, tableSchema, primaryKeyIndex);
                     }
+                    tableSchema.incrementNumRecords();
                     break;
                 }
 
@@ -216,6 +214,7 @@ public class StorageManager implements StorageManagerInterface {
                         // page was full
                         this.pageSplit(page, record, tableSchema, primaryKeyIndex);
                     }
+                    tableSchema.incrementNumRecords();
                 }
             }
         }
@@ -398,10 +397,15 @@ public class StorageManager implements StorageManagerInterface {
             }
 
             //for every page in the buffer that has this table number, remove it.
+            List<Page> toRemove = new ArrayList<>();
             for (Page page : this.buffer) {
                 if(tableNumber == page.getTableNumber()){
-                    buffer.remove(page);
+                    toRemove.add(page);
                 }
+            }
+
+            for (Page page : toRemove) {
+                this.buffer.remove(page);
             }
 
         } catch (Exception e) {

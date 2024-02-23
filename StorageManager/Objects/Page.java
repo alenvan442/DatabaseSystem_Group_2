@@ -46,8 +46,8 @@ public class Page implements java.io.Serializable, Comparator<Page>, StorageMana
         return numRecords;
     }
 
-    public void setNumRecords(int numRecords) {
-        this.numRecords = numRecords;
+    public void setNumRecords() {
+        this.numRecords = this.records.size();
     }
 
     public List<Record> getRecords() {
@@ -56,6 +56,7 @@ public class Page implements java.io.Serializable, Comparator<Page>, StorageMana
 
     public void setRecords(List<Record> records) {
         this.records = records;
+        this.setNumRecords();
     }
 
     /*
@@ -106,8 +107,7 @@ public class Page implements java.io.Serializable, Comparator<Page>, StorageMana
             // sort
             this.records.sort(comparator);
 
-            this.numRecords++;
-            schema.incrementNumRecords();
+            this.setNumRecords();
             this.changed = true;
             this.setPriority();
             return true;
@@ -126,6 +126,7 @@ public class Page implements java.io.Serializable, Comparator<Page>, StorageMana
         if (!removed.equals(null)) {
             this.changed = true;
             this.setPriority();
+            this.setNumRecords();
             return true;
         }
         return false;

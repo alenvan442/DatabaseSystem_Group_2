@@ -61,12 +61,8 @@ public class TableSchema implements SchemaInterface {
     }
 
 
-    public void incrementNumPages() {
-      this.numPages += 1;
-    }
-
-    public void decrementNumPages() {
-      this.numPages -= 1;
+    public void setNumPages() {
+      this.numPages = this.pageOrder.size();
     }
 
     public void incrementNumRecords() {
@@ -87,6 +83,7 @@ public class TableSchema implements SchemaInterface {
 
     public void addPageNumber(int pageNumber) {
       this.pageOrder.add(pageNumber);
+      this.setNumPages();
     }
 
     public void addPageNumber(int numberBefore, int pageNumber) {
@@ -99,6 +96,7 @@ public class TableSchema implements SchemaInterface {
       }
 
       this.pageOrder.add(index+1, pageNumber);
+      this.setNumPages();
 
     }
 

@@ -153,7 +153,7 @@ public class InsertQueryExcutor implements QueryExecutorInterface {
     Matcher matcher = pattern.matcher(dataType);
     int size = 0;
     while (matcher.find()) {
-      size = Integer.parseInt(matcher.group(0));
+      size = Integer.parseInt(matcher.group(0).replaceAll("[()]", ""));
     }
     pattern = Pattern.compile("\\((.*?)\\)");
     matcher = pattern.matcher(this.query);
@@ -163,15 +163,15 @@ public class InsertQueryExcutor implements QueryExecutorInterface {
       row = matcher.group(0);
     }
 
-    if (dataType.contains("char")) {
-      if (value.length() != size) {
-        MessagePrinter.printMessage(MessageType.ERROR,
-            String.format("row %s: %s can only accept %d chars; %s is %d", row, dataType, size, value, value.length()));
-      }
-    } else {
+    if (dataType.contains("varchar")) {
       if (value.length() > size) {
         MessagePrinter.printMessage(MessageType.ERROR, String.format(
             "row %s: %s can only accept %d chars or less; %s is %d", row, dataType, size, value, value.length()));
+      }
+    } else {
+      if (value.length() != size) {
+        MessagePrinter.printMessage(MessageType.ERROR,
+            String.format("row %s: %s can only accept %d chars; %s is %d", row, dataType, size, value, value.length()));
       }
     }
   }
