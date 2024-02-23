@@ -77,23 +77,7 @@ public class InsertQueryExcutor implements QueryExecutorInterface {
         row = matcher.group(0);
       }
 
-
-      boolean addSpace = false;
-      for (AttributeSchema attributeSchema : attributeSchemas) {
-        if (addSpace)
-          got.append(" ");
-        expected.append(attributeSchema.getDataType());
-        addSpace = true;
-      }
-
-      addSpace = false;
-      for (Object value : record.getValues()) {
-        if (addSpace)
-          got.append(" ");
-        String valueDataType = getDataType(value, null);
-        got.append(valueDataType);
-        addSpace = true;
-      }
+      getGotAndExpected(attributeSchemas, record, got, expected);
 
       MessagePrinter.printMessage(MessageType.ERROR,
           String.format("row %s: Too many attributes: expected (%s) for (%s)", row, expected, got));
@@ -117,29 +101,38 @@ public class InsertQueryExcutor implements QueryExecutorInterface {
         row = matcher.group(0);
       }
 
-      String expected = attributeSchemas.get(i).getDataType();
-      String got = getDataType(record.getValues().get(i), attributeSchemas.get(i).getDataType());
-      if (expected.equals("integer")) {
+      String expectedDataType = attributeSchemas.get(i).getDataType();
+
+
+      StringBuilder expected = new StringBuilder();
+      StringBuilder got = new StringBuilder();
+
+
+      if (expectedDataType.equals("integer")) {
         if (!(record.getValues().get(i) instanceof Integer)) {
+          getGotAndExpected(attributeSchemas, record, got, expected);
           MessagePrinter.printMessage(MessageType.ERROR,
               String.format("row %s: Invalid data type: expected (%s) got (%s).", row, expected, got));
         }
-      } else if (expected.equals("double")) {
+      } else if (expectedDataType.equals("double")) {
         if (!(record.getValues().get(i) instanceof Double)) {
+          getGotAndExpected(attributeSchemas, record, got, expected);
           MessagePrinter.printMessage(MessageType.ERROR,
-            String.format("row %s: Invalid data type: expected (%s) got (%s).", row, expected, got));
+              String.format("row %s: Invalid data type: expected (%s) got (%s).", row, expected, got));
         }
-      } else if (expected.equals("boolean")) {
+      } else if (expectedDataType.equals("boolean")) {
         if (!(record.getValues().get(i) instanceof Boolean)) {
+          getGotAndExpected(attributeSchemas, record, got, expected);
           MessagePrinter.printMessage(MessageType.ERROR,
-            String.format("row %s: Invalid data type: expected (%s) got (%s).", row, expected, got));
+              String.format("row %s: Invalid data type: expected (%s) got (%s).", row, expected, got));
         }
-      } else if (expected.contains("char") || expected.contains("varchar")) {
+      } else if (expectedDataType.contains("char") || expectedDataType.contains("varchar")) {
         if (!(record.getValues().get(i) instanceof String)) {
+          getGotAndExpected(attributeSchemas, record, got, expected);
           MessagePrinter.printMessage(MessageType.ERROR,
-            String.format("row %s: Invalid data type: expected (%s) got (%s).", row, expected, got));
+              String.format("row %s: Invalid data type: expected (%s) got (%s).", row, expected, got));
         } else {
-          checkSizeOfStrings(((String) record.getValues().get(i)), expected);
+          checkSizeOfStrings(((String) record.getValues().get(i)), expectedDataType);
         }
       } else {
         MessagePrinter.printMessage(MessageType.ERROR,
@@ -171,7 +164,7 @@ public class InsertQueryExcutor implements QueryExecutorInterface {
     } else {
       if (value.length() != size) {
         MessagePrinter.printMessage(MessageType.ERROR,
-            String.format("row %s: %s can only accept %d chars; %s is %d", row, dataType, size, value, value.length()));
+            String.format("row %s: %s can only accept %d chars; \"%s\" is %d", row, dataType, size, value, value.length()));
       }
     }
   }
@@ -206,7 +199,27 @@ public class InsertQueryExcutor implements QueryExecutorInterface {
     return row.toString();
   }
 
-  public static String getDataType(Object object, String dataType) {
+  private void getGotAndExpected(List<AttributeSchema> attributeSchemas, Record record, StringBuilder got,
+      StringBuilder expected) {
+    boolean addSpace = false;
+    for (AttributeSchema attributeSchema : attributeSchemas) {
+      if (addSpace)
+        expected.append(" ");
+      expected.append(attributeSchema.getDataType());
+      addSpace = true;
+    }
+
+    addSpace = false;
+    for (Object value : record.getValues()) {
+      if (addSpace)
+        got.append(" ");
+      String valueDataType = getDataType(value, expected.toString().contains("char") ? "char": "varchar");
+      got.append(valueDataType);
+      addSpace = true;
+    }
+  }
+
+  public static String getDataType(Object object, String dataTypeForString) {
     if (object instanceof Integer) {
       return "integer";
     } else if (object instanceof Double) {
@@ -214,7 +227,7 @@ public class InsertQueryExcutor implements QueryExecutorInterface {
     } else if (object instanceof Boolean) {
       return "boolean";
     } else if (object instanceof String) {
-      if (dataType == null || dataType.contains("char")) {
+      if (dataTypeForString.contains("char")) {
         return "char(" + ((String) object).length() + ")";
       } else {
         return "varchar(" + ((String) object).length() + ")";

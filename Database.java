@@ -33,7 +33,8 @@ public class Database {
             StorageManager.createStorageManager(bufferSize);
             Catalog.createCatalog(dbDirectory.getAbsolutePath(), schemaFile.getAbsolutePath(), -1, bufferSize);
             System.out.println("Page Size: " + Catalog.getCatalog().getPageSize());
-            System.out.println("Buffer Size: " + bufferSize);
+            System.out.println("Buffer Size: " + bufferSize + "\n");
+            System.out.println("Database restarted successfully");
         } else {
             System.out.println("Creating new db at " + dbDirectory.getAbsolutePath());
             File tableDirectory = new File(dbDirectory.getAbsolutePath().concat("/tables"));
@@ -60,7 +61,7 @@ public class Database {
             System.out.println("Safely shutting down the database...\r\n" +
                                 "Purging page buffer...");
             storageManager.writeAll();
-            System.out.println("Saving catalog...\n\n");
+            System.out.println("Saving catalog...\n");
             catalog.saveCatalog();
         } catch (Exception e) {
             System.out.println("Database Failed to shut down successfully");

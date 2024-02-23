@@ -48,7 +48,7 @@ public class DDLParser extends ParserCommon {
 			String type = tokens.get(i).toLowerCase();
 			if (!(type.equals("integer") || type.equals("double") || type.equals("boolean") || type.equals("char")
 					|| type.equals("varchar"))) {
-				MessagePrinter.printMessage(MessageType.ERROR, String.format("Invalid data type %s", type));
+				MessagePrinter.printMessage(MessageType.ERROR, String.format("Invalid data type \"%s\"", type));
 			}
 			if (type.equals("char") || type.equals("varchar")) {
 				dataType += type;
