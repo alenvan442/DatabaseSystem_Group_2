@@ -61,27 +61,32 @@ public class StorageManager implements StorageManagerInterface {
         tableSchema.addPageNumber(page.getPageNumber(), newPage.getPageNumber());
 
         // Calculate the split index
-        int splitIndex = (int) Math.floor(page.getRecords().size() / 2);
-
-        // Move half of the records to the new page
-        for (Record copyRecord: page.getRecords().subList(splitIndex, page.getRecords().size())) {
-            if(!newPage.addNewRecord(copyRecord)) {
-                MessagePrinter.printMessage(MessageType.ERROR, "Failed to insert record");
-            }
-        }
-
-        page.getRecords().subList(splitIndex, page.getRecords().size()).clear();
-
-        // decide what page to add record to
-        Record lastRecordInCurrPage = page.getRecords().get(page.getRecords().size() - 1);
-        if (record.compareTo(lastRecordInCurrPage, primaryKeyIndex) < 0) {
-            // record is less than lastRecord in page
-            if (!page.addNewRecord(record)) {
-                MessagePrinter.printMessage(MessageType.ERROR, "Failed to insert record");
-            }
+        int splitIndex = 0;
+        if (page.getRecords().size() == 1) {
+            newPage.addNewRecord(record);
         } else {
-            if (!newPage.addNewRecord(record)) {
-                MessagePrinter.printMessage(MessageType.ERROR, "Failed to insert record");
+            splitIndex = (int) Math.floor(page.getRecords().size() / 2);
+            
+            // Move half of the records to the new page
+            for (Record copyRecord: page.getRecords().subList(splitIndex, page.getRecords().size())) {
+                if(!newPage.addNewRecord(copyRecord)) {
+                    pageSplit(newPage, copyRecord, tableSchema, primaryKeyIndex);
+                }
+            }
+
+            page.getRecords().subList(splitIndex, page.getRecords().size()).clear();
+
+            // decide what page to add record to
+            Record lastRecordInCurrPage = page.getRecords().get(page.getRecords().size() - 1);
+            if (record.compareTo(lastRecordInCurrPage, primaryKeyIndex) < 0) {
+                // record is less than lastRecord in page
+                if (!page.addNewRecord(record)) {
+                    pageSplit(page, record, tableSchema, primaryKeyIndex);
+                }
+            } else {
+                if (!newPage.addNewRecord(record)) {
+                    pageSplit(newPage, record, tableSchema, primaryKeyIndex);
+                }
             }
         }
 
@@ -179,8 +184,11 @@ public class StorageManager implements StorageManagerInterface {
         Catalog catalog = Catalog.getCatalog();
         // get tableSchema from the catalog
         TableSchema tableSchema = catalog.getSchema(tableNumber);
+        if (record.computeSize() > catalog.getPageSize()) {
+            MessagePrinter.printMessage(MessageType.ERROR, "Unable to insert record. The record size is larger than the page size.");
+        }        
 
-            // check to see if the file exists, if not create it
+        // check to see if the file exists, if not create it
         if (!tableFile.exists()) {
             tableFile.createNewFile();
             // create a new page and insert the new record into it
@@ -215,6 +223,7 @@ public class StorageManager implements StorageManagerInterface {
                         this.pageSplit(page, record, tableSchema, primaryKeyIndex);
                     }
                     tableSchema.incrementNumRecords();
+                    break;
                 }
             }
         }
@@ -362,7 +371,7 @@ public class StorageManager implements StorageManagerInterface {
     }
 
     private void addPageToBuffer(Page page) throws Exception {
-        if (this.buffer.size() > this.bufferSize) {
+        if (this.buffer.size() == this.bufferSize) {
             Page lruPage = this.buffer.poll(); // assuming the first Page in the buffer is LRU
             if (lruPage.isChanged()) {
                 this.writePageHardware(lruPage);
