@@ -214,6 +214,7 @@ public class DDLParser extends ParserCommon {
 							if (charsize != deflt.length()) {
 								MessagePrinter.printMessage(MessageType.ERROR, "Char default must match specified size!");
 							}
+							type = charType;
 							break;
 						case "varchar":
 							deflt = deflt.substring(1, deflt.length() - 1);//removing quotes, if they aren't quotes then size constraint will (probably) trip
@@ -221,6 +222,7 @@ public class DDLParser extends ParserCommon {
 							if (deflt.length() > charsize) {
 								MessagePrinter.printMessage(MessageType.ERROR, "Varchar default must be less than or equal to the specified size!");
 							}
+							type = charType;
 							break;
 						default:
 							MessagePrinter.printMessage(MessageType.ERROR, "Type not recognized!"); //unreachable, hopefully
@@ -231,7 +233,7 @@ public class DDLParser extends ParserCommon {
 		altervals.put("tableName", tableName);
 		altervals.put("adddrop", adddrop);
 		altervals.put("attriname", attriname);
-		altervals.put("type", charType);
+		altervals.put("type", type);
 		altervals.put("deflt", deflt);
 		altervals.put("isDeflt", isDeflt);
 		return altervals;
