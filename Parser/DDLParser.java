@@ -147,6 +147,7 @@ public class DDLParser extends ParserCommon {
 		String type = "null";
 		String deflt = "";
 		String isDeflt = "false";
+		String charType = "";
 		if (!tokens.get(0).toLowerCase().equals("alter") || !tokens.get(1).toLowerCase().equals("table")) {
 			MessagePrinter.printMessage(MessageType.ERROR, "this should be an alter table statement???");
 		}
@@ -164,25 +165,26 @@ public class DDLParser extends ParserCommon {
 		}
 		if(adddrop.equals("add")) {
 			type = tokens.get(5).toLowerCase();
+			charType = type;
 			if (!(type.equals("integer") || type.equals("double") || type.equals("boolean") || type.equals("char")
 					|| type.equals("varchar"))) {
 				MessagePrinter.printMessage(MessageType.ERROR, "Attribute types must be one of the following: integer, double, boolean, char, varchar");
 			}
 			if (type.equals("char") || type.equals("varchar")) {
-				if (!tokens.get(7).equals("(")) {
+				if (!tokens.get(6).equals("(")) {
 					MessagePrinter.printMessage(MessageType.ERROR, "Open parenthesis expected for char or varchar type");
 				}
-				type += "(";
-				String[] Size = tokens.get(8).split("."); // we need to ensure this is an integer not decimal
+				charType += "(";
+				String[] Size = tokens.get(7).split("[.]"); // we need to ensure this is an integer not decimal
 				if (!(Size.length == 1)) {
 					MessagePrinter.printMessage(MessageType.ERROR, "char or varchar size must be integer");
 				}
-				type += tokens.get(8);
+				charType += tokens.get(7);
 
-				if (!tokens.get(9).equals(")")) {
+				if (!tokens.get(8).equals(")")) {
 					MessagePrinter.printMessage(MessageType.ERROR, "Close parenthesis expected for char or varchar type");
 				}
-				type += ")";
+				charType += ")";
 			}
 			if ((tokens.size() >=9 && !type.equals("char") && !type.equals("varchar")) || (type.equals("char") || type.equals("varchar")) && tokens.size() >= 12) { // checking for a default value, hellish boolean
 				deflt = tokens.get(tokens.size() - 2).toLowerCase();
@@ -216,7 +218,7 @@ public class DDLParser extends ParserCommon {
 						case "varchar":
 							deflt = deflt.substring(1, deflt.length() - 1);//removing quotes, if they aren't quotes then size constraint will (probably) trip
 							charsize = Integer.parseInt(tokens.get(7)); //what token "8" is depends on the case but I'm just setting up vars for both here
-							if (charsize > deflt.length()) {
+							if (deflt.length() > charsize) {
 								MessagePrinter.printMessage(MessageType.ERROR, "Varchar default must be less than or equal to the specified size!");
 							}
 							break;
@@ -229,7 +231,7 @@ public class DDLParser extends ParserCommon {
 		altervals.put("tableName", tableName);
 		altervals.put("adddrop", adddrop);
 		altervals.put("attriname", attriname);
-		altervals.put("type", type);
+		altervals.put("type", charType);
 		altervals.put("deflt", deflt);
 		altervals.put("isDeflt", isDeflt);
 		return altervals;
