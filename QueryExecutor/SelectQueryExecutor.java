@@ -25,7 +25,6 @@ public class SelectQueryExecutor implements QueryExecutorInterface {
     // validate
     TableSchema tableSchema = validateQuery();
 
-
     // execute
     StorageManager storageManager = StorageManager.getStorageManager();
     List<Record> record = storageManager.getAllRecords(tableSchema.getTableNumber());
@@ -35,39 +34,58 @@ public class SelectQueryExecutor implements QueryExecutorInterface {
     }
 
     // buid result string
-    System.out.println("\n"+ buildResultString(record, attributeNames));
+    System.out.println("\n" + buildResultString(record, attributeNames));
     MessagePrinter.printMessage(MessageType.SUCCESS, null);
   }
 
   private String buildResultString(List<Record> records, List<String> attributeNames) {
+    int numAttributes = attributeNames.size();
+    int[] columnWidths = new int[numAttributes];
+
+    // Calculate maximum width for each column
+    for (int i = 0; i < numAttributes; i++) {
+      int maxWidth = attributeNames.get(i).length();
+      for (Record record : records) {
+        Object value = record.getValues().get(i);
+        if (value != null) {
+          maxWidth = Math.max(maxWidth, value.toString().length());
+        }
+      }
+      columnWidths[i] = maxWidth;
+    }
+
     StringBuilder resultString = new StringBuilder();
 
-    for (int i=0; i < attributeNames.size(); ++i) {
-      resultString.append("-------");
+    // Build top border
+    for (int width : columnWidths) {
+      resultString.append("-").append("-".repeat(width + 2)); // Add 2 for padding
     }
-    resultString.append("\n");
+    resultString.append("-\n");
 
-    for (String attributeName : attributeNames) {
-      resultString.append("| " + attributeName + " ");
+    // Build attribute names row
+    for (int i = 0; i < numAttributes; i++) {
+      String attributeName = attributeNames.get(i);
+      resultString.append(String.format("| %-" + (columnWidths[i]) + "s ", attributeName));
     }
-
     resultString.append("|\n");
 
-    for (int i=0; i < attributeNames.size(); ++i) {
-      resultString.append("-------");
+    // Build separator row
+    for (int i = 0; i < numAttributes; i++) {
+      resultString.append("|" + "-".repeat(columnWidths[i] + 2)); // Add 2 for padding
     }
-    resultString.append("\n");
+    resultString.append("|\n");
 
+    // Build data rows
     for (Record record : records) {
-      for (Object value : record.getValues()) {
-        resultString.append("|    " + value.toString());
+      for (int i = 0; i < numAttributes; i++) {
+        Object value = record.getValues().get(i);
+        String formattedValue = (value == null) ? "" : value.toString();
+        resultString.append(String.format("| %-" + (columnWidths[i]) + "s ", formattedValue));
       }
-      resultString.append("\t|\n");
+      resultString.append("|\n");
     }
 
     return resultString.toString();
-
-
   }
 
   private TableSchema validateQuery() throws Exception {
