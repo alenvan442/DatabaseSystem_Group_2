@@ -113,8 +113,8 @@ public class UserInterface {
             System.out.println(
                     "\t" + attributeSchema.getAttributeName() + ": " + attributeSchema.getDataType() + " "
                             + (attributeSchema.isPrimaryKey() ? "primaryKey"
-                                    : attributeSchema.isNotNull() ? "notnull"
-                                            : attributeSchema.isUnique() ? "unique" : ""));
+                                : ((attributeSchema.isNotNull() ? "notnull" : "") +
+                                    (attributeSchema.isUnique() ? " unique" : ""))));
 
         }
         System.out.println("Pages: " + tableSchema.getNumPages() + "\n" +
@@ -142,8 +142,8 @@ public class UserInterface {
                     System.out.println(
                             "\t" + attributeSchema.getAttributeName() + ": " + attributeSchema.getDataType() + " "
                                     + (attributeSchema.isPrimaryKey() ? "primaryKey"
-                                            : attributeSchema.isNotNull() ? "notnull"
-                                                    : attributeSchema.isUnique() ? "unique" : ""));
+                                            : ((attributeSchema.isNotNull() ? "notnull" : "") +
+                                                (attributeSchema.isUnique() ? " unique" : ""))));
 
                 }
                 System.out.println("Pages: " + tableSchema.getNumPages() + "\n" +
