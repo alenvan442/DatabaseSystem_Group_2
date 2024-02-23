@@ -153,7 +153,7 @@ public class InsertQueryExcutor implements QueryExecutorInterface {
     Matcher matcher = pattern.matcher(dataType);
     int size = 0;
     while (matcher.find()) {
-      size = Integer.parseInt(matcher.group(0).replaceAll("[()]", ""));
+      size = Integer.parseInt(matcher.group(1));
     }
     pattern = Pattern.compile("\\((.*?)\\)");
     matcher = pattern.matcher(this.query);

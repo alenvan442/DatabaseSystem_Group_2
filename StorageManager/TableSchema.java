@@ -87,17 +87,9 @@ public class TableSchema implements SchemaInterface {
     }
 
     public void addPageNumber(int numberBefore, int pageNumber) {
-      int index = 0;
-      for (int i = 0; i < this.pageOrder.size(); i++) {
-        if (this.pageOrder.get(i) == numberBefore) {
-          index = i;
-          break;
-        }
-      }
-
-      this.pageOrder.add(index+1, pageNumber);
+      int index = this.pageOrder.indexOf(numberBefore);
+      this.pageOrder.add(index + 1, pageNumber);
       this.setNumPages();
-
     }
 
     public int getRecords() {
