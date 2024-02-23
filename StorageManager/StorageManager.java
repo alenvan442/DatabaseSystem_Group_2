@@ -59,14 +59,14 @@ public class StorageManager implements StorageManagerInterface {
         // Create a new page
         Page newPage = new Page(0, tableSchema.getTableNumber(), tableSchema.getNumPages() + 1);
         tableSchema.addPageNumber(page.getPageNumber(), newPage.getPageNumber());
-        
+
         // Calculate the split index
         int splitIndex = (int) Math.floor(page.getRecords().size() / 2);
 
         // Move half of the records to the new page
         for (Record copyRecord: page.getRecords().subList(splitIndex, page.getRecords().size())) {
             if(!newPage.addNewRecord(copyRecord)) {
-                pageSplit(newPage, copyRecord, tableSchema, primaryKeyIndex);
+                MessagePrinter.printMessage(MessageType.ERROR, "Failed to insert record");
             }
         }
 
@@ -77,11 +77,11 @@ public class StorageManager implements StorageManagerInterface {
         if (record.compareTo(lastRecordInCurrPage, primaryKeyIndex) < 0) {
             // record is less than lastRecord in page
             if (!page.addNewRecord(record)) {
-                pageSplit(page, record, tableSchema, primaryKeyIndex);
+                MessagePrinter.printMessage(MessageType.ERROR, "Failed to insert record");
             }
         } else {
             if (!newPage.addNewRecord(record)) {
-                pageSplit(newPage, record, tableSchema, primaryKeyIndex);
+                MessagePrinter.printMessage(MessageType.ERROR, "Failed to insert record");
             }
         }
 
@@ -364,12 +364,11 @@ public class StorageManager implements StorageManagerInterface {
     private void addPageToBuffer(Page page) throws Exception {
         if (this.buffer.size() > this.bufferSize) {
             Page lruPage = this.buffer.poll(); // assuming the first Page in the buffer is LRU
-            if (page.isChanged()) {
+            if (lruPage.isChanged()) {
                 this.writePageHardware(lruPage);
             }
-        } else {
-            this.buffer.add(page);
         }
+        this.buffer.add(page);
     }
 
     public void writeAll() throws Exception {
