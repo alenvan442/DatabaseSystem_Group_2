@@ -148,9 +148,8 @@ public class UserInterface {
                 }
                 System.out.println("Pages: " + tableSchema.getNumPages() + "\n" +
                         "Records: " + tableSchema.getRecords());
-                MessagePrinter.printMessage(MessageType.SUCCESS, null);
-
             }
+            MessagePrinter.printMessage(MessageType.SUCCESS, null);
         }
 
     }
