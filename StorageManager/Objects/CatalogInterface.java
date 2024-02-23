@@ -32,7 +32,7 @@ public interface CatalogInterface {
    * @throws Exception - Should only be thrown if the method is called in an incorrect fashion.
    * @return - If drop - The previous index of the dropped item. If add - the index of the new attr.
    */
-  public void alterTableSchema(int tableNumber,String op, String attrName, String attrType, Object val,boolean notNull,
+  public void alterTableSchema(int tableNumber,String op, String attrName, String attrType, Object val, String isDeflt ,boolean notNull,
                                 boolean pKey, boolean unique) throws Exception;
 
   /**

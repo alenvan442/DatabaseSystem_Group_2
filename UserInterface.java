@@ -76,7 +76,7 @@ public class UserInterface {
                 HashMap<String, String> tableAlterInfo = DDLParser.parseAlterTable(tokens);
                 DDLQueryExecutor ddlQueryExecutor = new DDLQueryExecutor(tableAlterInfo.get("tableName"), "alter",
                         tableAlterInfo.get("deflt"), tableAlterInfo.get("attriname"), tableAlterInfo.get("type"),
-                        tableAlterInfo.get("adddrop"));
+                        tableAlterInfo.get("adddrop"),tableAlterInfo.get("isDeflt"));
                 ddlQueryExecutor.excuteQuery();
             } else if (tokens.get(0).toLowerCase().equals("insert") &&
                     tokens.get(1).toLowerCase().equals("into")) {

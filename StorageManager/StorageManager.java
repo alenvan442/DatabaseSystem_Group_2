@@ -421,7 +421,7 @@ public class StorageManager implements StorageManagerInterface {
      * @param val - the default value if appliacable, otherwise null.
      * @return - null
      */
-    public Exception alterTable(int tableNumber, String op, String attrName, Object val) {
+    public Exception alterTable(int tableNumber, String op, String attrName, Object val, String isDeflt) {
         try {
 
             Catalog catalog = Catalog.getCatalog();
@@ -445,10 +445,11 @@ public class StorageManager implements StorageManagerInterface {
 
                         if(op.equals("add")) {
                             newVals.add(new Object());
-
+                            //System.out.println(newVals);
                             //if theres a default val, set it for each instances
-                            if(val!=null){
-                                newVals.set(-1,val);
+                            if(isDeflt.equals("true")){
+                                newVals.set(newVals.size()-1,val);
+                                //System.out.println(newVals);
                             }
 
                             //if we are dropping just remove the attr col
@@ -464,6 +465,9 @@ public class StorageManager implements StorageManagerInterface {
                         }
                         //put the records into  a page.
                         newPageRecords.add(new Record(newVals));
+                    }
+                    for(int j=0; j<newPageRecords.size(); j++){
+                        newPage.addNewRecord(newPageRecords.get(j));
                     }
                     buffer.remove(currentPage);
                     buffer.add(newPage);

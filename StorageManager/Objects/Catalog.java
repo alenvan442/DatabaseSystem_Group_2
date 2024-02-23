@@ -124,9 +124,34 @@ public class Catalog implements java.io.Serializable, CatalogInterface {
      * {@inheritDoc}
      */
     @Override
-    public void alterTableSchema(int tableNumber,String op, String attrName, String attrType, Object val ,boolean notNull,
+    public void alterTableSchema(int tableNumber,String op, String attrName, String attrType, Object val,String isDeflt ,boolean notNull,
                                 boolean pKey, boolean unique) throws Exception {
         TableSchema table = schemas.get(tableNumber);
+
+        if(isDeflt.equals("true")) {
+            if (attrType.equals("integer")) {
+                try {
+                    val = Integer.parseInt((String) val);
+                } catch (Exception e) {
+                    MessagePrinter.printMessage(MessageType.ERROR, String.format("Invalid data type: expected (%s)", attrType));
+                }
+
+            } else if (attrType.equals("double")) {
+                try {
+                    val = Double.parseDouble((String) val);
+                } catch (Exception e) {
+                    MessagePrinter.printMessage(MessageType.ERROR, String.format("Invalid data type: expected (%s)", attrType));
+                }
+            } else if (attrType.equals("boolean")) {
+                try {
+                    val = Boolean.parseBoolean((String) val);
+                } catch (Exception e) {
+                    MessagePrinter.printMessage(MessageType.ERROR, String.format("Invalid data type: expected (%s)", attrType));
+                }
+            }
+        }
+
+
 
         List<AttributeSchema> attrList = table.getAttributes();
         if(op.equals("drop")){
@@ -147,7 +172,7 @@ public class Catalog implements java.io.Serializable, CatalogInterface {
             }
 
             // validate default data type
-            if (val != null) {
+            if (isDeflt.equals("true")) {
                 String valDataType = InsertQueryExcutor.getDataType(val, attrType);
                 if (attrType.contains("char") || attrType.contains("varchar")) {
                     if (!(val instanceof String)) {
@@ -168,11 +193,11 @@ public class Catalog implements java.io.Serializable, CatalogInterface {
                       }
 
                 } else if (attrType.equals("integer")) {
-                    if (!(val instanceof Integer)) {
+                    if (!((Integer) val instanceof Integer)) {
                         MessagePrinter.printMessage(MessageType.ERROR, String.format("Invalid data type: expected ($s) got (%s)", attrType, valDataType));
                     }
                 } else if (attrType.equals("double")) {
-                    if (!(val instanceof Double)) {
+                    if (!((Double) val instanceof Double)) {
                         MessagePrinter.printMessage(MessageType.ERROR, String.format("Invalid data type: expected ($s) got (%s)", attrType, valDataType));
                     }
                 } else if (attrType.equals("boolean")) {
@@ -191,7 +216,8 @@ public class Catalog implements java.io.Serializable, CatalogInterface {
         table.setAttributes(attrList);
 
         //call new storage manager method.
-        StorageManager.getStorageManager().alterTable(tableNumber, op, attrName, val);
+        StorageManager.getStorageManager().alterTable(tableNumber, op, attrName, val, isDeflt);
+        MessagePrinter.printMessage(MessageType.SUCCESS, null);
     }
 
 

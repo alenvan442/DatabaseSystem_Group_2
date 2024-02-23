@@ -13,15 +13,18 @@ public class DDLQueryExecutor implements QueryExecutorInterface{
   private String dataType; // alter use
   private String attributeAction;
 
+  private String isDeflt;
+
 
   public DDLQueryExecutor(String name, String action, String defaultValue, String attributeName, String dataType,
-      String attributeAction) {
+      String attributeAction, String isDeflt) {
     this.name = name;
     this.action = action;
     this.defaultValue = defaultValue;
     this.attributeName = attributeName;
     this.dataType = dataType;
     this.attributeAction = attributeAction;
+    this.isDeflt = isDeflt;
   }
 
   public DDLQueryExecutor(String name, String action) {
@@ -53,7 +56,7 @@ public class DDLQueryExecutor implements QueryExecutorInterface{
       case "alter":
         tableSchema = catalog.getSchema(this.name);
         catalog.alterTableSchema(tableSchema.getTableNumber(), this.attributeAction,this.attributeName,this.dataType,
-                this.defaultValue,false,false,false);
+                this.defaultValue,this.isDeflt,false,false,false);
         
       default:
         break;
