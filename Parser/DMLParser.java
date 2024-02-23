@@ -75,7 +75,7 @@ public class DMLParser extends ParserCommon{
                 }
 
                 if (tokens.get(0).equalsIgnoreCase("null")) {
-                    record.getValues().add(tokens.get(0));
+                    record.getValues().add(null);
                     tokens.remove(0);
                     continue;
                 }
