@@ -180,10 +180,16 @@ public class Catalog implements java.io.Serializable, CatalogInterface {
                     }
                     Pattern pattern = Pattern.compile("\\((\\d+)\\)");
                     Matcher matcher = pattern.matcher(attrType);
-                    int size = Integer.parseInt(matcher.group(0));
+                    int size;
+                    if(matcher.find()) {
+                        size = Integer.parseInt(matcher.group(1));
+                    }else {
+                        throw new Exception("No match found in pattern");
+                    }
+
                     String value = ((String) val);
                     if (attrType.contains("char")) {
-                        if (value.length() != size) {
+                        if (value.length() != size && attrType.equals("char")) {
                           MessagePrinter.printMessage(MessageType.ERROR, String.format("%s can only accept %d chars; %s is %d", attrType, size, value, value.length()));
                         }
                       } else {

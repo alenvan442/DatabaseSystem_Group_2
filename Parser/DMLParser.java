@@ -38,7 +38,7 @@ public class DMLParser extends ParserCommon{
 
         String integerRegex = "^-?\\d+$";
         String doubleRegex = "^-?\\d*\\.?\\d+$";
-        String stringRegex = "^\"[a-zA-Z0-9]*\"$";
+        String stringRegex = "^\"[ a-zA-Z0-9]*\"$";
         String booleanRegex = "^(true|false)$";
 
         List<Record> records = new ArrayList<>();
