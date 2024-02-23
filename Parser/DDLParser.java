@@ -145,7 +145,8 @@ public class DDLParser extends ParserCommon {
 		String adddrop = "";
 		String attriname = "";
 		String type = "null";
-		String deflt = "null";
+		String deflt = "";
+		String isDeflt = "false";
 		if (!tokens.get(0).toLowerCase().equals("alter") || !tokens.get(1).toLowerCase().equals("table")) {
 			MessagePrinter.printMessage(MessageType.ERROR, "this should be an alter table statement???");
 		}
@@ -185,6 +186,7 @@ public class DDLParser extends ParserCommon {
 			}
 			if ((tokens.size() >=9 && !type.equals("char") && !type.equals("varchar")) || (type.equals("char") || type.equals("varchar")) && tokens.size() >= 12) { // checking for a default value, hellish boolean
 				deflt = tokens.get(tokens.size() - 2).toLowerCase();
+				isDeflt = "true";
 				String[] Size = tokens.get(7).split("[.]");
 				int charsize;
 				if (!deflt.equals("null")) {
@@ -229,6 +231,7 @@ public class DDLParser extends ParserCommon {
 		altervals.put("attriname", attriname);
 		altervals.put("type", type);
 		altervals.put("deflt", deflt);
+		altervals.put("isDeflt", isDeflt);
 		return altervals;
 	}
 }
