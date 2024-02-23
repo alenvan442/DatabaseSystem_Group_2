@@ -28,10 +28,14 @@ public class Database {
         }
         if (schemaFile.exists()) {
             System.out.println("Database found..." + "\n" +
-            "Restarting the database...\n" +
-            "\tIgnoring provided pages size, using stored page size");
+            "Restarting the database...");
+            if (schemaFile.length() == 0) {
+                Catalog.createCatalog(dbDirectory.getAbsolutePath(), schemaFile.getAbsolutePath(), pageSize, bufferSize);
+            } else {
+                System.out.println("\tIgnoring provided pages size, using stored page size");
+                Catalog.createCatalog(dbDirectory.getAbsolutePath(), schemaFile.getAbsolutePath(), -1, bufferSize);
+            }
             StorageManager.createStorageManager(bufferSize);
-            Catalog.createCatalog(dbDirectory.getAbsolutePath(), schemaFile.getAbsolutePath(), -1, bufferSize);
             System.out.println("Page Size: " + Catalog.getCatalog().getPageSize());
             System.out.println("Buffer Size: " + bufferSize + "\n");
             System.out.println("Database restarted successfully");
