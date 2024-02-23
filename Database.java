@@ -41,9 +41,11 @@ public class Database {
             if (success){
                 StorageManager.createStorageManager(bufferSize);
                 Catalog.createCatalog(dbDirectory.getAbsolutePath(), schemaFile.getAbsolutePath(), pageSize, bufferSize);
-                System.out.println("New db created sucessfully");
+                System.out.println("New db created successfully");
                 System.out.println("Page Size: " + pageSize);
                 System.out.println("Buffer Size: " + bufferSize);
+            } else {
+                MessagePrinter.printMessage(MessageType.ERROR, "Unable to successfully create the database.");
             }
         }
         userInterface = new UserInterface();

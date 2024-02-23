@@ -59,7 +59,7 @@ public class DDLParser extends ParserCommon {
 				dataType += "(";
 				i++;
 				String[] size = tokens.get(i).split("[.]"); // we need to ensure this is an integer not decimal
-				if (size.length != 0) {
+				if (size.length != 1) {
 					MessagePrinter.printMessage(MessageType.ERROR, "char or varchar size must be integer");
 				}
 				dataType += tokens.get(i);
