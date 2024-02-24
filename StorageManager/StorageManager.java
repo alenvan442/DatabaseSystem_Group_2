@@ -65,7 +65,14 @@ public class StorageManager implements StorageManagerInterface {
         // Calculate the split index
         int splitIndex = 0;
         if (page.getRecords().size() == 1) {
-            newPage.addNewRecord(record);
+            Record lastRecordInCurrPage = page.getRecords().get(page.getRecords().size() - 1);
+            if (record.compareTo(lastRecordInCurrPage, primaryKeyIndex) < 0) {
+                page.getRecords().clear();
+                page.addNewRecord(record);
+                newPage.addNewRecord(lastRecordInCurrPage);
+            } else {
+                newPage.addNewRecord(record);
+            }
         } else {
             splitIndex = (int) Math.floor(page.getRecords().size() / 2);
 
