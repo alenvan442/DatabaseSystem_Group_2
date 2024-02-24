@@ -74,7 +74,7 @@ public class InsertQueryExcutor implements QueryExecutorInterface {
       Pattern pattern = Pattern.compile("\\((.*?)\\)");
       Matcher matcher = pattern.matcher(query);
       while (matcher.find()) {
-        row = matcher.group(0);
+        row = matcher.group(1);
       }
 
       getGotAndExpected(attributeSchemas, record, got, expected);
@@ -98,7 +98,7 @@ public class InsertQueryExcutor implements QueryExecutorInterface {
 
       String row = "";
       while (matcher.find()) {
-        row = matcher.group(this.records.indexOf(record));
+        row = matcher.group(1);
       }
 
       String expectedDataType = attributeSchemas.get(i).getDataType();
