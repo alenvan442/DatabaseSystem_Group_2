@@ -98,7 +98,7 @@ public class InsertQueryExcutor implements QueryExecutorInterface {
 
       String row = "";
       while (matcher.find()) {
-        row = matcher.group(0);
+        row = matcher.group(this.records.indexOf(record));
       }
 
       String expectedDataType = attributeSchemas.get(i).getDataType();
