@@ -201,9 +201,15 @@ public class InsertQueryExcutor implements QueryExecutorInterface {
     StringBuilder row = new StringBuilder();
     Boolean addSpace = false;
     for (Object value : record.getValues()) {
-      if (addSpace)
+      if (addSpace) {
         row.append(" ");
-      row.append(value.toString());
+      }
+
+      if (!(value == null)) {
+        row.append(value.toString());
+      } else {
+        row.append("(null)");
+      }
       addSpace = true;
     }
     return row.toString();
