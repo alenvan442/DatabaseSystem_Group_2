@@ -73,10 +73,15 @@ public class InsertQueryExcutor implements QueryExecutorInterface {
 
       Pattern pattern = Pattern.compile("\\((.*?)\\)");
       Matcher matcher = pattern.matcher(query);
+      int tupleIndex = 0;
       while (matcher.find()) {
         row = matcher.group(1);
+        if (tupleIndex == this.records.indexOf(record)) {
+          break;
+        }
+        ++tupleIndex;
       }
-
+      
       getGotAndExpected(attributeSchemas, record, got, expected);
 
       MessagePrinter.printMessage(MessageType.ERROR,
