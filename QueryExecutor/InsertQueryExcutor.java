@@ -97,8 +97,13 @@ public class InsertQueryExcutor implements QueryExecutorInterface {
       Matcher matcher = pattern.matcher(this.query);
 
       String row = "";
+      int tupleIndex = 0;
       while (matcher.find()) {
         row = matcher.group(1);
+        if (tupleIndex == this.records.indexOf(record)) {
+          break;
+        }
+        ++tupleIndex;
       }
 
       String expectedDataType = attributeSchemas.get(i).getDataType();
