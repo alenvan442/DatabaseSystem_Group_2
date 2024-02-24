@@ -23,7 +23,7 @@ public class StorageManager implements StorageManagerInterface {
      * Constructor for the storage manager
      * initializes the class by initializing the buffer
      *
-     * @param buffersize    The size of the buffer
+     * @param buffersize The size of the buffer
      */
     private StorageManager(int bufferSize) {
         this.bufferSize = bufferSize;
@@ -33,7 +33,7 @@ public class StorageManager implements StorageManagerInterface {
     /*
      * Static function that initializes the storageManager
      *
-     * @param bufferSize    The size of the buffer
+     * @param bufferSize The size of the buffer
      */
     public static void createStorageManager(int bufferSize) {
         storageManager = new StorageManager(bufferSize);
@@ -42,20 +42,19 @@ public class StorageManager implements StorageManagerInterface {
     /*
      * Getter for the global storageManager
      *
-     * @return  The storageManager
+     * @return The storageManager
      */
     public static StorageManager getStorageManager() {
         return storageManager;
     }
 
-
     /**
      * Splits a page by moving half of its records to a new page.
      *
-     * @param page         The page to split.
-     * @param record       The record to insert after the split.
-     * @param tableSchema  The schema of the table.
-     * @throws Exception   If an error occurs during the split operation.
+     * @param page        The page to split.
+     * @param record      The record to insert after the split.
+     * @param tableSchema The schema of the table.
+     * @throws Exception If an error occurs during the split operation.
      */
     private void pageSplit(Page page, Record record, TableSchema tableSchema, int primaryKeyIndex) throws Exception {
         // Create a new page
@@ -77,8 +76,8 @@ public class StorageManager implements StorageManagerInterface {
             splitIndex = (int) Math.floor(page.getRecords().size() / 2);
 
             // Move half of the records to the new page
-            for (Record copyRecord: page.getRecords().subList(splitIndex, page.getRecords().size())) {
-                if(!newPage.addNewRecord(copyRecord)) {
+            for (Record copyRecord : page.getRecords().subList(splitIndex, page.getRecords().size())) {
+                if (!newPage.addNewRecord(copyRecord)) {
                     pageSplit(newPage, copyRecord, tableSchema, primaryKeyIndex);
                 }
             }
@@ -107,14 +106,13 @@ public class StorageManager implements StorageManagerInterface {
         this.addPageToBuffer(newPage);
     }
 
-
     /*
      * Construct the full table path according to where
      * the DB is located
      *
-     * @param tableNumber   the id of the table
+     * @param tableNumber the id of the table
      *
-     * @return              the full table path
+     * @return the full table path
      */
     private String getTablePath(int tableNumber) {
         String dbLoc = Catalog.getCatalog().getDbLocation();
@@ -170,7 +168,7 @@ public class StorageManager implements StorageManagerInterface {
      * @param tableNumber The number of the table to retrieve records from.
      * @return A list of records from the specified table.
      * @throws Exception If an error occurs during the retrieval process.
-    */
+     */
     public List<Record> getAllRecords(int tableNumber) throws Exception {
         List<Record> records = new ArrayList<>(); // List to store all records
         List<Page> allPagesForTable = new ArrayList<>();
@@ -180,7 +178,7 @@ public class StorageManager implements StorageManagerInterface {
             allPagesForTable.add(this.getPage(tableNumber, pageNumber));
         }
 
-        for (Page page: allPagesForTable) {
+        for (Page page : allPagesForTable) {
             records.addAll(page.getRecords());
         }
 
@@ -194,7 +192,8 @@ public class StorageManager implements StorageManagerInterface {
         // get tableSchema from the catalog
         TableSchema tableSchema = catalog.getSchema(tableNumber);
         if (record.computeSize() > (catalog.getPageSize() - (Integer.BYTES * 2))) {
-            MessagePrinter.printMessage(MessageType.ERROR, "Unable to insert record. The record size is larger than the page size.");
+            MessagePrinter.printMessage(MessageType.ERROR,
+                    "Unable to insert record. The record size is larger than the page size.");
         }
 
         // check to see if the file exists, if not create it
@@ -217,7 +216,7 @@ public class StorageManager implements StorageManagerInterface {
                 Record lastRecordInPage = page.getRecords().get(page.getRecords().size() - 1);
                 if (record.compareTo(lastRecordInPage, primaryKeyIndex) < 0) {
                     // record is less than lastRecordPage
-                    if(!page.addNewRecord(record)) {
+                    if (!page.addNewRecord(record)) {
                         // page was full
                         this.pageSplit(page, record, tableSchema, primaryKeyIndex);
                     }
@@ -226,8 +225,8 @@ public class StorageManager implements StorageManagerInterface {
                 }
 
                 // check if we are at last page
-                if (pageNumber == tableSchema.getPageOrder().get(tableSchema.getPageOrder().size() -1)) {
-                    if(!page.addNewRecord(record)) {
+                if (pageNumber == tableSchema.getPageOrder().get(tableSchema.getPageOrder().size() - 1)) {
+                    if (!page.addNewRecord(record)) {
                         // page was full
                         this.pageSplit(page, record, tableSchema, primaryKeyIndex);
                     }
@@ -259,7 +258,7 @@ public class StorageManager implements StorageManagerInterface {
                 int comparison = lastRecord.compareTo(record, primaryIndex);
                 if (comparison == 0) {
                     // found the record, delete it
-                    page.deleteRecord(page.getNumRecords()-1);
+                    page.deleteRecord(page.getNumRecords() - 1);
                     return page;
                 } else if (comparison > 0) {
                     // found the correct page
@@ -273,7 +272,8 @@ public class StorageManager implements StorageManagerInterface {
 
             if (foundPage.equals(null)) {
                 MessagePrinter.printMessage(MessageType.ERROR,
-                    String.format("No record of primary key: (%d), was found.", record.getValues().get(primaryIndex)));
+                        String.format("No record of primary key: (%d), was found.",
+                                record.getValues().get(primaryIndex)));
                 return null;
             } else {
                 // a page was found but deletion has yet to happen
@@ -285,7 +285,8 @@ public class StorageManager implements StorageManagerInterface {
                     }
                 }
                 MessagePrinter.printMessage(MessageType.ERROR,
-                    String.format("No record of primary key: (%d), was found.", record.getValues().get(primaryIndex)));
+                        String.format("No record of primary key: (%d), was found.",
+                                record.getValues().get(primaryIndex)));
                 return null;
             }
 
@@ -298,7 +299,8 @@ public class StorageManager implements StorageManagerInterface {
 
     public void updateRecord(int tableNumber, Record record) throws Exception {
 
-        Page deletePage = this.deleteRecord(tableNumber, record); // if the delete was successful then deletePage != null
+        Page deletePage = this.deleteRecord(tableNumber, record); // if the delete was successful then deletePage !=
+                                                                  // null
 
         if (deletePage.equals(null)) {
             // no record found
@@ -316,17 +318,17 @@ public class StorageManager implements StorageManagerInterface {
 
     }
 
-    //---------------------------- Page Buffer ------------------------------
+    // ---------------------------- Page Buffer ------------------------------
 
     private Page getLastPageInBuffer(PriorityQueue<Page> buffer) {
         Object[] bufferArray = buffer.toArray();
-        return ((Page)bufferArray[bufferArray.length - 1]);
+        return ((Page) bufferArray[bufferArray.length - 1]);
     }
 
     @Override
     public Page getPage(int tableNumber, int pageNumber) throws Exception {
         // check if page is in buffer
-        for (Page page: this.buffer) {
+        for (Page page : this.buffer) {
             if (page.getTableNumber() == tableNumber && page.getPageNumber() == pageNumber) {
                 page.setPriority();
                 return page;
@@ -373,7 +375,7 @@ public class StorageManager implements StorageManagerInterface {
         byte[] buffer = new byte[catalog.getPageSize()];
         random.nextBytes(buffer);
         tableAccessFile.write(buffer, 0, catalog.getPageSize());
-        tableAccessFile.seek(tableAccessFile.getFilePointer() -  catalog.getPageSize()); // move pointer back
+        tableAccessFile.seek(tableAccessFile.getFilePointer() - catalog.getPageSize()); // move pointer back
 
         page.writeToHardware(tableAccessFile);
         tableAccessFile.close();
@@ -400,23 +402,24 @@ public class StorageManager implements StorageManagerInterface {
 
     /**
      * Method to drop whole tables from the DB
+     *
      * @param tableNumber - the tablenumber for the table we are removing
      */
     public void dropTable(int tableNumber) {
 
-        //Checks the hardware for a tablefile. If it finds it remove it.
+        // Checks the hardware for a tablefile. If it finds it remove it.
         String tablePath = this.getTablePath(tableNumber);
         File tableFile = new File(tablePath);
         try {
-            //if its on the file system remove it.
+            // if its on the file system remove it.
             if (tableFile.exists()) {
                 tableFile.delete();
             }
 
-            //for every page in the buffer that has this table number, remove it.
+            // for every page in the buffer that has this table number, remove it.
             List<Page> toRemove = new ArrayList<>();
             for (Page page : this.buffer) {
-                if(tableNumber == page.getTableNumber()){
+                if (tableNumber == page.getTableNumber()) {
                     toRemove.add(page);
                 }
             }
@@ -433,61 +436,61 @@ public class StorageManager implements StorageManagerInterface {
 
     /**
      * Method meant to alter table attributes universally
+     *
      * @param tableNumber - the number of the table we are altering
-     * @param op - the operation we are performing on the table, add or drop
-     * @param attrName - attrName name of the attr we are altering
-     * @param val - the default value if appliacable, otherwise null.
+     * @param op          - the operation we are performing on the table, add or
+     *                    drop
+     * @param attrName    - attrName name of the attr we are altering
+     * @param val         - the default value if appliacable, otherwise null.
      * @return - null
+     * @throws Exception
      */
-    public Exception alterTable(int tableNumber, String op, String attrName, Object val, String isDeflt, List<AttributeSchema> attrList) {
-        try {
+    public Exception alterTable(int tableNumber, String op, String attrName, Object val, String isDeflt,
+            List<AttributeSchema> attrList) throws Exception {
+        Catalog catalog = Catalog.getCatalog();
+        TableSchema currentSchemea = catalog.getSchema(tableNumber);
+        TableSchema newSchema = new TableSchema(currentSchemea.getTableName());
+        newSchema.setAttributes(attrList);
 
-            Catalog catalog = Catalog.getCatalog();
-            TableSchema currentSchemea = catalog.getSchema(tableNumber);
-            TableSchema newSchema = new TableSchema(currentSchemea.getTableName());
-            newSchema.setAttributes(attrList);
+        // get all rows in old table
+        List<Record> oldRecords = this.getAllRecords(tableNumber);
+        List<Record> newRecords = new ArrayList<>();
 
-            // get all rows in old table
-            List<Record> oldRecords = this.getAllRecords(tableNumber);
-            List<Record> newRecords = new ArrayList<>();
+        // determine value to add in the new column and add it
+        Object newVal = isDeflt.equals("true") ? val : null;
 
-            // determine value to add in the new column and add it
-            Object newVal = isDeflt.equals("true") ? val : null;
-
-            for (Record record : oldRecords) {
-                if (op.equals("add")) {
-                    // if add col, add the new value to the record
-                    record.addValue(newVal);
-                    if (record.computeSize() > (catalog.getPageSize() - (Integer.BYTES * 2))) {
-                        MessagePrinter.printMessage(MessageType.ERROR, "Alter will cause a record to be greater than the page size. Aborting alter...");
-                    }
-                } else if (op.equals("drop")) {
-                    // if drop col, remove the col to be removed
-                    List<Object> oldVals = record.getValues();
-                    for(int k=0; k<currentSchemea.getAttributes().size(); k++ ){
-                        if(currentSchemea.getAttributes().get(k).getAttributeName().equals(attrName)){
-                            oldVals.remove(k);
-                            break;
-                        }
-                    }
-                    record.setValues(oldVals);
-                } else {
-                    throw new Exception("unknown op");
+        for (Record record : oldRecords) {
+            if (op.equals("add")) {
+                // if add col, add the new value to the record
+                record.addValue(newVal);
+                if (record.computeSize() > (catalog.getPageSize() - (Integer.BYTES * 2))) {
+                    MessagePrinter.printMessage(MessageType.ERROR,
+                            "Alter will cause a record to be greater than the page size. Aborting alter...");
                 }
-                newRecords.add(record);
+            } else if (op.equals("drop")) {
+                // if drop col, remove the col to be removed
+                List<Object> oldVals = record.getValues();
+                for (int k = 0; k < currentSchemea.getAttributes().size(); k++) {
+                    if (currentSchemea.getAttributes().get(k).getAttributeName().equals(attrName)) {
+                        oldVals.remove(k);
+                        break;
+                    }
+                }
+                record.setValues(oldVals);
+            } else {
+                throw new Exception("unknown op");
             }
-
-            // drop old table and create new one
-            catalog.dropTableSchema(tableNumber);
-            catalog.createTable(newSchema);
-
-            for (Record record : newRecords) {
-                this.insertRecord(tableNumber, record);
-            }
-
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+            newRecords.add(record);
         }
+
+        // drop old table and create new one
+        catalog.dropTableSchema(tableNumber);
+        catalog.createTable(newSchema);
+
+        for (Record record : newRecords) {
+            this.insertRecord(tableNumber, record);
+        }
+
         return null;
     }
 }
