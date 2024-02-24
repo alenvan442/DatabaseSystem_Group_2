@@ -2,13 +2,17 @@ package StorageManager.Objects;
 
 import java.io.File;
 import java.io.RandomAccessFile;
+import java.text.AttributedCharacterIterator.Attribute;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import javax.management.RuntimeErrorException;
 
 import QueryExecutor.InsertQueryExcutor;
 import StorageManager.StorageManager;
@@ -110,14 +114,12 @@ public class Catalog implements java.io.Serializable, CatalogInterface {
      */
     @Override
     public void dropTableSchema(int tableNumber) {
-        schemas.remove(tableNumber);
-        StorageManager.getStorageManager().dropTable(tableNumber);
         try {
-            MessagePrinter.printMessage(MessageType.SUCCESS, null);
+            schemas.remove(tableNumber);
+            StorageManager.getStorageManager().dropTable(tableNumber);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        // call StorageManager
     }
 
     /**
@@ -153,7 +155,9 @@ public class Catalog implements java.io.Serializable, CatalogInterface {
 
 
 
-        List<AttributeSchema> attrList = table.getAttributes();
+        //List<AttributeSchema> attrList = table.getAttributes();
+        List<AttributeSchema> attrList = new ArrayList<>();
+        attrList.addAll(table.getAttributes());
         if(op.equals("drop")){
             for(int i=0; i<attrList.size(); i++) {
                 if(attrList.get(i).getAttributeName().equals(attrName)){
@@ -219,11 +223,12 @@ public class Catalog implements java.io.Serializable, CatalogInterface {
         }else{
             throw new Exception("Invalid Command");
         }
-        table.setAttributes(attrList);
 
         //call new storage manager method.
-        StorageManager.getStorageManager().alterTable(tableNumber, op, attrName, val, isDeflt);
-        MessagePrinter.printMessage(MessageType.SUCCESS, null);
+        StorageManager.getStorageManager().alterTable(tableNumber, op, attrName, val, isDeflt, attrList);
+        
+        // save the schema afterwards in the off chance we need to rollback
+        table.setAttributes(attrList);
     }
 
 
@@ -262,7 +267,6 @@ public class Catalog implements java.io.Serializable, CatalogInterface {
             }
         }
         this.schemas.put(tableSchema.getTableNumber(), tableSchema);
-        MessagePrinter.printMessage(MessageType.SUCCESS, null);
     }
 
     public Map<Integer, TableSchema> getSchemas() {

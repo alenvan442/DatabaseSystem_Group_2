@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Random;
+
+import StorageManager.Objects.AttributeSchema;
 import StorageManager.Objects.Catalog;
 import StorageManager.Objects.MessagePrinter;
 import StorageManager.Objects.Page;
@@ -430,20 +432,17 @@ public class StorageManager implements StorageManagerInterface {
      * @param val - the default value if appliacable, otherwise null.
      * @return - null
      */
-    public Exception alterTable(int tableNumber, String op, String attrName, Object val, String isDeflt) {
+    public Exception alterTable(int tableNumber, String op, String attrName, Object val, String isDeflt, List<AttributeSchema> attrList) {
         try {
 
             Catalog catalog = Catalog.getCatalog();
             TableSchema currentSchemea = catalog.getSchema(tableNumber);
             TableSchema newSchema = new TableSchema(currentSchemea.getTableName());
-            newSchema.setAttributes(currentSchemea.getAttributes());
+            newSchema.setAttributes(attrList);
 
             // get all rows in old table
             List<Record> oldRecords = this.getAllRecords(tableNumber);
-
-            // drop old table and create new one
-            catalog.dropTableSchema(tableNumber);
-            catalog.createTable(newSchema);
+            List<Record> newRecords = new ArrayList<>();
 
             // determine value to add in the new column and add it
             Object newVal = isDeflt.equals("true") ? val : null;
@@ -452,6 +451,9 @@ public class StorageManager implements StorageManagerInterface {
                 if (op.equals("add")) {
                     // if add col, add the new value to the record
                     record.addValue(newVal);
+                    if (record.computeSize() > catalog.getPageSize()) {
+                        MessagePrinter.printMessage(MessageType.ERROR, "Alter will cause a record to be greater than the page size. Aborting alter...");
+                    }
                 } else if (op.equals("drop")) {
                     // if drop col, remove the col to be removed
                     List<Object> oldVals = record.getValues();
@@ -465,8 +467,17 @@ public class StorageManager implements StorageManagerInterface {
                 } else {
                     throw new Exception("unknown op");
                 }
+                newRecords.add(record);
+            }
+
+            // drop old table and create new one
+            catalog.dropTableSchema(tableNumber);
+            catalog.createTable(newSchema);
+
+            for (Record record : newRecords) {
                 this.insertRecord(tableNumber, record);
             }
+
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

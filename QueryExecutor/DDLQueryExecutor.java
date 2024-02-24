@@ -2,6 +2,8 @@ package QueryExecutor;
 
 import StorageManager.TableSchema;
 import StorageManager.Objects.Catalog;
+import StorageManager.Objects.MessagePrinter;
+import StorageManager.Objects.MessagePrinter.MessageType;
 
 public class DDLQueryExecutor implements QueryExecutorInterface{
 
@@ -48,16 +50,18 @@ public class DDLQueryExecutor implements QueryExecutorInterface{
     switch (this.action) {
       case "create":
         catalog.createTable(this.tableSchema);
+        MessagePrinter.printMessage(MessageType.SUCCESS, null);
         break;
       case "drop":
         TableSchema tableSchema = catalog.getSchema(this.name);
         catalog.dropTableSchema(tableSchema.getTableNumber());
+        MessagePrinter.printMessage(MessageType.SUCCESS, null);
         break;
       case "alter":
         tableSchema = catalog.getSchema(this.name);
         catalog.alterTableSchema(tableSchema.getTableNumber(), this.attributeAction,this.attributeName,this.dataType,
                 this.defaultValue,this.isDeflt,false,false,false);
-        
+        MessagePrinter.printMessage(MessageType.SUCCESS, null);
       default:
         break;
     }
