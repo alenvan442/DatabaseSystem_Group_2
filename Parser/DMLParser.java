@@ -23,7 +23,7 @@ public class DMLParser extends ParserCommon{
             MessagePrinter.printMessage(MessageType.ERROR, "Invalid table name");
         }
 
-        tableName = tokens.remove(0);
+        tableName = tokens.remove(0).toLowerCase();
 
         if (!tokens.get(0).equalsIgnoreCase("values")){
             MessagePrinter.printMessage(MessageType.ERROR, "Expected values");

@@ -151,7 +151,7 @@ public class DDLParser extends ParserCommon {
 		if (!tokens.get(0).toLowerCase().equals("alter") || !tokens.get(1).toLowerCase().equals("table")) {
 			MessagePrinter.printMessage(MessageType.ERROR, "this should be an alter table statement???");
 		}
-		tableName = tokens.get(2);
+		tableName = tokens.get(2).toLowerCase();
 		if(!(Character.isLetter(tableName.charAt(0)) && keywordCheck(tableName))){// verifying first is a letter ensures this is a legal label via the
 			MessagePrinter.printMessage(MessageType.ERROR,"Table names must be alphanumeric, begin with a letter, and not a keyword!"); // can't use a double!
 		}

@@ -68,7 +68,7 @@ public class StorageManager implements StorageManagerInterface {
             newPage.addNewRecord(record);
         } else {
             splitIndex = (int) Math.floor(page.getRecords().size() / 2);
-            
+
             // Move half of the records to the new page
             for (Record copyRecord: page.getRecords().subList(splitIndex, page.getRecords().size())) {
                 if(!newPage.addNewRecord(copyRecord)) {
@@ -186,9 +186,9 @@ public class StorageManager implements StorageManagerInterface {
         Catalog catalog = Catalog.getCatalog();
         // get tableSchema from the catalog
         TableSchema tableSchema = catalog.getSchema(tableNumber);
-        if (record.computeSize() > catalog.getPageSize()) {
+        if (record.computeSize() > (catalog.getPageSize() - (Integer.BYTES * 2))) {
             MessagePrinter.printMessage(MessageType.ERROR, "Unable to insert record. The record size is larger than the page size.");
-        }        
+        }
 
         // check to see if the file exists, if not create it
         if (!tableFile.exists()) {
