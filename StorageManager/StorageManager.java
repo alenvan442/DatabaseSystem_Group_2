@@ -458,7 +458,7 @@ public class StorageManager implements StorageManagerInterface {
                 if (op.equals("add")) {
                     // if add col, add the new value to the record
                     record.addValue(newVal);
-                    if (record.computeSize() > catalog.getPageSize()) {
+                    if (record.computeSize() > (catalog.getPageSize() - (Integer.BYTES * 2))) {
                         MessagePrinter.printMessage(MessageType.ERROR, "Alter will cause a record to be greater than the page size. Aborting alter...");
                     }
                 } else if (op.equals("drop")) {
