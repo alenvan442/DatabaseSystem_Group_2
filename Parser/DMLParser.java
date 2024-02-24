@@ -80,7 +80,7 @@ public class DMLParser extends ParserCommon{
                     continue;
                 }
 
-                MessagePrinter.printMessage(MessageType.ERROR, tokens.get(0) + "is an invalid input");
+                MessagePrinter.printMessage(MessageType.ERROR, tokens.get(0) + " is an invalid input");
             }
 
             if (tokens.size() == 0) {
