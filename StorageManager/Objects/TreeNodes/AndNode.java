@@ -2,14 +2,14 @@ package StorageManager.Objects.TreeNodes;
 
 import StorageManager.TableSchema;
 import StorageManager.Objects.Record;
-import StorageManager.Objects.TreeNodes.Interfaces.ComparisonNode;
+import StorageManager.Objects.TreeNodes.Interfaces.OperatorNode;
 
-public class AndNode implements ComparisonNode {
+public class AndNode implements OperatorNode {
 
-    ComparisonNode leftChild;
-    ComparisonNode rigthChild;
+    OperatorNode leftChild;
+    OperatorNode rigthChild;
 
-    public AndNode(ComparisonNode left, ComparisonNode right) {
+    public AndNode(OperatorNode left, OperatorNode right) {
         this.leftChild = left;
         this.rigthChild = right;
     }
@@ -18,5 +18,5 @@ public class AndNode implements ComparisonNode {
     public boolean evaluate(TableSchema schema, Record record) {
         return leftChild.evaluate(schema, record) && rigthChild.evaluate(schema, record);
     }
-    
+
 }
