@@ -111,6 +111,7 @@ public class DMLParser extends ParserCommon{
 
     public static String parseSelect(ArrayList<String> tokens) throws Exception{
         // Format: select * from <name>;
+        // only deal with all attributes
         String tableName = "";
 
         if (tokens.size() != 5 || !tokens.get(0).equalsIgnoreCase("select")
@@ -129,6 +130,38 @@ public class DMLParser extends ParserCommon{
             }
         }
         return tableName;
+    }
+
+    public static ArrayList<String> parseFrom(ArrayList<String> tokens) throws Exception {
+        // from tableName, tableName, ......
+        ArrayList<String> tableName = new ArrayList<>();
+        String nameRegex = "^[a-zA-Z][a-zA-Z0-9]*$";
+
+        if (tokens.size() <= 1) {
+            MessagePrinter.printMessage(MessageType.ERROR, "incorrect format");
+        }
+
+        if(!tokens.get(0).equalsIgnoreCase("from")) {
+            MessagePrinter.printMessage(MessageType.ERROR, "first should be from");
+        }
+        else {
+            // table name(s) in a string
+            for (int i = 1; i < tokens.size() - 1; i++) {
+                if (tokens.get(i).contains(nameRegex)){
+                    tableName.add(tokens.get(i));
+                }
+            }
+        }
+        return tableName;
+    }
+
+    public static String parseWhere(ArrayList<String> tokens) throws Exception {
+        // where followed by values, nodes and operands, such as and, or, =, <, >, <=, >=, !=
+        if(!tokens.get(0).equalsIgnoreCase("from")) {
+            MessagePrinter.printMessage(MessageType.ERROR, "first should be where");
+        }
+        // TODO
+        return "";
     }
 
     public static void parseDisplaySchema(ArrayList<String> tokens) throws Exception {
@@ -162,10 +195,13 @@ public class DMLParser extends ParserCommon{
     }
 
     public static void parseDelete(String dmlStatement) {
-
+        // delete from foo;
+        // delete from foo where bar = 10;
+        // TODO
     }
 
     public static void parseUpdate(String dmlStatement) {
         // delete / insert record
+        // TODO
     }
 }
