@@ -68,4 +68,11 @@ public class Token {
         return val.length();
     }
 
+    public String getPrior(){
+        return prior;
+    }
+    public String getLatter(){
+        return latter;
+    }
+
 }
