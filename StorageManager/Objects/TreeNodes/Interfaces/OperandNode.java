@@ -1,4 +1,4 @@
-package StorageManager.Objects.TreeNodes;
+package StorageManager.Objects.TreeNodes.Interfaces;
 
 import StorageManager.TableSchema;
 import StorageManager.Objects.Record;
@@ -6,7 +6,7 @@ import StorageManager.Objects.Record;
 /*
  * Interface for the leaf nodes
  */
-public interface WhereLeafNodeInterface {
+public interface OperandNode {
     
     /*
      * Returns the value of the leaf node
