@@ -1,3 +1,4 @@
+package Parser;
 public enum Type {
     IDKEY,
     IDDOUBLE,

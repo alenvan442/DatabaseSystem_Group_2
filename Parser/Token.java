@@ -1,5 +1,4 @@
 package Parser;
-import Type;
 
 public class Token {
     private Type type;
