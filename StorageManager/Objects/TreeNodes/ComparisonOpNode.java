@@ -1,20 +1,20 @@
 package StorageManager.Objects.TreeNodes;
 
 import StorageManager.TableSchema;
-import StorageManager.Objects.TreeNodes.Interfaces.ComparisonNode;
+import StorageManager.Objects.TreeNodes.Interfaces.OperatorNode;
 import StorageManager.Objects.TreeNodes.Interfaces.OperandNode;
 
 /*
 * Node that holds what operation is to be performed (=, <=, <, >, >=, !=)
 * This will always be the root node
 */
-public class OperatorNode implements ComparisonNode {
+public class ComparisonOpNode implements OperatorNode {
 
     OperandNode rigthChild;
     OperandNode leftChild;
     String operator;
 
-    public OperatorNode(OperandNode left, OperandNode right, String operator) {
+    public ComparisonOpNode(OperandNode left, OperandNode right, String operator) {
         this.leftChild = left;
         this.rigthChild = right;
         this.operator = operator;

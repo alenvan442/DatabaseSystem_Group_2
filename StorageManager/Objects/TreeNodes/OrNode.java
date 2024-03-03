@@ -2,14 +2,14 @@ package StorageManager.Objects.TreeNodes;
 
 import StorageManager.TableSchema;
 import StorageManager.Objects.Record;
-import StorageManager.Objects.TreeNodes.Interfaces.ComparisonNode;
+import StorageManager.Objects.TreeNodes.Interfaces.OperatorNode;
 
-public class OrNode implements ComparisonNode {
-    
-    ComparisonNode leftChild;
-    ComparisonNode rigthChild;
+public class OrNode implements OperatorNode {
 
-    public OrNode(ComparisonNode left, ComparisonNode right) {
+    OperatorNode leftChild;
+    OperatorNode rigthChild;
+
+    public OrNode(OperatorNode left, OperatorNode right) {
         this.leftChild = left;
         this.rigthChild = right;
     }
