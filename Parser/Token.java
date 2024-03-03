@@ -69,4 +69,12 @@ public class Token {
         return val.length();
     }
 
+    //saving you the pain of splitting the value later!
+    public String getPrior(){
+        return prior;
+    }
+    public String getLatter(){
+        return latter;
+    }
+
 }
