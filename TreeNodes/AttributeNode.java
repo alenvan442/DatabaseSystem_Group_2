@@ -1,4 +1,4 @@
-package StorageManager.Objects.TreeNodes;
+package TreeNodes;
 
 import java.util.List;
 
@@ -7,7 +7,7 @@ import StorageManager.Objects.AttributeSchema;
 import StorageManager.Objects.MessagePrinter;
 import StorageManager.Objects.Record;
 import StorageManager.Objects.MessagePrinter.MessageType;
-import StorageManager.Objects.TreeNodes.Interfaces.OperandNode;
+import TreeNodes.Interfaces.OperandNode;
 
 /*
 * Node that holds an attribute name, this should be a leaf
@@ -25,7 +25,7 @@ public class AttributeNode implements OperandNode {
     @Override
     public Object getValue(TableSchema schema, Record record) {
         List<AttributeSchema> attrs = schema.getAttributes();
-        
+
         for (int i = 0; i < attrs.size(); i++)  {
             if (attrs.get(i).getAttributeName().equals(dataName.toLowerCase())) {
                 return record.getValues().get(i);
@@ -35,5 +35,5 @@ public class AttributeNode implements OperandNode {
         return null; // invalid dataName TODO use messageprinter
 
     }
-    
+
 }

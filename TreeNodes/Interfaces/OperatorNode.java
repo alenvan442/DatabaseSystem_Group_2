@@ -1,4 +1,4 @@
-package StorageManager.Objects.TreeNodes.Interfaces;
+package TreeNodes.Interfaces;
 
 import StorageManager.TableSchema;
 import StorageManager.Objects.Record;

@@ -1,8 +1,8 @@
-package StorageManager.Objects.TreeNodes;
+package TreeNodes;
 
 import StorageManager.TableSchema;
 import StorageManager.Objects.Record;
-import StorageManager.Objects.TreeNodes.Interfaces.OperatorNode;
+import TreeNodes.Interfaces.OperatorNode;
 
 public class OrNode implements OperatorNode {
 

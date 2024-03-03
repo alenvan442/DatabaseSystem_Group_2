@@ -1,4 +1,4 @@
-package StorageManager.Objects.TreeNodes.Interfaces;
+package TreeNodes.Interfaces;
 
 import StorageManager.TableSchema;
 import StorageManager.Objects.Record;
@@ -7,7 +7,7 @@ import StorageManager.Objects.Record;
  * Interface for the leaf nodes
  */
 public interface OperandNode {
-    
+
     /*
      * Returns the value of the leaf node
      * If the leaf node is a literal, then return the literal

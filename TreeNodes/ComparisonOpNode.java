@@ -1,8 +1,8 @@
-package StorageManager.Objects.TreeNodes;
+package TreeNodes;
 
 import StorageManager.TableSchema;
-import StorageManager.Objects.TreeNodes.Interfaces.OperatorNode;
-import StorageManager.Objects.TreeNodes.Interfaces.OperandNode;
+import TreeNodes.Interfaces.OperandNode;
+import TreeNodes.Interfaces.OperatorNode;
 
 /*
 * Node that holds what operation is to be performed (=, <=, <, >, >=, !=)
