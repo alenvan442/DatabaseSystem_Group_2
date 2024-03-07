@@ -11,70 +11,66 @@ import java.util.Map;
 
 public class DMLParser extends ParserCommon{
 
-    public static Map<String, List<Record>> parseInsert(ArrayList<String> tokens) throws Exception {
+    public static Map<String, List<Record>> parseInsert(ArrayList<Token> tokens) throws Exception {
         // Format: insert into <name> values <tuples>;
         // Catalog catalog = Catalog.getCatalog();
-        String tableName = "";
+        String tableName;
         tokens.remove(0);
         tokens.remove(0);
 
-        String nameRegex = "^[a-zA-Z][a-zA-Z0-9]*$";
-        if (!tokens.get(0).matches(nameRegex)) {
+        // check if first one is the keyword
+        if (tokens.get(0).getType() != Type.IDKEY) {
             MessagePrinter.printMessage(MessageType.ERROR, "Invalid table name");
         }
 
-        tableName = tokens.remove(0).toLowerCase();
+        tableName = tokens.remove(0).getVal().toString().toLowerCase();
 
-        if (!tokens.get(0).equalsIgnoreCase("values")){
-            MessagePrinter.printMessage(MessageType.ERROR, "Expected values");
+        if (tokens.get(0).getType() != Type.IDKEY && !tokens.get(0).getVal().toString().equalsIgnoreCase("values")) {
+            MessagePrinter.printMessage(MessageType.ERROR, "Expected 'values' keyword");
         }
+
         tokens.remove(0);
 
-        if (!tokens.get(0).equals("(")) {
+        if (tokens.get(0).getType() != Type.L_PAREN) {
             MessagePrinter.printMessage(MessageType.ERROR, "Expected '('");
         }
 
         tokens.remove(0); // remove opening bracket
 
-        String integerRegex = "^-?\\d+$";
-        String doubleRegex = "^-?\\d*\\.?\\d+$";
-        String stringRegex = "^\"[ a-zA-Z0-9]*\"$";
-        String booleanRegex = "^(true|false)$";
-
         List<Record> records = new ArrayList<>();
         while (true) {
             Record record = new Record(new ArrayList<>());
-            while (tokens.size() != 0 && !tokens.get(0).equals(")")) {
+            while (tokens.size() != 0 && tokens.get(0).getType() == Type.R_PAREN) {
 
                 // is integer
-                if (tokens.get(0).matches(integerRegex)) {
-                    record.getValues().add(Integer.parseInt(tokens.get(0)));
+                if (tokens.get(0).getType() == Type.INTEGER) {
+                    record.getValues().add(tokens.get(0).getVal());
                     tokens.remove(0);
                     continue;
                 }
 
                 // is double
-                if (tokens.get(0).matches(doubleRegex)) {
-                    record.getValues().add(Double.parseDouble(tokens.get(0)));
+                if (tokens.get(0).getType() == Type.DOUBLE) {
+                    record.getValues().add(tokens.get(0).getVal());
                     tokens.remove(0);
                     continue;
                 }
 
                 // is boolean
-                if (tokens.get(0).matches(booleanRegex)) {
-                    record.getValues().add(Boolean.parseBoolean(tokens.get(0)));
+                if (tokens.get(0).getType() == Type.BOOLEAN) {
+                    record.getValues().add(tokens.get(0).getVal());
                     tokens.remove(0);
                     continue;
                 }
 
                 // is string literal
-                if (tokens.get(0).matches(stringRegex)) {
-                    record.getValues().add(tokens.get(0).substring(1, tokens.get(0).length() - 1));
+                if (tokens.get(0).getType() == Type.STRING) {
+                    record.getValues().add(tokens.get(0).getVal());
                     tokens.remove(0);
                     continue;
                 }
 
-                if (tokens.get(0).equalsIgnoreCase("null")) {
+                if (tokens.get(0).getType() == Type.NULL) {
                     record.getValues().add(null);
                     tokens.remove(0);
                     continue;
@@ -91,16 +87,17 @@ public class DMLParser extends ParserCommon{
             tokens.remove(0); // remove closing bracket
             records.add(record);
 
-            if (tokens.get(0).equals(",")) {
+            if (tokens.get(0).getType() == Type.COMMA) {
                 tokens.remove(0);
-                if (!tokens.get(0).equals("(")) {
+                if (tokens.get(0).getType() != Type.L_PAREN) {
                     MessagePrinter.printMessage(MessageType.ERROR, "Expected '(' after ','");
                 }
                 tokens.remove(0);
-                continue;
-            } else if (tokens.get(0).equals(";")) {
+            }
+            else if (tokens.get(0).getType() == Type.SEMICOLON) {
                 break;
-            } else {
+            }
+            else {
                 MessagePrinter.printMessage(MessageType.ERROR, "Expected a ';'");
             }
         }
