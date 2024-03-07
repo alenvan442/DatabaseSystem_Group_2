@@ -34,20 +34,8 @@ public class Token {
 
     //getVal gets the true, properly typed value of the token, when applicable. good for inserting or comparing data.
     //use toString for String values.
-    public Object getVal(){
-        switch (type){
-            case Type.INTEGER:
-                return Integer.parseInt(val);
-            case Type.DOUBLE:
-                return Double.parseDouble(val);
-            case Type.BOOLEAN:
-                return Boolean.parseBoolean(val);
-            case Type.STRING:
-                return val.substring(1, val.length() - 1); //need to trim quotes!
-            default:
-                return val;
-        }
-
+    public String getVal(){
+        return val;
     }
 
     //bit of a misnomer since val is a string by default but I'm a sucker for tradition.

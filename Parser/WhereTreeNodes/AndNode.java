@@ -1,22 +1,22 @@
-package TreeNodes;
+package Parser.WhereTreeNodes;
 
+import Parser.WhereTreeNodes.Interfaces.OperatorNode;
 import StorageManager.TableSchema;
 import StorageManager.Objects.Record;
-import TreeNodes.Interfaces.OperatorNode;
 
-public class OrNode implements OperatorNode {
+public class AndNode implements OperatorNode {
 
     OperatorNode leftChild;
     OperatorNode rigthChild;
 
-    public OrNode(OperatorNode left, OperatorNode right) {
+    public AndNode(OperatorNode left, OperatorNode right) {
         this.leftChild = left;
         this.rigthChild = right;
     }
 
     @Override
     public boolean evaluate(TableSchema schema, Record record) {
-        return leftChild.evaluate(schema, record) || rigthChild.evaluate(schema, record);
+        return leftChild.evaluate(schema, record) && rigthChild.evaluate(schema, record);
     }
 
 }

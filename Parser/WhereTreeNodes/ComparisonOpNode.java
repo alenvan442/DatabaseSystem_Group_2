@@ -1,8 +1,8 @@
-package TreeNodes;
+package Parser.WhereTreeNodes;
 
+import Parser.WhereTreeNodes.Interfaces.OperandNode;
+import Parser.WhereTreeNodes.Interfaces.OperatorNode;
 import StorageManager.TableSchema;
-import TreeNodes.Interfaces.OperandNode;
-import TreeNodes.Interfaces.OperatorNode;
 
 /*
 * Node that holds what operation is to be performed (=, <=, <, >, >=, !=)
