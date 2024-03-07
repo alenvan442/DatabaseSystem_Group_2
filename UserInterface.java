@@ -7,6 +7,7 @@ import java.util.Scanner;
 import Parser.DDLParser;
 import Parser.DMLParser;
 import Parser.ParserCommon;
+import Parser.Token;
 import QueryExecutor.DDLQueryExecutor;
 import QueryExecutor.InsertQueryExcutor;
 import QueryExecutor.SelectQueryExecutor;
@@ -60,41 +61,41 @@ public class UserInterface {
 
     private void processUserCommand(String command) {
         try {
-            ArrayList<String> tokens = ParserCommon.Tokenize(command);
-            if (tokens.get(0).toLowerCase().equals("create") &&
-                    tokens.get(1).toLowerCase().equals("table")) {
+            ArrayList<Token> tokens = ParserCommon.Tokenize(command);
+            if (tokens.get(0).getVal().equals("create") &&
+                    tokens.get(0).getVal().equals("table")) {
                 TableSchema TableSchema = DDLParser.parseCreateTable(tokens);
                 DDLQueryExecutor ddlQueryExecutor = new DDLQueryExecutor("create", TableSchema);
                 ddlQueryExecutor.excuteQuery();
-            } else if (tokens.get(0).toLowerCase().equals("drop") &&
-                    tokens.get(1).toLowerCase().equals("table")) {
+            } else if (tokens.get(0).getVal().equals("drop") &&
+                    tokens.get(0).getVal().equals("table")) {
                 String tableName = DDLParser.parseDropTable(tokens);
                 DDLQueryExecutor ddlQueryExecutor = new DDLQueryExecutor(tableName, "drop");
                 ddlQueryExecutor.excuteQuery();
-            } else if (tokens.get(0).toLowerCase().equals("alter") &&
-                    tokens.get(1).toLowerCase().equals("table")) {
+            } else if (tokens.get(0).getVal().equals("alter") &&
+                    tokens.get(0).getVal().equals("table")) {
                 HashMap<String, String> tableAlterInfo = DDLParser.parseAlterTable(tokens);
                 DDLQueryExecutor ddlQueryExecutor = new DDLQueryExecutor(tableAlterInfo.get("tableName"), "alter",
                         tableAlterInfo.get("deflt"), tableAlterInfo.get("attriname"), tableAlterInfo.get("type"),
                         tableAlterInfo.get("adddrop"),tableAlterInfo.get("isDeflt"));
                 ddlQueryExecutor.excuteQuery();
-            } else if (tokens.get(0).toLowerCase().equals("insert") &&
-                    tokens.get(1).toLowerCase().equals("into")) {
+            } else if (tokens.get(0).getVal().equals("insert") &&
+                    tokens.get(0).getVal().equals("into")) {
                 Map<String, List<Record>> insertMap = DMLParser.parseInsert(tokens);
                 InsertQueryExcutor insertQueryExcutor = new InsertQueryExcutor(
                         insertMap.entrySet().iterator().next().getKey(),
                         insertMap.entrySet().iterator().next().getValue(), command);
                 insertQueryExcutor.excuteQuery();
-            } else if (tokens.get(0).toLowerCase().equals("select")) {
+            } else if (tokens.get(0).getVal().equals("select")) {
                 String tableName = DMLParser.parseSelect(tokens);
                 SelectQueryExecutor selectQueryExecutor = new SelectQueryExecutor(tableName, command);
                 selectQueryExecutor.excuteQuery();
-            } else if (tokens.get(0).toLowerCase().equals("display") &&
-                    tokens.get(1).toLowerCase().equals("schema")) {
+            } else if (tokens.get(0).getVal().equals("display") &&
+                    tokens.get(0).getVal().equals("schema")) {
                 DMLParser.parseDisplaySchema(tokens);
                 displaySchemaResult();
-            } else if (tokens.get(0).toLowerCase().equals("display") &&
-                    tokens.get(1).toLowerCase().equals("info")) {
+            } else if (tokens.get(0).getVal().equals("display") &&
+                    tokens.get(0).getVal().equals("info")) {
                 String tableName = DMLParser.parseDisplayInfo(tokens);
                 displayInfoResult(tableName);
             } else {

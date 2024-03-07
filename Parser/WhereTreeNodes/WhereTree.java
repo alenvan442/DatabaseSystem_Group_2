@@ -1,8 +1,8 @@
-package TreeNodes;
+package Parser.WhereTreeNodes;
 
+import Parser.WhereTreeNodes.Interfaces.OperatorNode;
 import StorageManager.TableSchema;
 import StorageManager.Objects.Record;
-import TreeNodes.Interfaces.OperatorNode;
 
 public class WhereTree {
   private OperatorNode root;

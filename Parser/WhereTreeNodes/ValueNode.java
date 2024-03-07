@@ -1,8 +1,8 @@
-package TreeNodes;
+package Parser.WhereTreeNodes;
 
+import Parser.WhereTreeNodes.Interfaces.OperandNode;
 import StorageManager.TableSchema;
 import StorageManager.Objects.Record;
-import TreeNodes.Interfaces.OperandNode;
 
 /*
 * A literal value node, this should be a leaf

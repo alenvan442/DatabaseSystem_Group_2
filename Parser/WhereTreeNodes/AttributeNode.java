@@ -1,13 +1,13 @@
-package TreeNodes;
+package Parser.WhereTreeNodes;
 
 import java.util.List;
 
+import Parser.WhereTreeNodes.Interfaces.OperandNode;
 import StorageManager.TableSchema;
 import StorageManager.Objects.AttributeSchema;
 import StorageManager.Objects.MessagePrinter;
 import StorageManager.Objects.Record;
 import StorageManager.Objects.MessagePrinter.MessageType;
-import TreeNodes.Interfaces.OperandNode;
 
 /*
 * Node that holds an attribute name, this should be a leaf

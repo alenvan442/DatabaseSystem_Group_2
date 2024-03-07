@@ -9,6 +9,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
+import java.util.Stack;
+
+import Parser.WhereTreeNodes.WhereTree;
 
 public class DMLParser extends ParserCommon {
 
@@ -24,9 +27,9 @@ public class DMLParser extends ParserCommon {
             MessagePrinter.printMessage(MessageType.ERROR, "Invalid table name");
         }
 
-        tableName = tokens.remove(0).getVal().toString().toLowerCase();
+        tableName = tokens.remove(0).getVal().toLowerCase();
 
-        if (tokens.get(0).getType() != Type.IDKEY && !tokens.get(0).getVal().toString().equalsIgnoreCase("values")) {
+        if (tokens.get(0).getType() != Type.IDKEY && !tokens.get(0).getVal().equalsIgnoreCase("values")) {
             MessagePrinter.printMessage(MessageType.ERROR, "Expected 'values' keyword");
         }
 
@@ -41,7 +44,7 @@ public class DMLParser extends ParserCommon {
         List<Record> records = new ArrayList<>();
         while (true) {
             Record record = new Record(new ArrayList<>());
-            while (tokens.size() != 0 && tokens.get(0).getType() == Type.R_PAREN) {
+            while (!tokens.isEmpty() && tokens.get(0).getType() == Type.R_PAREN) {
 
                 // is integer
                 if (tokens.get(0).getType() == Type.INTEGER) {
@@ -80,7 +83,7 @@ public class DMLParser extends ParserCommon {
                 MessagePrinter.printMessage(MessageType.ERROR, tokens.get(0) + " is an invalid input");
             }
 
-            if (tokens.size() == 0) {
+            if (tokens.isEmpty() || tokens.get(0).getType() != Type.R_PAREN) {
                 // closing bracket was missing
                 MessagePrinter.printMessage(MessageType.ERROR, "Expected ')'");
             }
@@ -148,25 +151,56 @@ public class DMLParser extends ParserCommon {
         return tableName;
     }
 
-    public static String parseWhere(ArrayList<Token> tokens) throws Exception {
-        // where followed by values, nodes and operands, such as and, or, =, <, >, <=,
-        // >=, !=
+    public static WhereTree parseWhere(ArrayList<Token> tokens) throws Exception {
+        Queue<Token> outputPostfix = new LinkedList<>();
+        Stack<Token> operatorStack = new Stack<>();
+        tokens.remove(0); // Remove "where" token
 
-        List<Token> outputPostfix = new LinkedList<>();
-        tokens.remove(0); // remove where token
-
-        while ((tokens.get(0).getType() != Type.IDKEY && !tokens.get(0).getVal().toString().equalsIgnoreCase("orderby"))
-                || tokens.get(0).getType() != Type.SEMICOLON || !tokens.isEmpty())  {
-            if (tokens.get(0).getType() != Type.IDKEY || tokens.get(0).getType() != Type.IDDOUBLE) {
+        while (true) {
+            // Expect attribute name
+            if (tokens.get(0).getType() != Type.IDKEY && tokens.get(0).getType() != Type.IDDOUBLE) {
                 MessagePrinter.printMessage(MessageType.ERROR, "Expected an attribute name");
             }
-
             outputPostfix.add(tokens.remove(0));
 
+            // Expect relational operation
+            if (tokens.isEmpty() || tokens.get(0).getType() != Type.REL_OP) {
+                MessagePrinter.printMessage(MessageType.ERROR, "Expected a relational operation");
+            }
+            Token currOperator = tokens.remove(0);
+            while (!operatorStack.isEmpty() && getPrecedent(operatorStack.peek()) >= getPrecedent(currOperator)) {
+                outputPostfix.add(operatorStack.pop());
+            }
+            operatorStack.push(currOperator);
+
+            // Expect attribute name or constant value
+            if (tokens.isEmpty() || !isAttributeOrConstant(tokens.get(0))) {
+                MessagePrinter.printMessage(MessageType.ERROR, "Attribute name or a constant value expected");
+            }
+            outputPostfix.add(tokens.remove(0));
+
+            // Expect 'and', 'or', 'orderby', or ';'
+            if (tokens.isEmpty() || !isLogicalOperator(tokens.get(0)) || tokens.get(0).getType() != Type.SEMICOLON
+                    || !tokens.get(0).getVal().equals("orderby")) {
+                MessagePrinter.printMessage(MessageType.ERROR, "Expected either 'and', 'or', 'orderby', or ';'");
+            }
+
+            if (isLogicalOperator(tokens.get(0))) {
+                currOperator = tokens.remove(0);
+                while (!operatorStack.isEmpty() && getPrecedent(operatorStack.peek()) >= getPrecedent(currOperator)) {
+                    outputPostfix.add(operatorStack.pop());
+                }
+                operatorStack.push(currOperator);
+            } else {
+                while (!operatorStack.isEmpty()) {
+                    outputPostfix.add(operatorStack.pop());
+                }
+                break;
+            }
         }
 
-        // TODO
-        return "";
+        WhereTreeBuilder whereTreeBuilder = new WhereTreeBuilder(outputPostfix);
+        return whereTreeBuilder.buildWhileTree();
     }
 
     public static void parseDisplaySchema(ArrayList<String> tokens) throws Exception {
@@ -205,5 +239,27 @@ public class DMLParser extends ParserCommon {
     public static void parseUpdate(String dmlStatement) {
         // delete / insert record
         // TODO
+    }
+
+    public static int getPrecedent(Token operator) {
+        if (operator.getType() == Type.REL_OP) {
+            return 0;
+        } else if (operator.getVal().equals("and")) {
+            return 1;
+        } else {
+            return 2;
+        }
+    }
+
+    private static boolean isAttributeOrConstant(Token token) {
+        Type type = token.getType();
+        return type == Type.IDKEY || type == Type.IDDOUBLE || type == Type.INTDEF || type == Type.DOUBLEDEF ||
+                type == Type.BOOLDEF || type == Type.VARCHARDEF || type == Type.CHARDEF || type == Type.STRING ||
+                type == Type.DOUBLE || type == Type.INTEGER || type == Type.BOOLEAN || type == Type.IDDOUBLE;
+    }
+
+    private static boolean isLogicalOperator(Token token) {
+        String value = token.getVal();
+        return value.equals("and") || value.equals("or");
     }
 }

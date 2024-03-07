@@ -1,4 +1,4 @@
-package TreeNodes;
+package Parser.WhereTreeNodes;
 
 public class WhereTreeBuilder {
 

@@ -1,4 +1,4 @@
-package TreeNodes.Interfaces;
+package Parser.WhereTreeNodes.Interfaces;
 
 import StorageManager.TableSchema;
 import StorageManager.Objects.Record;
