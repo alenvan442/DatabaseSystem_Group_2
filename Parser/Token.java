@@ -7,14 +7,14 @@ public class Token {
     private String latter;
     private int charsize;
 
-    public void Token(Type type, String val){
+    public Token(Type type, String val){
         this.type = type;
         this.val = val;
     }
     //overloaded constructors my beloved
     //intended only for CHAR and VARCHAR Type
     //charsize is the number, e.g. 32 in varchar(32)
-    public void Token(Type type, String val, int charsize){
+    public Token(Type type, String val, int charsize){
         this.type = type;
         this.val = val;
         this.charsize = charsize;
@@ -22,7 +22,7 @@ public class Token {
     //overloaded constructors my beloved
     //intended for IDDOUBLE Type
     //handles tokens in the form of prior.latter
-    public void Token(Type type, String val, String prior, String latter){
+    public Token(Type type, String val, String prior, String latter){
         this.type = type;
         this.val = val;
         this.prior = prior;

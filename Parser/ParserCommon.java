@@ -41,26 +41,52 @@ public class ParserCommon { // extend me!
 	// Numbers, which can be integer or double with exactly 1 "." in any place, the
 	// char/varchar case must check for double seperately.
 	// any tokens outside these options will throw an error.
-	public static ArrayList<String> Tokenize(String ddlStatement) throws Exception {
-		ArrayList<String> tokens = new ArrayList<>();
+	public static ArrayList<Token> Tokenize(String ddlStatement) throws Exception {
+		ArrayList<Token> tokens = new ArrayList<>();
 		String currentToken = "";
 
 		boolean label = false;
 		boolean number = false;
 		boolean hasdecimal = false;
 		boolean string = false;
+		boolean charvar = false;
+		String prior = "";
+		String latter = "";
 		for (int stmti = 0; stmti < ddlStatement.length() ; stmti++) {
 			char nextByte = ddlStatement.charAt(stmti);
 			if (nextByte == '(' && !label && !number && !string) {
-				tokens.add("(");
+				tokens.add(new Token(Type.L_PAREN,"("));
 			} else if (nextByte == ')' && !label && !number && !string) {
-				tokens.add(")");
+				tokens.add(new Token(Type.R_PAREN, ")"));
 			} else if (nextByte == ';' && !label && !number && !string) {
-				tokens.add(";");
+				tokens.add(new Token(Type.SEMICOLON, ";"));
 			} else if (nextByte == ',' && !label && !number && !string) {
-				tokens.add(",");
+				tokens.add(new Token(Type.COMMA, ","));
 			} else if (nextByte == '*' && !label && !number && !string) {
-				tokens.add("*");
+				tokens.add(new Token(Type.ASTERISK, "*"));
+			} else if (nextByte == '>'){
+				if(ddlStatement.charAt(stmti+1) == '='){
+					tokens.add(new Token(Type.REL_OP, ">="));
+					stmti++;
+				} else {
+					tokens.add(new Token(Type.REL_OP, ">"));
+				}
+			} else if (nextByte == '<') {
+				if (ddlStatement.charAt(stmti + 1) == '=') {
+					tokens.add(new Token(Type.REL_OP, "<="));
+					stmti++;
+				} else {
+					tokens.add(new Token(Type.REL_OP, "<"));
+				}
+			} else if (nextByte == '!') {
+				if (ddlStatement.charAt(stmti + 1) == '=') {
+					tokens.add(new Token(Type.REL_OP, "!="));
+					stmti++;
+				} else {
+					throw new Exception("'!=' expected!");
+				}
+			} else if (nextByte == '='){
+					tokens.add(new Token(Type.REL_OP, "="));
 			} else if (nextByte == ' ' && !label && !number && !string) { //if space then ignore
 			} else if (nextByte == '_' && label) {
 				currentToken += nextByte;
@@ -73,7 +99,7 @@ public class ParserCommon { // extend me!
 					} else
 					{
 						currentToken += nextByte;
-						tokens.add(currentToken);
+						tokens.add(new Token(Type.STRING, currentToken));
 						currentToken = "";
 						string = false;
 					}
@@ -85,17 +111,33 @@ public class ParserCommon { // extend me!
 			} else if ((Character.isDigit(nextByte) || (nextByte == '.' && !hasdecimal)) && !label) // only ONE decimal
 																									// point per double!
 			{
+
 				if (nextByte == '.') {
 					hasdecimal = true;
+				} else {
+					if(!hasdecimal){
+						prior += nextByte;
+					} else{
+						latter += nextByte;
+					}
 				}
 				currentToken += nextByte;
 				number = true;
-			} else if (Character.isLetterOrDigit(nextByte)) // covering both labels and values in the same block since
+			} else if ((Character.isLetterOrDigit(nextByte) || (nextByte == '.' && !hasdecimal)) && !number) // covering both labels and values in the same block since
 															// values only come after "default" anyway
 			{
 				if (!label && !Character.isLetter(nextByte)) {
 					throw new Exception("Labels must start with a letter!"); // realistically the digit branch should
-																				// stop this from ever being accessible
+																			 // stop this from ever being accessible
+				}
+				if (nextByte == '.') {
+					hasdecimal = true;
+				} else {
+					if(!hasdecimal){
+						prior += nextByte;
+					} else{
+						latter += nextByte;
+					}
 				}
 				currentToken += nextByte;
 				label = true; // we need to block the other paths to know when to flush.
@@ -103,8 +145,57 @@ public class ParserCommon { // extend me!
 				if (currentToken.equals("")) {
 					throw new Exception("Invalid Token!");
 				}
-				tokens.add(currentToken);
+				if (number && !hasdecimal) {
+					tokens.add(new Token(Type.INTEGER, currentToken));
+				}
+				if (number && hasdecimal) {
+					tokens.add(new Token(Type.DOUBLE, currentToken));
+				}
+				if (label && hasdecimal){
+					tokens.add(new Token(Type.IDDOUBLE, currentToken, prior, latter));
+				}
+				if (label && !hasdecimal){
+					switch (currentToken.toLowerCase()){
+						case "integer":
+							tokens.add(new Token(Type.INTDEF, currentToken));
+							break;
+						case "double":
+							tokens.add(new Token(Type.DOUBLEDEF, currentToken));
+							break;
+						case "boolean":
+							tokens.add(new Token(Type.BOOLDEF, currentToken));
+							break;
+						case "null":
+							tokens.add(new Token(Type.NULL, currentToken));
+						case "char", "varchar":
+							stmti++;
+							if(ddlStatement.charAt(stmti) != '('){
+								throw new Exception("( expected after char or varchar");
+							}
+							String size = "";
+							stmti++;
+							while(ddlStatement.charAt(stmti) != ')' && stmti < ddlStatement.length()){
+								char next = ddlStatement.charAt(stmti);
+								if(!Character.isDigit(next)){
+									throw new Exception("Size expected in (var)char definition!");
+								}
+								size += next;
+								stmti++;
+							}
+							if(size.equals("")){
+								throw new Exception("Size expected in (var)char definition!");
+							}
+							if(currentToken.toLowerCase().equals("char")){
+								tokens.add(new Token(Type.CHARDEF, currentToken, Integer.parseInt(size)));
+							}
+							if (currentToken.toLowerCase().equals("varchar")){
+								tokens.add(new Token(Type.VARCHARDEF, currentToken, Integer.parseInt(size)));
+							}
+					}
+				}
 				currentToken = "";
+				prior = "";
+				latter = "";
 				number = false;
 				label = false;
 				hasdecimal = false;
