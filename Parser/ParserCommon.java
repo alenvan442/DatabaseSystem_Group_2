@@ -142,6 +142,7 @@ public class ParserCommon { // extend me!
 				currentToken += nextByte;
 				label = true; // we need to block the other paths to know when to flush.
 			} else { // flush the label or number token string
+				currentToken = currentToken.toLowerCase();
 				if (currentToken.equals("")) {
 					throw new Exception("Invalid Token!");
 				}
@@ -149,7 +150,7 @@ public class ParserCommon { // extend me!
 					tokens.add(new Token(Type.INTEGER, currentToken));
 				}
 				if (number && hasdecimal) {
-					tokens.add(new Token(Type.DOUBLE, currentToken));
+					tokens.add(new Token(Type.DOUBLE, currentToken, prior, latter));
 				}
 				if (label && hasdecimal){
 					tokens.add(new Token(Type.IDDOUBLE, currentToken, prior, latter));
@@ -191,6 +192,8 @@ public class ParserCommon { // extend me!
 							if (currentToken.toLowerCase().equals("varchar")){
 								tokens.add(new Token(Type.VARCHARDEF, currentToken, Integer.parseInt(size)));
 							}
+						default:
+							tokens.add(new Token(Type.IDKEY, currentToken));
 					}
 				}
 				currentToken = "";
