@@ -5,11 +5,12 @@ import StorageManager.Objects.Record;
 import StorageManager.Objects.MessagePrinter.MessageType;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 
-
-public class DMLParser extends ParserCommon{
+public class DMLParser extends ParserCommon {
 
     public static Map<String, List<Record>> parseInsert(ArrayList<Token> tokens) throws Exception {
         // Format: insert into <name> values <tuples>;
@@ -93,11 +94,9 @@ public class DMLParser extends ParserCommon{
                     MessagePrinter.printMessage(MessageType.ERROR, "Expected '(' after ','");
                 }
                 tokens.remove(0);
-            }
-            else if (tokens.get(0).getType() == Type.SEMICOLON) {
+            } else if (tokens.get(0).getType() == Type.SEMICOLON) {
                 break;
-            }
-            else {
+            } else {
                 MessagePrinter.printMessage(MessageType.ERROR, "Expected a ';'");
             }
         }
@@ -106,20 +105,18 @@ public class DMLParser extends ParserCommon{
         return map;
     }
 
-    public static String parseSelect(ArrayList<String> tokens) throws Exception{
+    public static String parseSelect(ArrayList<String> tokens) throws Exception {
         // Format: select * from <name>;
         // only deal with all attributes
         String tableName = "";
 
         if (tokens.size() != 5 || !tokens.get(0).equalsIgnoreCase("select")
-                             || !tokens.get(1).equalsIgnoreCase("*")
-                            || !tokens.get(2).equals("from")
-                            || tokens.get(3).isEmpty()
-                            || !tokens.get(4).equals(";"))
-        {
+                || !tokens.get(1).equalsIgnoreCase("*")
+                || !tokens.get(2).equals("from")
+                || tokens.get(3).isEmpty()
+                || !tokens.get(4).equals(";")) {
             MessagePrinter.printMessage(MessageType.ERROR, "incorrect select format");
-        }
-        else {
+        } else {
             // if the command is correct, return table name
             if (Character.isLetter(tokens.get(3).charAt(0))
                     && keywordCheck(tokens.get(3))) {
@@ -138,13 +135,12 @@ public class DMLParser extends ParserCommon{
             MessagePrinter.printMessage(MessageType.ERROR, "incorrect format");
         }
 
-        if(!tokens.get(0).equalsIgnoreCase("from")) {
+        if (!tokens.get(0).equalsIgnoreCase("from")) {
             MessagePrinter.printMessage(MessageType.ERROR, "first should be from");
-        }
-        else {
+        } else {
             // table name(s) in a string
             for (int i = 1; i < tokens.size() - 1; i++) {
-                if (tokens.get(i).contains(nameRegex)){
+                if (tokens.get(i).contains(nameRegex)) {
                     tableName.add(tokens.get(i));
                 }
             }
@@ -152,11 +148,23 @@ public class DMLParser extends ParserCommon{
         return tableName;
     }
 
-    public static String parseWhere(ArrayList<String> tokens) throws Exception {
-        // where followed by values, nodes and operands, such as and, or, =, <, >, <=, >=, !=
-        if(!tokens.get(0).equalsIgnoreCase("from")) {
-            MessagePrinter.printMessage(MessageType.ERROR, "first should be where");
+    public static String parseWhere(ArrayList<Token> tokens) throws Exception {
+        // where followed by values, nodes and operands, such as and, or, =, <, >, <=,
+        // >=, !=
+
+        List<Token> outputPostfix = new LinkedList<>();
+        tokens.remove(0); // remove where token
+
+        while ((tokens.get(0).getType() != Type.IDKEY && !tokens.get(0).getVal().toString().equalsIgnoreCase("orderby"))
+                || tokens.get(0).getType() != Type.SEMICOLON || !tokens.isEmpty())  {
+            if (tokens.get(0).getType() != Type.IDKEY || tokens.get(0).getType() != Type.IDDOUBLE) {
+                MessagePrinter.printMessage(MessageType.ERROR, "Expected an attribute name");
+            }
+
+            outputPostfix.add(tokens.remove(0));
+
         }
+
         // TODO
         return "";
     }
@@ -166,8 +174,7 @@ public class DMLParser extends ParserCommon{
         // It will show: database location, page size, buffer, size, and table schema
         if (!tokens.get(0).equalsIgnoreCase("display")
                 && !tokens.get(1).equalsIgnoreCase("schema")
-                && !tokens.get(2).equals(";"))
-        {
+                && !tokens.get(2).equals(";")) {
             MessagePrinter.printMessage(MessageType.ERROR, "");
         }
     }
@@ -180,12 +187,10 @@ public class DMLParser extends ParserCommon{
         if (tokens.get(0).equalsIgnoreCase("display")
                 && tokens.get(1).equalsIgnoreCase("info")
                 && tokens.get(3).equals(";")
-                && tokens.size() == 4)
-        {
+                && tokens.size() == 4) {
             tableName = tokens.get(2).toLowerCase();
             return tableName;
-        }
-        else {
+        } else {
             MessagePrinter.printMessage(MessageType.ERROR, "incorrect display info format");
             return null;
         }
