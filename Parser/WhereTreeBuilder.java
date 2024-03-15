@@ -35,7 +35,7 @@ public class WhereTreeBuilder {
                                     // error will be caught when we evaluate
     ArrayList<String> operators = new ArrayList<>(Arrays.asList("and", "or"));
     ArrayList<String> comparisons = new ArrayList<>(Arrays.asList(">", ">=", "<", "<=", "=", "!="));
-    
+
     while (!this.postfixExpression.isEmpty()) {
       Token token = this.postfixExpression.remove();
       String value = token.getVal().toLowerCase().trim();
@@ -61,7 +61,7 @@ public class WhereTreeBuilder {
         } catch (Exception e) {
           // TODO throw operator/operand mismatch error
         }
-        
+
       } else if (comparisons.contains(value)) {
         // create operator node
         if (nodeStack.size() < 2) {
@@ -87,7 +87,7 @@ public class WhereTreeBuilder {
         } else {
           ValueNode operand = null;
           switch (token.getType()) {
-            case Type.BOOLEAN:
+            case BOOLEAN:
               switch (value) {
                 case "true":
                   operand = new ValueNode(true);
@@ -100,13 +100,13 @@ public class WhereTreeBuilder {
                   break;
               }
               break;
-            case Type.INTEGER:
+            case INTEGER:
               operand = new ValueNode(Integer.parseInt(value));
               break;
-            case Type.DOUBLE:
+            case DOUBLE:
               operand = new ValueNode(Double.parseDouble(value));
               break;
-            case Type.STRING:
+            case STRING:
               operand = new ValueNode(value);
               break;
             default:

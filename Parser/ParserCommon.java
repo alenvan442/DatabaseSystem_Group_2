@@ -168,7 +168,9 @@ public class ParserCommon { // extend me!
 							break;
 						case "null":
 							tokens.add(new Token(Type.NULL, currentToken));
-						case "char", "varchar":
+							break;
+						case "char":
+						case "varchar":
 							stmti++;
 							if(ddlStatement.charAt(stmti) != '('){
 								throw new Exception("( expected after char or varchar");
