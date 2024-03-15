@@ -9,11 +9,9 @@ import StorageManager.Objects.Record;
 */
 public class ValueNode implements OperandNode {
 
-    private String dataType;
     private Object value;
 
-    public ValueNode(String type, Object value) {
-        this.dataType = type;
+    public ValueNode(Object value) {
         this.value = value;
     }
 

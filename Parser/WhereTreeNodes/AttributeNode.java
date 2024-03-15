@@ -14,11 +14,9 @@ import StorageManager.Objects.MessagePrinter.MessageType;
 */
 public class AttributeNode implements OperandNode {
 
-    String dataType;
     String dataName;
 
-    public AttributeNode(String type, String name) {
-        this.dataType = type;
+    public AttributeNode(String name) {
         this.dataName = name;
     }
 

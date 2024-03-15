@@ -26,6 +26,9 @@ public class ComparisonOpNode implements OperatorNode {
         throw new UnsupportedOperationException("Unimplemented method 'evaluate'");
         // idea: get the value of left and right child, then case switch based on operator
         // then use operator to return a boolean.
+        // we will check to see if the data types of what the getValue() 
+        // of the left and right childs returns are the same here
+            // if not raise error
     }
 
 }

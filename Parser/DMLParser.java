@@ -200,7 +200,7 @@ public class DMLParser extends ParserCommon {
         }
 
         WhereTreeBuilder whereTreeBuilder = new WhereTreeBuilder(outputPostfix);
-        return whereTreeBuilder.buildWhileTree();
+        return whereTreeBuilder.buildWhereTree();
     }
 
     public static void parseDisplaySchema(ArrayList<String> tokens) throws Exception {
