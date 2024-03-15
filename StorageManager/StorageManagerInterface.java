@@ -50,7 +50,7 @@ public interface StorageManagerInterface {
      * @param tableNumber   the table to delete from
      * @param primaryKey    the value of the primaryKey to search for
      */
-    public Page deleteRecord(int tableNumber, Record record) throws Exception;
+    public void deleteRecord(int tableNumber, Record record) throws Exception;
 
     /*
      * Update a record in the DB

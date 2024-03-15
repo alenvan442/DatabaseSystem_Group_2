@@ -42,6 +42,10 @@ public class Page implements java.io.Serializable, Comparator<Page>, StorageMana
         return this.pageNumber;
     }
 
+    public void decrementPageNumber() {
+        this.pageNumber--;
+    }
+
     public int getNumRecords() {
         return numRecords;
     }
@@ -119,17 +123,17 @@ public class Page implements java.io.Serializable, Comparator<Page>, StorageMana
      *
      * @param index     The index to delete the record at
      *
-     * @return          boolean, indicating success status
+     * @return          The deleted record, null otherwise
      */
-    public boolean deleteRecord(int index) {
+    public Record deleteRecord(int index) {
         Record removed = this.records.remove(index);
         if (!removed.equals(null)) {
             this.changed = true;
             this.setPriority();
             this.setNumRecords();
-            return true;
+            return removed;
         }
-        return false;
+        return null;
     }
 
     /*

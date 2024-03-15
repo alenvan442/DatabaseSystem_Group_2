@@ -13,6 +13,7 @@ import StorageManager.Objects.MessagePrinter;
 import StorageManager.Objects.Page;
 import StorageManager.Objects.Record;
 import StorageManager.Objects.MessagePrinter.MessageType;
+import StorageManager.Objects.Utility.Pair;
 
 public class StorageManager implements StorageManagerInterface {
     private static StorageManager storageManager;
@@ -237,9 +238,9 @@ public class StorageManager implements StorageManagerInterface {
         }
     }
 
-    public Page deleteRecord(int tableNumber, Record record) {
+    public Pair<Page, Record> deleteHelper(TableSchema schema, Record record) {
 
-        TableSchema schema = Catalog.getCatalog().getSchema(tableNumber);
+        Integer tableNumber = schema.getTableNumber();
         int primaryIndex = schema.getPrimaryIndex();
         Page foundPage = null;
 
@@ -249,7 +250,8 @@ public class StorageManager implements StorageManagerInterface {
             List<Integer> pageOrder = schema.getPageOrder();
 
             // find the correct page
-            for (Integer pageIndex : pageOrder) {
+            for (int i = 0; i < pageOrder.size(); i++) {
+                Integer pageIndex = pageOrder.get(i);
                 Page page = this.getPage(tableNumber, pageIndex);
 
                 // compare last record in page
@@ -258,8 +260,8 @@ public class StorageManager implements StorageManagerInterface {
                 int comparison = lastRecord.compareTo(record, primaryIndex);
                 if (comparison == 0) {
                     // found the record, delete it
-                    page.deleteRecord(page.getNumRecords() - 1);
-                    return page;
+                    Record removed = page.deleteRecord(page.getNumRecords() - 1);
+                    return new Pair<Page,Record>(page, removed);
                 } else if (comparison > 0) {
                     // found the correct page
                     foundPage = page;
@@ -280,8 +282,8 @@ public class StorageManager implements StorageManagerInterface {
                 List<Record> recordsInFound = foundPage.getRecords();
                 for (int i = 0; i < recordsInFound.size(); i++) {
                     if (record.compareTo(recordsInFound.get(i), primaryIndex) == 0) {
-                        foundPage.deleteRecord(i);
-                        return foundPage;
+                        Record removed = foundPage.deleteRecord(i);
+                        return new Pair<Page, Record>(foundPage, removed);
                     }
                 }
                 MessagePrinter.printMessage(MessageType.ERROR,
@@ -297,108 +299,65 @@ public class StorageManager implements StorageManagerInterface {
 
     }
 
-    public void updateRecord(int tableNumber, Record record) throws Exception {
+    private void checkDeletePage(TableSchema schema, Page page) throws Exception {
+        
+        if (page.getNumRecords() == 0) {
+            // begin to delete the page by moving all preceding pages up
+            List<Integer> pageOrder = schema.getPageOrder();
+            for (int i = 0; i < schema.getPageOrder().size(); i++) {
+                Page foundPage = this.getPage(schema.getTableNumber(), pageOrder.get(i));
+                if (foundPage.getPageNumber() > page.getPageNumber()) {
+                    foundPage.decrementPageNumber();
+                }
+            }
 
-        Page deletePage = this.deleteRecord(tableNumber, record); // if the delete was successful then deletePage !=
-                                                                  // null
+            // update the pageOrder of the schema
+            schema.deletePageNumber(page.getPageNumber());
+        }
+    }
 
+    public void deleteRecord(int tableNumber, Record record) throws Exception {
+
+        TableSchema schema = Catalog.getCatalog().getSchema(tableNumber);
+        Pair<Page, Record> deletedPair = deleteHelper(schema, record);
+        Page deletePage = deletedPair.first;
         if (deletePage.equals(null)) {
             // no record found
             // error message was already thrown in deletePage
             return;
         }
 
+        this.checkDeletePage(schema, deletePage);
+
+    }
+
+    public void updateRecord(int tableNumber, Record record) throws Exception {
+
+        TableSchema schema = Catalog.getCatalog().getSchema(tableNumber);
+        Pair<Page, Record> deletedPair = this.deleteHelper(schema, record); // if the delete was successful then deletePage !=
+                                                                  // null
+
+        Page deletePage = deletedPair.first;
+        Record oldRecord = deletedPair.second;
+                                                                  
+        if (deletePage.equals(null)) {
+            // no record found
+            // error message was already thrown in deletePage
+            return;
+        }
+
+        this.checkDeletePage(schema, deletePage);
+
         try {
             this.insertRecord(tableNumber, record);
         } catch (Exception e) {
             // insert failed, restore the deleted record
-            deletePage.addNewRecord(record);
+            this.insertRecord(tableNumber, oldRecord);
 
         }
 
     }
 
-    // ---------------------------- Page Buffer ------------------------------
-
-    private Page getLastPageInBuffer(PriorityQueue<Page> buffer) {
-        Object[] bufferArray = buffer.toArray();
-        return ((Page) bufferArray[bufferArray.length - 1]);
-    }
-
-    @Override
-    public Page getPage(int tableNumber, int pageNumber) throws Exception {
-        // check if page is in buffer
-        for (Page page : this.buffer) {
-            if (page.getTableNumber() == tableNumber && page.getPageNumber() == pageNumber) {
-                page.setPriority();
-                return page;
-            }
-        }
-
-        // read page from hardware into buffer
-        readPageHardware(tableNumber, pageNumber);
-        return getLastPageInBuffer(this.buffer);
-
-    }
-
-    private void readPageHardware(int tableNumber, int pageNumber) throws Exception {
-        Catalog catalog = Catalog.getCatalog();
-        TableSchema tableSchema = catalog.getSchema(tableNumber);
-        String filePath = this.getTablePath(tableNumber);
-        File tableFile = new File(filePath);
-        RandomAccessFile tableAccessFile = new RandomAccessFile(tableFile, "r");
-        int pageIndex = pageNumber - 1;
-
-        tableAccessFile.seek(Integer.BYTES + (catalog.getPageSize() * pageIndex)); // start after numPages
-        int numRecords = tableAccessFile.readInt();
-        int pageNum = tableAccessFile.readInt();
-        Page page = new Page(numRecords, tableNumber, pageNum);
-        page.readFromHardware(tableAccessFile, tableSchema);
-        this.addPageToBuffer(page);
-        tableAccessFile.close();
-    }
-
-    private void writePageHardware(Page page) throws Exception {
-        Catalog catalog = Catalog.getCatalog();
-        TableSchema tableSchema = catalog.getSchema(page.getTableNumber());
-        String filePath = this.getTablePath(page.getTableNumber());
-        File tableFile = new File(filePath);
-        RandomAccessFile tableAccessFile = new RandomAccessFile(tableFile, "rw");
-        tableAccessFile.writeInt(tableSchema.getNumPages());
-        int pageIndex = page.getPageNumber() - 1;
-
-        // Go to the point where the page is in the file
-        tableAccessFile.seek(tableAccessFile.getFilePointer() + (catalog.getPageSize() * pageIndex));
-
-        // Allocate space for a Page in the table file
-        Random random = new Random();
-        byte[] buffer = new byte[catalog.getPageSize()];
-        random.nextBytes(buffer);
-        tableAccessFile.write(buffer, 0, catalog.getPageSize());
-        tableAccessFile.seek(tableAccessFile.getFilePointer() - catalog.getPageSize()); // move pointer back
-
-        page.writeToHardware(tableAccessFile);
-        tableAccessFile.close();
-    }
-
-    private void addPageToBuffer(Page page) throws Exception {
-        if (this.buffer.size() == this.bufferSize) {
-            Page lruPage = this.buffer.poll(); // assuming the first Page in the buffer is LRU
-            if (lruPage.isChanged()) {
-                this.writePageHardware(lruPage);
-            }
-        }
-        this.buffer.add(page);
-    }
-
-    public void writeAll() throws Exception {
-        for (Page page : buffer) {
-            if (page.isChanged()) {
-                writePageHardware(page);
-            }
-        }
-        this.buffer.removeAll(buffer);
-    }
 
     /**
      * Method to drop whole tables from the DB
@@ -493,4 +452,87 @@ public class StorageManager implements StorageManagerInterface {
 
         return null;
     }
+
+    // ---------------------------- Page Buffer ------------------------------
+
+    private Page getLastPageInBuffer(PriorityQueue<Page> buffer) {
+        Object[] bufferArray = buffer.toArray();
+        return ((Page) bufferArray[bufferArray.length - 1]);
+    }
+
+    @Override
+    public Page getPage(int tableNumber, int pageNumber) throws Exception {
+        // check if page is in buffer
+        for (Page page : this.buffer) {
+            if (page.getTableNumber() == tableNumber && page.getPageNumber() == pageNumber) {
+                page.setPriority();
+                return page;
+            }
+        }
+
+        // read page from hardware into buffer
+        readPageHardware(tableNumber, pageNumber);
+        return getLastPageInBuffer(this.buffer);
+
+    }
+
+    private void readPageHardware(int tableNumber, int pageNumber) throws Exception {
+        Catalog catalog = Catalog.getCatalog();
+        TableSchema tableSchema = catalog.getSchema(tableNumber);
+        String filePath = this.getTablePath(tableNumber);
+        File tableFile = new File(filePath);
+        RandomAccessFile tableAccessFile = new RandomAccessFile(tableFile, "r");
+        int pageIndex = pageNumber - 1;
+
+        tableAccessFile.seek(Integer.BYTES + (catalog.getPageSize() * pageIndex)); // start after numPages
+        int numRecords = tableAccessFile.readInt();
+        int pageNum = tableAccessFile.readInt();
+        Page page = new Page(numRecords, tableNumber, pageNum);
+        page.readFromHardware(tableAccessFile, tableSchema);
+        this.addPageToBuffer(page);
+        tableAccessFile.close();
+    }
+
+    private void writePageHardware(Page page) throws Exception {
+        Catalog catalog = Catalog.getCatalog();
+        TableSchema tableSchema = catalog.getSchema(page.getTableNumber());
+        String filePath = this.getTablePath(page.getTableNumber());
+        File tableFile = new File(filePath);
+        RandomAccessFile tableAccessFile = new RandomAccessFile(tableFile, "rw");
+        tableAccessFile.writeInt(tableSchema.getNumPages());
+        int pageIndex = page.getPageNumber() - 1;
+
+        // Go to the point where the page is in the file
+        tableAccessFile.seek(tableAccessFile.getFilePointer() + (catalog.getPageSize() * pageIndex));
+
+        // Allocate space for a Page in the table file
+        Random random = new Random();
+        byte[] buffer = new byte[catalog.getPageSize()];
+        random.nextBytes(buffer);
+        tableAccessFile.write(buffer, 0, catalog.getPageSize());
+        tableAccessFile.seek(tableAccessFile.getFilePointer() - catalog.getPageSize()); // move pointer back
+
+        page.writeToHardware(tableAccessFile);
+        tableAccessFile.close();
+    }
+
+    private void addPageToBuffer(Page page) throws Exception {
+        if (this.buffer.size() == this.bufferSize) {
+            Page lruPage = this.buffer.poll(); // assuming the first Page in the buffer is LRU
+            if (lruPage.isChanged()) {
+                this.writePageHardware(lruPage);
+            }
+        }
+        this.buffer.add(page);
+    }
+
+    public void writeAll() throws Exception {
+        for (Page page : buffer) {
+            if (page.isChanged()) {
+                writePageHardware(page);
+            }
+        }
+        this.buffer.removeAll(buffer);
+    }
+
 }
