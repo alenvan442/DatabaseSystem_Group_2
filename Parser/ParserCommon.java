@@ -153,18 +153,18 @@ public class ParserCommon { // extend me!
 					tokens.add(new Token(Type.DOUBLE, currentToken, prior, latter));
 				}
 				if (label && hasdecimal){
-					tokens.add(new Token(Type.IDDOUBLE, currentToken, prior, latter));
+					tokens.add(new Token(Type.QUALIFIER, currentToken, prior, latter));
 				}
 				if (label && !hasdecimal){
 					switch (currentToken.toLowerCase()){
 						case "integer":
-							tokens.add(new Token(Type.INTDEF, currentToken));
+							tokens.add(new Token(Type.DATATYPE, currentToken));
 							break;
 						case "double":
-							tokens.add(new Token(Type.DOUBLEDEF, currentToken));
+							tokens.add(new Token(Type.DATATYPE, currentToken));
 							break;
 						case "boolean":
-							tokens.add(new Token(Type.BOOLDEF, currentToken));
+							tokens.add(new Token(Type.DATATYPE, currentToken));
 							break;
 						case "null":
 							tokens.add(new Token(Type.NULL, currentToken));
@@ -189,10 +189,10 @@ public class ParserCommon { // extend me!
 								throw new Exception("Size expected in (var)char definition!");
 							}
 							if(currentToken.toLowerCase().equals("char")){
-								tokens.add(new Token(Type.CHARDEF, currentToken, Integer.parseInt(size)));
+								tokens.add(new Token(Type.DATATYPE, currentToken, Integer.parseInt(size)));
 							}
 							if (currentToken.toLowerCase().equals("varchar")){
-								tokens.add(new Token(Type.VARCHARDEF, currentToken, Integer.parseInt(size)));
+								tokens.add(new Token(Type.DATATYPE, currentToken, Integer.parseInt(size)));
 							}
 						default:
 							tokens.add(new Token(Type.IDKEY, currentToken));
