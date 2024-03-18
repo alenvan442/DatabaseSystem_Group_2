@@ -16,139 +16,151 @@ import Parser.WhereTreeNodes.WhereTree;
 public class DMLParser extends ParserCommon {
 
     public static Map<String, List<Record>> parseInsert(ArrayList<Token> tokens) throws Exception {
-        // Format: insert into <name> values <tuples>;
-        // Catalog catalog = Catalog.getCatalog();
         String tableName;
         tokens.remove(0);
         tokens.remove(0);
 
-        // check if first one is the keyword
         if (tokens.get(0).getType() != Type.IDKEY) {
             MessagePrinter.printMessage(MessageType.ERROR, "Invalid table name");
         }
-
         tableName = tokens.remove(0).getVal().toLowerCase();
 
-        if (tokens.get(0).getType() != Type.IDKEY && !tokens.get(0).getVal().equalsIgnoreCase("values")) {
+        if (!tokens.get(0).getVal().equalsIgnoreCase("values")) {
             MessagePrinter.printMessage(MessageType.ERROR, "Expected 'values' keyword");
         }
-
         tokens.remove(0);
 
-        if (tokens.get(0).getType() != Type.L_PAREN) {
-            MessagePrinter.printMessage(MessageType.ERROR, "Expected '('");
-        }
-
-        tokens.remove(0); // remove opening bracket
-
         List<Record> records = new ArrayList<>();
-        while (true) {
-            Record record = new Record(new ArrayList<>());
-            while (!tokens.isEmpty() && tokens.get(0).getType() == Type.R_PAREN) {
+        records.add(parseRecord(tokens));
 
-                // is integer
-                if (tokens.get(0).getType() == Type.INTEGER) {
-                    record.getValues().add(tokens.get(0).getVal());
-                    tokens.remove(0);
-                    continue;
-                }
-
-                // is double
-                if (tokens.get(0).getType() == Type.DOUBLE) {
-                    record.getValues().add(tokens.get(0).getVal());
-                    tokens.remove(0);
-                    continue;
-                }
-
-                // is boolean
-                if (tokens.get(0).getType() == Type.BOOLEAN) {
-                    record.getValues().add(tokens.get(0).getVal());
-                    tokens.remove(0);
-                    continue;
-                }
-
-                // is string literal
-                if (tokens.get(0).getType() == Type.STRING) {
-                    record.getValues().add(tokens.get(0).getVal());
-                    tokens.remove(0);
-                    continue;
-                }
-
-                if (tokens.get(0).getType() == Type.NULL) {
-                    record.getValues().add(null);
-                    tokens.remove(0);
-                    continue;
-                }
-
-                MessagePrinter.printMessage(MessageType.ERROR, tokens.get(0) + " is an invalid input");
+        while (tokens.get(0).getType() != Type.SEMICOLON) {
+            if (tokens.get(0).getType() != Type.COMMA) {
+                MessagePrinter.printMessage(MessageType.ERROR, "Expected a ','");
             }
 
-            if (tokens.isEmpty() || tokens.get(0).getType() != Type.R_PAREN) {
-                // closing bracket was missing
-                MessagePrinter.printMessage(MessageType.ERROR, "Expected ')'");
-            }
-
-            tokens.remove(0); // remove closing bracket
-            records.add(record);
-
-            if (tokens.get(0).getType() == Type.COMMA) {
-                tokens.remove(0);
-                if (tokens.get(0).getType() != Type.L_PAREN) {
-                    MessagePrinter.printMessage(MessageType.ERROR, "Expected '(' after ','");
-                }
-                tokens.remove(0);
-            } else if (tokens.get(0).getType() == Type.SEMICOLON) {
-                break;
-            } else {
-                MessagePrinter.printMessage(MessageType.ERROR, "Expected a ';'");
-            }
+            tokens.remove(0);
+            records.add(parseRecord(tokens));
         }
+
+        tokens.remove(0); // remove semicolon
         Map<String, List<Record>> map = new HashMap<>();
         map.put(tableName, records);
         return map;
     }
 
-    public static String parseSelect(ArrayList<String> tokens) throws Exception {
-        // Format: select * from <name>;
-        // only deal with all attributes
-        String tableName = "";
+    public static Record parseRecord(ArrayList<Token> tokens) throws Exception {
+        if (tokens.get(0).getType() != Type.L_PAREN) {
+            MessagePrinter.printMessage(MessageType.ERROR, "Expected '('");
+        }
+        tokens.remove(0); // remove opening bracket
 
-        if (tokens.size() != 5 || !tokens.get(0).equalsIgnoreCase("select")
-                || !tokens.get(1).equalsIgnoreCase("*")
-                || !tokens.get(2).equals("from")
-                || tokens.get(3).isEmpty()
-                || !tokens.get(4).equals(";")) {
-            MessagePrinter.printMessage(MessageType.ERROR, "incorrect select format");
-        } else {
-            // if the command is correct, return table name
-            if (Character.isLetter(tokens.get(3).charAt(0))
-                    && keywordCheck(tokens.get(3))) {
-                tableName = tokens.get(3).toLowerCase();
+        Record record = new Record(new ArrayList<>());
+        while (tokens.get(0).getType() != Type.R_PAREN) {
+            switch (tokens.get(0).getType()) {
+                case INTEGER:
+                    record.getValues().add(Integer.parseInt(tokens.remove(0).getVal()));
+                    break;
+                case DOUBLE:
+                    record.getValues().add(Double.parseDouble(tokens.remove(0).getVal()));
+                    break;
+                case BOOLEAN:
+                    record.getValues().add(Boolean.parseBoolean(tokens.remove(0).getVal()));
+                    break;
+                case STRING:
+                    record.getValues().add(tokens.remove(0).getVal());
+                    break;
+                case NULL:
+                    record.getValues().add(null);
+                    break;
+                default:
+                    MessagePrinter.printMessage(MessageType.ERROR, tokens.get(0) + " is an invalid input");
             }
         }
-        return tableName;
+        tokens.remove(0); // remove closing bracket
+        return record;
     }
 
-    public static ArrayList<String> parseFrom(ArrayList<String> tokens) throws Exception {
-        // from tableName, tableName, ......
-        ArrayList<String> tableName = new ArrayList<>();
-        String nameRegex = "^[a-zA-Z][a-zA-Z0-9]*$";
+    public static Select parseSelect(ArrayList<Token> tokens) throws Exception {
+        // Format: select * from <name>;
+        List<String> attributeNames = new ArrayList<>();
+        tokens.remove(0); // remove select token
 
-        if (tokens.size() <= 1) {
-            MessagePrinter.printMessage(MessageType.ERROR, "incorrect format");
-        }
+        if (tokens.get(0).getType() != Type.ASTERISK) {
 
-        if (!tokens.get(0).equalsIgnoreCase("from")) {
-            MessagePrinter.printMessage(MessageType.ERROR, "first should be from");
-        } else {
-            // table name(s) in a string
-            for (int i = 1; i < tokens.size() - 1; i++) {
-                if (tokens.get(i).contains(nameRegex)) {
-                    tableName.add(tokens.get(i));
-                }
+            if (tokens.get(0).getType() != Type.IDKEY && tokens.get(0).getType() != Type.QUALIFIER
+                    && tokens.get(0).getType() != Type.CONSTRAINT && tokens.get(0).getType() != Type.DATATYPE) {
+                MessagePrinter.printMessage(MessageType.ERROR, "Expected attribute name");
             }
+
+            attributeNames.add(tokens.remove(0).getVal().toLowerCase());
+
+            while (!tokens.get(0).getVal().equalsIgnoreCase("from")) {
+
+                if (tokens.get(0).getType() != Type.COMMA) {
+                    MessagePrinter.printMessage(MessageType.ERROR, "Expected ',' after attribute name");
+                }
+
+                tokens.remove(0);
+
+                if (tokens.get(0).getType() != Type.IDKEY && tokens.get(0).getType() != Type.QUALIFIER
+                        && tokens.get(0).getType() != Type.CONSTRAINT && tokens.get(0).getType() != Type.DATATYPE) {
+                    MessagePrinter.printMessage(MessageType.ERROR, "Expected attribute name");
+                }
+
+                attributeNames.add(tokens.remove(0).getVal().toLowerCase());
+
+            }
+        } else {
+            tokens.remove(0); // remove asterisk
         }
-        return tableName;
+
+        List<String> tableNames = parseFrom(tokens);
+        WhereTree whereTree = null;
+        String ordeByAttribute = null;
+        if (tokens.get(0).getVal().equalsIgnoreCase("where")) {
+            whereTree = parseWhere(tokens);
+        }
+
+        if (tokens.get(0).getVal().equalsIgnoreCase("orderby")) {
+            ordeByAttribute = parseOrderBy(tokens);
+        }
+
+        if (tokens.get(0).getType() != Type.SEMICOLON) {
+            MessagePrinter.printMessage(MessageType.ERROR, "Expected ';'");
+        }
+        tokens.remove(0); // remove semicolon
+
+        return new Select(attributeNames, tableNames, whereTree, ordeByAttribute);
+    }
+
+    public static ArrayList<String> parseFrom(ArrayList<Token> tokens) throws Exception {
+        // from tableName, tableName, ......
+        tokens.remove(0); // remove from keyword
+        ArrayList<String> tableNames = new ArrayList<>();
+
+        if (tokens.get(0).getType() != Type.IDKEY && tokens.get(0).getType() != Type.DATATYPE
+                && tokens.get(0).getType() != Type.CONSTRAINT) {
+            MessagePrinter.printMessage(MessageType.ERROR, "Expected table name");
+        }
+
+        tableNames.add(tokens.remove(0).getVal().toLowerCase());
+
+        while (tokens.get(0).getType() != Type.SEMICOLON && !tokens.get(0).getVal().equalsIgnoreCase("where")) {
+            if (tokens.get(0).getType() != Type.COMMA) {
+                MessagePrinter.printMessage(MessageType.ERROR, "Expected a ','");
+            }
+
+            tokens.remove(0);
+
+            if (tokens.get(0).getType() != Type.IDKEY) {
+                MessagePrinter.printMessage(MessageType.ERROR, "Expected table name");
+            }
+
+            tableNames.add(tokens.remove(0).getVal().toLowerCase());
+
+        }
+
+        return tableNames;
     }
 
     public static WhereTree parseWhere(ArrayList<Token> tokens) throws Exception {
@@ -156,78 +168,114 @@ public class DMLParser extends ParserCommon {
         Stack<Token> operatorStack = new Stack<>();
         tokens.remove(0); // Remove "where" token
 
-        while (true) {
-            // Expect attribute name
-            if (tokens.get(0).getType() != Type.IDKEY && tokens.get(0).getType() != Type.IDDOUBLE) {
-                MessagePrinter.printMessage(MessageType.ERROR, "Expected an attribute name");
+        // Expect attribute name
+        if (tokens.get(0).getType() != Type.IDKEY && tokens.get(0).getType() != Type.QUALIFIER
+                && tokens.get(0).getType() != Type.CONSTRAINT && tokens.get(0).getType() != Type.DATATYPE) {
+            MessagePrinter.printMessage(MessageType.ERROR, "Expected attribute name");
+        }
+
+        outputPostfix.add(tokens.remove(0));
+
+        // Expect relational operation
+        if (tokens.get(0).getType() != Type.REL_OP) {
+            MessagePrinter.printMessage(MessageType.ERROR, "Expected a relational operation");
+        }
+        Token currOperator = tokens.remove(0);
+        while (!operatorStack.isEmpty() && getPrecedent(operatorStack.peek()) >= getPrecedent(currOperator)) {
+            outputPostfix.add(operatorStack.pop());
+        }
+        operatorStack.push(currOperator);
+
+        // Expect attribute name or constant value
+        if (!isAttributeOrConstant(tokens.get(0))) {
+            MessagePrinter.printMessage(MessageType.ERROR, "Attribute name or a constant value expected");
+        }
+        outputPostfix.add(tokens.remove(0));
+
+        while (tokens.get(0).getType() != Type.SEMICOLON && !tokens.get(0).getVal().equalsIgnoreCase("orderby")) {
+
+            if (!isLogicalOperator(tokens.get(0))) {
+                MessagePrinter.printMessage(MessageType.ERROR, "Expected either 'and' or 'or'");
             }
+
+            // Expect attribute name
+            if (tokens.get(0).getType() != Type.IDKEY && tokens.get(0).getType() != Type.QUALIFIER
+                    && tokens.get(0).getType() != Type.CONSTRAINT && tokens.get(0).getType() != Type.DATATYPE) {
+                MessagePrinter.printMessage(MessageType.ERROR, "Expected attribute name");
+            }
+
             outputPostfix.add(tokens.remove(0));
 
             // Expect relational operation
-            if (tokens.isEmpty() || tokens.get(0).getType() != Type.REL_OP) {
+            if (tokens.get(0).getType() != Type.REL_OP) {
                 MessagePrinter.printMessage(MessageType.ERROR, "Expected a relational operation");
             }
-            Token currOperator = tokens.remove(0);
+            currOperator = tokens.remove(0);
             while (!operatorStack.isEmpty() && getPrecedent(operatorStack.peek()) >= getPrecedent(currOperator)) {
                 outputPostfix.add(operatorStack.pop());
             }
             operatorStack.push(currOperator);
 
             // Expect attribute name or constant value
-            if (tokens.isEmpty() || !isAttributeOrConstant(tokens.get(0))) {
+            if (!isAttributeOrConstant(tokens.get(0))) {
                 MessagePrinter.printMessage(MessageType.ERROR, "Attribute name or a constant value expected");
             }
             outputPostfix.add(tokens.remove(0));
+        }
 
-            // Expect 'and', 'or', 'orderby', or ';'
-            if (tokens.isEmpty() || !isLogicalOperator(tokens.get(0)) || tokens.get(0).getType() != Type.SEMICOLON
-                    || !tokens.get(0).getVal().equals("orderby")) {
-                MessagePrinter.printMessage(MessageType.ERROR, "Expected either 'and', 'or', 'orderby', or ';'");
-            }
-
-            if (isLogicalOperator(tokens.get(0))) {
-                currOperator = tokens.remove(0);
-                while (!operatorStack.isEmpty() && getPrecedent(operatorStack.peek()) >= getPrecedent(currOperator)) {
-                    outputPostfix.add(operatorStack.pop());
-                }
-                operatorStack.push(currOperator);
-            } else {
-                while (!operatorStack.isEmpty()) {
-                    outputPostfix.add(operatorStack.pop());
-                }
-                break;
-            }
+        while (!operatorStack.isEmpty()) {
+            outputPostfix.add(operatorStack.pop());
         }
 
         WhereTreeBuilder whereTreeBuilder = new WhereTreeBuilder(outputPostfix);
         return whereTreeBuilder.buildWhereTree();
     }
 
-    public static void parseDisplaySchema(ArrayList<String> tokens) throws Exception {
-        // Command: display schema
-        // It will show: database location, page size, buffer, size, and table schema
-        if (!tokens.get(0).equalsIgnoreCase("display")
-                && !tokens.get(1).equalsIgnoreCase("schema")
-                && !tokens.get(2).equals(";")) {
-            MessagePrinter.printMessage(MessageType.ERROR, "");
+    public static String parseOrderBy(ArrayList<Token> tokens) throws Exception {
+        String orderByAttribute = "";
+        tokens.remove(0); // remove orderby token
+
+        if (tokens.get(0).getType() != Type.IDKEY && tokens.get(0).getType() != Type.QUALIFIER
+                && tokens.get(0).getType() != Type.CONSTRAINT && tokens.get(0).getType() != Type.DATATYPE) {
+            MessagePrinter.printMessage(MessageType.ERROR, "Expected attribute name");
         }
+
+        orderByAttribute = tokens.remove(0).getVal();
+
+        return orderByAttribute;
     }
 
-    public static String parseDisplayInfo(ArrayList<String> tokens) throws Exception {
+    public static void parseDisplaySchema(ArrayList<Token> tokens) throws Exception {
+        // Command: display schema
+        tokens.remove(0); // remove display token
+        tokens.remove(0); // remove schema token
+
+        if (tokens.get(0).getType() != Type.SEMICOLON) {
+            MessagePrinter.printMessage(MessageType.ERROR, "Expected ';'");
+        }
+        tokens.remove(0); // remove semicolon
+    }
+
+    public static String parseDisplayInfo(ArrayList<Token> tokens) throws Exception {
         // Command: display info <name>
         // It will show: table name, table schema, # of pages, # of records
         String tableName;
 
-        if (tokens.get(0).equalsIgnoreCase("display")
-                && tokens.get(1).equalsIgnoreCase("info")
-                && tokens.get(3).equals(";")
-                && tokens.size() == 4) {
-            tableName = tokens.get(2).toLowerCase();
-            return tableName;
-        } else {
-            MessagePrinter.printMessage(MessageType.ERROR, "incorrect display info format");
-            return null;
+        tokens.remove(0); // remove display token
+        tokens.remove(0); // remove info token
+
+        if (tokens.get(0).getType() != Type.IDKEY) {
+            MessagePrinter.printMessage(MessageType.ERROR, "Expected table name");
         }
+
+        tableName = tokens.remove(0).getVal().toLowerCase();
+
+        if (tokens.get(0).getType() != Type.SEMICOLON) {
+            MessagePrinter.printMessage(MessageType.ERROR, "Expected ';'");
+        }
+        tokens.remove(0); // remove semicolon
+
+        return tableName;
     }
 
     public static void parseDelete(String dmlStatement) {
@@ -244,7 +292,7 @@ public class DMLParser extends ParserCommon {
     public static int getPrecedent(Token operator) {
         if (operator.getType() == Type.REL_OP) {
             return 0;
-        } else if (operator.getVal().equals("and")) {
+        } else if (operator.getVal().equalsIgnoreCase("and")) {
             return 1;
         } else {
             return 2;
@@ -253,13 +301,12 @@ public class DMLParser extends ParserCommon {
 
     private static boolean isAttributeOrConstant(Token token) {
         Type type = token.getType();
-        return type == Type.IDKEY || type == Type.IDDOUBLE || type == Type.INTDEF || type == Type.DOUBLEDEF ||
-                type == Type.BOOLDEF || type == Type.VARCHARDEF || type == Type.CHARDEF || type == Type.STRING ||
-                type == Type.DOUBLE || type == Type.INTEGER || type == Type.BOOLEAN || type == Type.IDDOUBLE;
+        return type == Type.IDKEY || type == Type.QUALIFIER || type == Type.DATATYPE || type == Type.CONSTRAINT ||
+                type == Type.STRING || type == Type.DOUBLE || type == Type.INTEGER || type == Type.BOOLEAN;
     }
 
     private static boolean isLogicalOperator(Token token) {
         String value = token.getVal();
-        return value.equals("and") || value.equals("or");
+        return value.equalsIgnoreCase("and") || value.equalsIgnoreCase("or");
     }
 }

@@ -42,15 +42,6 @@ public class Token {
     public String toString(){
         return val;
     }
-    //weirdo method but nonetheless useful.
-    public int getCharSize(){
-        if(type == Type.VARCHARDEF || type == Type.CHARDEF){
-            return charsize;
-        }
-        else{
-            return -1;
-        }
-    }
     //probably useful shorthand, esp for parsing chars
     public int getSize(){
         return val.length();

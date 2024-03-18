@@ -3,6 +3,7 @@ package QueryExecutor;
 import java.util.ArrayList;
 import java.util.List;
 
+import Parser.Select;
 import StorageManager.StorageManager;
 import StorageManager.TableSchema;
 import StorageManager.Objects.AttributeSchema;
@@ -12,12 +13,10 @@ import StorageManager.Objects.Record;
 import StorageManager.Objects.MessagePrinter.MessageType;
 
 public class SelectQueryExecutor implements QueryExecutorInterface {
-  private String name;
-  private String query;
+  private Select select;
 
-  public SelectQueryExecutor(String name, String query) {
-    this.name = name;
-    this.query = query;
+  public SelectQueryExecutor(Select select) {
+    this.select = select;
   }
 
   @Override
@@ -90,7 +89,7 @@ public class SelectQueryExecutor implements QueryExecutorInterface {
 
   private TableSchema validateQuery() throws Exception {
     Catalog catalog = Catalog.getCatalog();
-    return catalog.getSchema(this.name);
+    return catalog.getSchema(select.getTableNames().get(0));
   }
 
 }

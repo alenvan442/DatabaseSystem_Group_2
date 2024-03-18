@@ -1,24 +1,18 @@
 package Parser;
 public enum Type {
     IDKEY,
-    IDDOUBLE,
+    QUALIFIER,
     REL_OP,
     SEMICOLON,
     INTEGER,
     DOUBLE,
     BOOLEAN,
     NULL,
-    VARCHARDEF,
-    CHARDEF,
-    INTDEF,
-    DOUBLEDEF,
-    BOOLDEF,
     STRING,
+    DATATYPE,
     L_PAREN,
     R_PAREN,
     COMMA,
     ASTERISK,
-
-
-
+    CONSTRAINT
 }

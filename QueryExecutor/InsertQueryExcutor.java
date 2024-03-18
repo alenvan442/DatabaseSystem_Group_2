@@ -81,11 +81,17 @@ public class InsertQueryExcutor implements QueryExecutorInterface {
         }
         ++tupleIndex;
       }
-      
+
       getGotAndExpected(attributeSchemas, record, got, expected);
 
-      MessagePrinter.printMessage(MessageType.ERROR,
-          String.format("row %s: Too many attributes: expected (%s) for (%s)", row, expected, got));
+      if (attributeSchemas.size() < record.getValues().size()) {
+        MessagePrinter.printMessage(MessageType.ERROR,
+          String.format("row (%s): Too many attributes: expected (%s) got (%s)", row, expected, got));
+      } else {
+        MessagePrinter.printMessage(MessageType.ERROR,
+          String.format("row (%s): Too few attributes: expected (%s) got (%s)", row, expected, got));
+      }
+
     }
   }
 
@@ -122,31 +128,31 @@ public class InsertQueryExcutor implements QueryExecutorInterface {
         if (!(record.getValues().get(i) instanceof Integer)) {
           getGotAndExpected(attributeSchemas, record, got, expected);
           MessagePrinter.printMessage(MessageType.ERROR,
-              String.format("row %s: Invalid data type: expected (%s) got (%s).", row, expected, got));
+              String.format("row (%s): Invalid data type: expected (%s) got (%s).", row, expected, got));
         }
       } else if (expectedDataType.equals("double")) {
         if (!(record.getValues().get(i) instanceof Double)) {
           getGotAndExpected(attributeSchemas, record, got, expected);
           MessagePrinter.printMessage(MessageType.ERROR,
-              String.format("row %s: Invalid data type: expected (%s) got (%s).", row, expected, got));
+              String.format("row (%s): Invalid data type: expected (%s) got (%s).", row, expected, got));
         }
       } else if (expectedDataType.equals("boolean")) {
         if (!(record.getValues().get(i) instanceof Boolean)) {
           getGotAndExpected(attributeSchemas, record, got, expected);
           MessagePrinter.printMessage(MessageType.ERROR,
-              String.format("row %s: Invalid data type: expected (%s) got (%s).", row, expected, got));
+              String.format("row (%s): Invalid data type: expected (%s) got (%s).", row, expected, got));
         }
       } else if (expectedDataType.contains("char") || expectedDataType.contains("varchar")) {
         if (!(record.getValues().get(i) instanceof String)) {
           getGotAndExpected(attributeSchemas, record, got, expected);
           MessagePrinter.printMessage(MessageType.ERROR,
-              String.format("row %s: Invalid data type: expected (%s) got (%s).", row, expected, got));
+              String.format("row (%s): Invalid data type: expected (%s) got (%s).", row, expected, got));
         } else {
           checkSizeOfStrings(((String) record.getValues().get(i)), expectedDataType);
         }
       } else {
         MessagePrinter.printMessage(MessageType.ERROR,
-            String.format("row %s: Invalid data type: expected (%s) got (%s).", row, expected, got));
+            String.format("row (%s): Invalid data type: expected (%s) got (%s).", row, expected, got));
       }
     }
   }
@@ -169,12 +175,12 @@ public class InsertQueryExcutor implements QueryExecutorInterface {
     if (dataType.contains("varchar")) {
       if (value.length() > size) {
         MessagePrinter.printMessage(MessageType.ERROR, String.format(
-            "row %s: %s can only accept %d chars or less; %s is %d", row, dataType, size, value, value.length()));
+            "row (%s): %s can only accept %d chars or less; \"%s\" is %d", row, dataType, size, value, value.length()));
       }
     } else {
       if (value.length() != size) {
         MessagePrinter.printMessage(MessageType.ERROR,
-            String.format("row %s: %s can only accept %d chars; \"%s\" is %d", row, dataType, size, value, value.length()));
+            String.format("row (%s): %s can only accept %d chars; \"%s\" is %d", row, dataType, size, value, value.length()));
       }
     }
   }
@@ -229,7 +235,7 @@ public class InsertQueryExcutor implements QueryExecutorInterface {
     for (Object value : record.getValues()) {
       if (addSpace)
         got.append(" ");
-      String valueDataType = getDataType(value, expected.toString().contains("char") ? "char": "varchar");
+      String valueDataType = getDataType(value, expected.toString().contains("varchar") ? "varchar": "char");
       got.append(valueDataType);
       addSpace = true;
     }
@@ -243,10 +249,10 @@ public class InsertQueryExcutor implements QueryExecutorInterface {
     } else if (object instanceof Boolean) {
       return "boolean";
     } else if (object instanceof String) {
-      if (dataTypeForString.contains("char")) {
-        return "char(" + ((String) object).length() + ")";
-      } else {
+      if (dataTypeForString.contains("varchar")) {
         return "varchar(" + ((String) object).length() + ")";
+      } else {
+        return "char(" + ((String) object).length() + ")";
       }
     }
     return "null";

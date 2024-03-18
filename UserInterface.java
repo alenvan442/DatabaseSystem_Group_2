@@ -7,6 +7,7 @@ import java.util.Scanner;
 import Parser.DDLParser;
 import Parser.DMLParser;
 import Parser.ParserCommon;
+import Parser.Select;
 import Parser.Token;
 import QueryExecutor.DDLQueryExecutor;
 import QueryExecutor.InsertQueryExcutor;
@@ -62,47 +63,49 @@ public class UserInterface {
     private void processUserCommand(String command) {
         try {
             ArrayList<Token> tokens = ParserCommon.Tokenize(command);
-            if (tokens.get(0).getVal().equals("create") &&
-                    tokens.get(0).getVal().equals("table")) {
+            if (tokens.get(0).getVal().equalsIgnoreCase("create") &&
+                    tokens.get(1).getVal().equalsIgnoreCase("table")) {
                 TableSchema TableSchema = DDLParser.parseCreateTable(tokens);
                 DDLQueryExecutor ddlQueryExecutor = new DDLQueryExecutor("create", TableSchema);
                 ddlQueryExecutor.excuteQuery();
-            } else if (tokens.get(0).getVal().equals("drop") &&
-                    tokens.get(0).getVal().equals("table")) {
+            } else if (tokens.get(0).getVal().equalsIgnoreCase("drop") &&
+                    tokens.get(1).getVal().equalsIgnoreCase("table")) {
                 String tableName = DDLParser.parseDropTable(tokens);
                 DDLQueryExecutor ddlQueryExecutor = new DDLQueryExecutor(tableName, "drop");
                 ddlQueryExecutor.excuteQuery();
-            } else if (tokens.get(0).getVal().equals("alter") &&
-                    tokens.get(0).getVal().equals("table")) {
+            } else if (tokens.get(0).getVal().equalsIgnoreCase("alter") &&
+                    tokens.get(1).getVal().equalsIgnoreCase("table")) {
                 HashMap<String, String> tableAlterInfo = DDLParser.parseAlterTable(tokens);
                 DDLQueryExecutor ddlQueryExecutor = new DDLQueryExecutor(tableAlterInfo.get("tableName"), "alter",
                         tableAlterInfo.get("deflt"), tableAlterInfo.get("attriname"), tableAlterInfo.get("type"),
                         tableAlterInfo.get("adddrop"),tableAlterInfo.get("isDeflt"));
                 ddlQueryExecutor.excuteQuery();
-            } else if (tokens.get(0).getVal().equals("insert") &&
-                    tokens.get(0).getVal().equals("into")) {
+            } else if (tokens.get(0).getVal().equalsIgnoreCase("insert") &&
+                    tokens.get(1).getVal().equalsIgnoreCase("into")) {
                 Map<String, List<Record>> insertMap = DMLParser.parseInsert(tokens);
                 InsertQueryExcutor insertQueryExcutor = new InsertQueryExcutor(
                         insertMap.entrySet().iterator().next().getKey(),
                         insertMap.entrySet().iterator().next().getValue(), command);
                 insertQueryExcutor.excuteQuery();
-            } else if (tokens.get(0).getVal().equals("select")) {
-                String tableName = DMLParser.parseSelect(tokens);
-                SelectQueryExecutor selectQueryExecutor = new SelectQueryExecutor(tableName, command);
+            } else if (tokens.get(0).getVal().equalsIgnoreCase("select")) {
+                Select select = DMLParser.parseSelect(tokens);
+                SelectQueryExecutor selectQueryExecutor = new SelectQueryExecutor(select);
                 selectQueryExecutor.excuteQuery();
-            } else if (tokens.get(0).getVal().equals("display") &&
-                    tokens.get(0).getVal().equals("schema")) {
+            } else if (tokens.get(0).getVal().equalsIgnoreCase("display") &&
+                    tokens.get(1).getVal().equalsIgnoreCase("schema")) {
                 DMLParser.parseDisplaySchema(tokens);
                 displaySchemaResult();
-            } else if (tokens.get(0).getVal().equals("display") &&
-                    tokens.get(0).getVal().equals("info")) {
+            } else if (tokens.get(0).getVal().equalsIgnoreCase("display") &&
+                    tokens.get(1).getVal().equalsIgnoreCase("info")) {
                 String tableName = DMLParser.parseDisplayInfo(tokens);
                 displayInfoResult(tableName);
             } else {
-                System.out.println("Not a valid command");
+                System.err.println("Not a valid command");
             }
+        } catch (IndexOutOfBoundsException e) {
+            System.err.println("Unexpected end to command");
         } catch (Exception e) {
-            System.out.println(e.getMessage());
+            System.err.println(e.getMessage());
         }
     }
 
