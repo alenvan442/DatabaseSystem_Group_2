@@ -23,7 +23,7 @@ public class DMLParser extends ParserCommon {
         if (tokens.get(0).getType() != Type.IDKEY) {
             MessagePrinter.printMessage(MessageType.ERROR, "Invalid table name");
         }
-        tableName = tokens.remove(0).getVal().toLowerCase();
+        tableName = tokens.remove(0).getVal();
 
         if (!tokens.get(0).getVal().equalsIgnoreCase("values")) {
             MessagePrinter.printMessage(MessageType.ERROR, "Expected 'values' keyword");
@@ -92,7 +92,7 @@ public class DMLParser extends ParserCommon {
                 MessagePrinter.printMessage(MessageType.ERROR, "Expected attribute name");
             }
 
-            attributeNames.add(tokens.remove(0).getVal().toLowerCase());
+            attributeNames.add(tokens.remove(0).getVal());
 
             while (!tokens.get(0).getVal().equalsIgnoreCase("from")) {
 
@@ -107,7 +107,7 @@ public class DMLParser extends ParserCommon {
                     MessagePrinter.printMessage(MessageType.ERROR, "Expected attribute name");
                 }
 
-                attributeNames.add(tokens.remove(0).getVal().toLowerCase());
+                attributeNames.add(tokens.remove(0).getVal());
 
             }
         } else {
@@ -143,7 +143,7 @@ public class DMLParser extends ParserCommon {
             MessagePrinter.printMessage(MessageType.ERROR, "Expected table name");
         }
 
-        tableNames.add(tokens.remove(0).getVal().toLowerCase());
+        tableNames.add(tokens.remove(0).getVal());
 
         while (tokens.get(0).getType() != Type.SEMICOLON && !tokens.get(0).getVal().equalsIgnoreCase("where")) {
             if (tokens.get(0).getType() != Type.COMMA) {
@@ -156,7 +156,7 @@ public class DMLParser extends ParserCommon {
                 MessagePrinter.printMessage(MessageType.ERROR, "Expected table name");
             }
 
-            tableNames.add(tokens.remove(0).getVal().toLowerCase());
+            tableNames.add(tokens.remove(0).getVal());
 
         }
 
@@ -268,7 +268,7 @@ public class DMLParser extends ParserCommon {
             MessagePrinter.printMessage(MessageType.ERROR, "Expected table name");
         }
 
-        tableName = tokens.remove(0).getVal().toLowerCase();
+        tableName = tokens.remove(0).getVal();
 
         if (tokens.get(0).getType() != Type.SEMICOLON) {
             MessagePrinter.printMessage(MessageType.ERROR, "Expected ';'");

@@ -101,7 +101,7 @@ public class ParserCommon { // extend me!
 					tokens.add(new Token(Type.QUALIFIER, currentToken));
 				}
 				else if (label) {
-					switch (currentToken.toLowerCase()) {
+					switch (currentToken) {
 						case "notnull":
 						case "primarykey":
 						case "unique":

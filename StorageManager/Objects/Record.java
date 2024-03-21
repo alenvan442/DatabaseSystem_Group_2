@@ -152,7 +152,7 @@ public class Record implements java.io.Serializable, StorageManagerObjectInteref
             } else if (attributeSchema.getDataType().equalsIgnoreCase("boolean")) {
                 boolean value = tableAccessFile.readBoolean();
                 this.values.add(value);
-            } else if (attributeSchema.getDataType().toLowerCase().contains("char") || attributeSchema.getDataType().toLowerCase().contains("varchar")) {
+            } else if (attributeSchema.getDataType().contains("char") || attributeSchema.getDataType().contains("varchar")) {
                 String value = tableAccessFile.readUTF();
                 this.values.add(value);
             }
