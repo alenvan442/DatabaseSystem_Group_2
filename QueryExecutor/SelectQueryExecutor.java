@@ -14,6 +14,7 @@ import StorageManager.Objects.MessagePrinter.MessageType;
 
 public class SelectQueryExecutor implements QueryExecutorInterface {
   private Select select;
+  private TableSchema schema;
 
   public SelectQueryExecutor(Select select) {
     this.select = select;
@@ -21,20 +22,30 @@ public class SelectQueryExecutor implements QueryExecutorInterface {
 
   @Override
   public void excuteQuery() throws Exception {
-    // validate
-    TableSchema tableSchema = validateQuery();
-
     // execute
     StorageManager storageManager = StorageManager.getStorageManager();
-    List<Record> record = storageManager.getAllRecords(tableSchema.getTableNumber());
+    this.validateQuery();
+    List<Record> record = storageManager.getAllRecords(this.schema.getTableNumber());
     List<String> attributeNames = new ArrayList<>();
-    for (AttributeSchema attributeSchema : tableSchema.getAttributes()) {
+    for (AttributeSchema attributeSchema : this.schema.getAttributes()) {
       attributeNames.add(attributeSchema.getAttributeName());
     }
 
     // buid result string
     System.out.println("\n" + buildResultString(record, attributeNames));
     MessagePrinter.printMessage(MessageType.SUCCESS, null);
+  }
+
+  private List<Record> getRecords() {
+    Catalog catalog = Catalog.getCatalog();
+    // TODO call validate query to create the schema
+
+    // TODO check to see if there is only 1 table
+    // if so, return all records from that table
+
+    // TODO if more than one table, get all records
+    // of all of the tables, and compute the cartesian product of them
+    
   }
 
   private String buildResultString(List<Record> records, List<String> attributeNames) {
@@ -87,9 +98,26 @@ public class SelectQueryExecutor implements QueryExecutorInterface {
     return resultString.toString();
   }
 
-  private TableSchema validateQuery() throws Exception {
+  private void validateQuery() throws Exception {
     Catalog catalog = Catalog.getCatalog();
-    return catalog.getSchema(select.getTableNames().get(0));
+    if (select.getTableNames().size() > 1) {
+      this.schema = this.buildCartesianSchema();
+    } else {
+      this.schema = catalog.getSchema(select.getTableNames().get(0));
+    }
+  }
+
+  private TableSchema buildCartesianSchema() {
+    // create new temp schema
+    TableSchema temp = new TableSchema("temp");
+
+    // TODO loop through each table name and get their schema
+    // then add each attribute in the form of x.y to the temp schema
+    // where x is the table name and y is the attribute name
+    // return the temp schema
+   
+    return temp;
+
   }
 
 }
