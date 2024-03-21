@@ -41,13 +41,13 @@ public class DDLParser extends ParserCommon {
 				MessagePrinter.printMessage(MessageType.ERROR, "Expected attribute name");
 			}
 
-			attributeName = tokens.remove(0).getVal().toLowerCase();
+			attributeName = tokens.remove(0).getVal();
 
 			if (tokens.get(0).getType() != Type.DATATYPE) {
 				MessagePrinter.printMessage(MessageType.ERROR, "invalid data type " + "'" + tokens.get(0).getVal() + "'");
 			}
 
-			dataType = tokens.remove(0).getVal().toLowerCase();
+			dataType = tokens.remove(0).getVal();
 
 			if (dataType.equalsIgnoreCase("char") || dataType.equalsIgnoreCase("varchar")) {
 				if (tokens.get(0).getType() != Type.L_PAREN) {
@@ -118,7 +118,7 @@ public class DDLParser extends ParserCommon {
 				&& tokens.get(0).getType() != Type.CONSTRAINT) {
 			MessagePrinter.printMessage(MessageType.ERROR, "Expected a table name");
 		}
-		return tokens.get(0).getVal().toLowerCase();
+		return tokens.get(0).getVal();
 	}
 
 	/**
@@ -152,13 +152,13 @@ public class DDLParser extends ParserCommon {
 			MessagePrinter.printMessage(MessageType.ERROR, "Expected table name");
 		}
 
-		tableName = tokens.remove(0).getVal().toLowerCase();
+		tableName = tokens.remove(0).getVal();
 
 		if (!tokens.get(0).getVal().equalsIgnoreCase("drop") && !tokens.get(0).getVal().equalsIgnoreCase("add")) {
 			MessagePrinter.printMessage(MessageType.ERROR, "Expected 'drop' or 'add' kwyword");
 		}
 
-		adddrop = tokens.remove(0).getVal().toLowerCase();
+		adddrop = tokens.remove(0).getVal();
 
 		if (tokens.get(0).getType() != Type.IDKEY && tokens.get(0).getType() != Type.DATATYPE
 				&& tokens.get(0).getType() != Type.CONSTRAINT) {

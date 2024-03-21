@@ -132,7 +132,7 @@ public class ParserCommon { // extend me!
 		}
 
 		if (!currentToken.isEmpty()) {
-			tokens.add(new Token(Type.IDKEY, currentToken));
+			tokens.add(new Token(Type.IDKEY, currentToken.toLowerCase()));
 		}
 
 		return tokens;
