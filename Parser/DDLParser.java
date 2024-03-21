@@ -41,7 +41,7 @@ public class DDLParser extends ParserCommon {
 				MessagePrinter.printMessage(MessageType.ERROR, "Expected attribute name");
 			}
 
-			attributeName = tokens.remove(0).getVal();
+			attributeName = tokens.remove(0).getVal().toLowerCase();
 
 			if (tokens.get(0).getType() != Type.DATATYPE) {
 				MessagePrinter.printMessage(MessageType.ERROR, "invalid data type " + "'" + tokens.get(0).getVal() + "'");
@@ -49,7 +49,7 @@ public class DDLParser extends ParserCommon {
 
 			dataType = tokens.remove(0).getVal().toLowerCase();
 
-			if (dataType.equals("char") || dataType.equals("varchar")) {
+			if (dataType.equalsIgnoreCase("char") || dataType.equalsIgnoreCase("varchar")) {
 				if (tokens.get(0).getType() != Type.L_PAREN) {
 					MessagePrinter.printMessage(MessageType.ERROR, "Expected '(' afetr " + tokens.get(0).getVal());
 				}
@@ -167,13 +167,13 @@ public class DDLParser extends ParserCommon {
 
 		attriname = tokens.remove(0).getVal();
 
-		if (adddrop.equals("add")) {
+		if (adddrop.equalsIgnoreCase("add")) {
 			if (tokens.get(0).getType() != Type.DATATYPE) {
 				MessagePrinter.printMessage(MessageType.ERROR, "Expected a valid data type for " + attriname);
 			}
 			type = tokens.remove(0).getVal();
 
-			if (type.equals("char") || type.equals("varchar")) {
+			if (type.equalsIgnoreCase("char") || type.equalsIgnoreCase("varchar")) {
 				if (tokens.get(0).getType() != Type.L_PAREN) {
 					MessagePrinter.printMessage(MessageType.ERROR, "Expected '(' afetr " + tokens.get(0).getVal());
 				}
