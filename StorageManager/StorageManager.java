@@ -129,15 +129,15 @@ public class StorageManager implements StorageManagerInterface {
         List<Integer> pageOrder = schema.getPageOrder();
         Page foundPage = null;
 
-        for (int i : pageOrder) {
-            Page page = this.getPage(tableNumber, i);
+        for (int pageNumber : pageOrder) {
+            Page page = this.getPage(tableNumber, pageNumber);
             Record lastRecord = page.getRecords().get(page.getRecords().size() - 1);
             int comparison = lastRecord.compareTo(primaryKey, primaryKeyIndex);
 
             if (comparison == 0) {
                 // found the record, return it
                 return lastRecord;
-            } else if (comparison < 0) {
+            } else if (comparison > 0) {
                 // found the correct page
                 foundPage = page;
                 break;
@@ -238,69 +238,60 @@ public class StorageManager implements StorageManagerInterface {
         }
     }
 
-    public Pair<Page, Record> deleteHelper(TableSchema schema, Record record) {
+    public Pair<Page, Record> deleteHelper(TableSchema schema, Object primaryKey) throws Exception {
 
         Integer tableNumber = schema.getTableNumber();
         int primaryIndex = schema.getPrimaryIndex();
         Page foundPage = null;
 
-        try {
-            // start reading pages
-            // get page order
-            List<Integer> pageOrder = schema.getPageOrder();
+        // start reading pages
+        // get page order
+        List<Integer> pageOrder = schema.getPageOrder();
 
-            // find the correct page
-            for (int i = 0; i < pageOrder.size(); i++) {
-                Integer pageIndex = pageOrder.get(i);
-                Page page = this.getPage(tableNumber, pageIndex);
+        // find the correct page
+        for (int pageNumber : pageOrder) {
+            Page page = this.getPage(tableNumber, pageNumber);
 
-                // compare last record in page
-                List<Record> foundRecords = page.getRecords();
-                Record lastRecord = foundRecords.get(page.getRecords().size() - 1);
-                int comparison = lastRecord.compareTo(record, primaryIndex);
-                if (comparison == 0) {
-                    // found the record, delete it
-                    Record removed = page.deleteRecord(page.getNumRecords() - 1);
-                    return new Pair<Page,Record>(page, removed);
-                } else if (comparison > 0) {
-                    // found the correct page
-                    foundPage = page;
-                    break;
-                } else {
-                    // page was not found, continue
-                    continue;
-                }
-            }
-
-            if (foundPage.equals(null)) {
-                MessagePrinter.printMessage(MessageType.ERROR,
-                        String.format("No record of primary key: (%d), was found.",
-                                record.getValues().get(primaryIndex)));
-                return null;
+            // compare last record in page
+            List<Record> foundRecords = page.getRecords();
+            Record lastRecord = foundRecords.get(page.getNumRecords() - 1);
+            int comparison = lastRecord.compareTo(primaryKey, primaryIndex);
+            if (comparison == 0) {
+                // found the record, delete it
+                Record removed = page.deleteRecord(page.getNumRecords() - 1);
+                return new Pair<Page,Record>(page, removed);
+            } else if (comparison > 0) {
+                // found the correct page
+                foundPage = page;
+                break;
             } else {
-                // a page was found but deletion has yet to happen
-                List<Record> recordsInFound = foundPage.getRecords();
-                for (int i = 0; i < recordsInFound.size(); i++) {
-                    if (record.compareTo(recordsInFound.get(i), primaryIndex) == 0) {
-                        Record removed = foundPage.deleteRecord(i);
-                        return new Pair<Page, Record>(foundPage, removed);
-                    }
-                }
-                MessagePrinter.printMessage(MessageType.ERROR,
-                        String.format("No record of primary key: (%d), was found.",
-                                record.getValues().get(primaryIndex)));
-                return null;
+                // page was not found, continue
+                continue;
             }
-
-        } catch (Exception e) {
-            System.out.println(e.getStackTrace());
-            return null;
         }
 
+        if (foundPage.equals(null)) {
+            MessagePrinter.printMessage(MessageType.ERROR,
+                    String.format("No record of primary key: (%d), was found.",
+                            primaryKey));
+        } else {
+            // a page was found but deletion has yet to happen
+            List<Record> recordsInFound = foundPage.getRecords();
+            for (int i = 0; i < recordsInFound.size(); i++) {
+                if (recordsInFound.get(i).compareTo(primaryKey, primaryIndex) == 0) {
+                    Record removed = foundPage.deleteRecord(i);
+                    return new Pair<Page, Record>(foundPage, removed);
+
+                }
+            }
+            MessagePrinter.printMessage(MessageType.ERROR,
+                    String.format("No record of primary key: (%d), was found.",
+                            primaryKey));
+        }
+        return null;
     }
 
     private void checkDeletePage(TableSchema schema, Page page) throws Exception {
-        
         if (page.getNumRecords() == 0) {
             // begin to delete the page by moving all preceding pages up
             List<Integer> pageOrder = schema.getPageOrder();
@@ -316,46 +307,29 @@ public class StorageManager implements StorageManagerInterface {
         }
     }
 
-    public void deleteRecord(int tableNumber, Record record) throws Exception {
+    public Record deleteRecord(int tableNumber, Object primaryKey) throws Exception {
 
         TableSchema schema = Catalog.getCatalog().getSchema(tableNumber);
-        Pair<Page, Record> deletedPair = deleteHelper(schema, record);
+        Pair<Page, Record> deletedPair = deleteHelper(schema, primaryKey);
         Page deletePage = deletedPair.first;
-        if (deletePage.equals(null)) {
-            // no record found
-            // error message was already thrown in deletePage
-            return;
-        }
 
         this.checkDeletePage(schema, deletePage);
-
+        return deletedPair.second;
     }
 
-    public void updateRecord(int tableNumber, Record record) throws Exception {
+    public void updateRecord(int tableNumber, Record newRecord, Object primaryKey) throws Exception {
 
-        TableSchema schema = Catalog.getCatalog().getSchema(tableNumber);
-        Pair<Page, Record> deletedPair = this.deleteHelper(schema, record); // if the delete was successful then deletePage !=
+
+        Record oldRecord = deleteRecord(tableNumber, primaryKey); // if the delete was successful then deletePage !=
                                                                   // null
 
-        Page deletePage = deletedPair.first;
-        Record oldRecord = deletedPair.second;
-                                                                  
-        if (deletePage.equals(null)) {
-            // no record found
-            // error message was already thrown in deletePage
-            return;
-        }
-
-        this.checkDeletePage(schema, deletePage);
-
         try {
-            this.insertRecord(tableNumber, record);
+            this.insertRecord(tableNumber, newRecord);
         } catch (Exception e) {
             // insert failed, restore the deleted record
             this.insertRecord(tableNumber, oldRecord);
 
         }
-
     }
 
 

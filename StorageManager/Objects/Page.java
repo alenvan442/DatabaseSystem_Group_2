@@ -123,17 +123,14 @@ public class Page implements java.io.Serializable, Comparator<Page>, StorageMana
      *
      * @param index     The index to delete the record at
      *
-     * @return          The deleted record, null otherwise
+     * @return          The deleted record
      */
     public Record deleteRecord(int index) {
         Record removed = this.records.remove(index);
-        if (!removed.equals(null)) {
-            this.changed = true;
-            this.setPriority();
-            this.setNumRecords();
-            return removed;
-        }
-        return null;
+        this.changed = true;
+        this.setPriority();
+        this.setNumRecords();
+        return removed;
     }
 
     /*

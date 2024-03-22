@@ -9,6 +9,7 @@ import Parser.DMLParser;
 import Parser.ParserCommon;
 import Parser.Select;
 import Parser.Token;
+import Parser.Insert;
 import QueryExecutor.DDLQueryExecutor;
 import QueryExecutor.InsertQueryExcutor;
 import QueryExecutor.SelectQueryExecutor;
@@ -82,15 +83,19 @@ public class UserInterface {
                 ddlQueryExecutor.excuteQuery();
             } else if (tokens.get(0).getVal().equalsIgnoreCase("insert") &&
                     tokens.get(1).getVal().equalsIgnoreCase("into")) {
-                Map<String, List<Record>> insertMap = DMLParser.parseInsert(tokens);
-                InsertQueryExcutor insertQueryExcutor = new InsertQueryExcutor(
-                        insertMap.entrySet().iterator().next().getKey(),
-                        insertMap.entrySet().iterator().next().getValue(), command);
+                Insert insert = DMLParser.parseInsert(tokens);
+                insert.setQuery(command);
+                InsertQueryExcutor insertQueryExcutor = new InsertQueryExcutor(insert);
                 insertQueryExcutor.excuteQuery();
             } else if (tokens.get(0).getVal().equalsIgnoreCase("select")) {
                 Select select = DMLParser.parseSelect(tokens);
                 SelectQueryExecutor selectQueryExecutor = new SelectQueryExecutor(select);
                 selectQueryExecutor.excuteQuery();
+            } else if (tokens.get(0).getVal().equalsIgnoreCase("delete") &&
+                        tokens.get(1).getVal().equalsIgnoreCase("from")) {
+                // todo: add call to parser
+            } else if (tokens.get(0).getVal().equalsIgnoreCase("update")) {
+                // tode: add call to parser
             } else if (tokens.get(0).getVal().equalsIgnoreCase("display") &&
                     tokens.get(1).getVal().equalsIgnoreCase("schema")) {
                 DMLParser.parseDisplaySchema(tokens);

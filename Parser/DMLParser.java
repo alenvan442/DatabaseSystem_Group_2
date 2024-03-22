@@ -15,7 +15,7 @@ import Parser.WhereTreeNodes.WhereTree;
 
 public class DMLParser extends ParserCommon {
 
-    public static Map<String, List<Record>> parseInsert(ArrayList<Token> tokens) throws Exception {
+    public static Insert parseInsert(ArrayList<Token> tokens) throws Exception {
         String tableName;
         tokens.remove(0);
         tokens.remove(0);
@@ -45,7 +45,8 @@ public class DMLParser extends ParserCommon {
         tokens.remove(0); // remove semicolon
         Map<String, List<Record>> map = new HashMap<>();
         map.put(tableName, records);
-        return map;
+
+        return new Insert(tableName, records);
     }
 
     public static Record parseRecord(ArrayList<Token> tokens) throws Exception {
