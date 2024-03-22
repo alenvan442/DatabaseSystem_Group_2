@@ -135,7 +135,7 @@ public class DMLParser extends ParserCommon {
     }
 
     public static ArrayList<String> parseFrom(ArrayList<Token> tokens) throws Exception {
-        // from tableName, tableName, ......
+        // from tableName, ......
         tokens.remove(0); // remove from keyword
         ArrayList<String> tableNames = new ArrayList<>();
 
@@ -279,10 +279,29 @@ public class DMLParser extends ParserCommon {
         return tableName;
     }
 
-    public static void parseDelete(String dmlStatement) {
+    public static delete parseDelete(ArrayList<Token> tokens) throws Exception {
         // delete from foo;
         // delete from foo where bar = 10;
-        // TODO
+        tokens.remove(0); // remove delete keyword
+        tokens.remove(0); // remove from keyword
+
+        if (tokens.get(0).getType() != Type.IDKEY && tokens.get(0).getType() != Type.DATATYPE
+                && tokens.get(0).getType() != Type.CONSTRAINT) {
+            MessagePrinter.printMessage(MessageType.ERROR, "Expected table name");
+        }
+
+        String tableName = String.valueOf(tokens.remove(0).getVal());
+        WhereTree whereTree = null;
+
+        if (tokens.get(0).getVal().equalsIgnoreCase("where")) {
+            whereTree = parseWhere(tokens);
+        }
+        if (tokens.get(0).getType() != Type.SEMICOLON) {
+            MessagePrinter.printMessage(MessageType.ERROR, "Expected ';'");
+        }
+        tokens.remove(0); // remove semicolon
+
+        return new delete(tableName, whereTree);
     }
 
     public static void parseUpdate(String dmlStatement) {
