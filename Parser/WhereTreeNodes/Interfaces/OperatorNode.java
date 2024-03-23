@@ -8,6 +8,6 @@ import StorageManager.Objects.Record;
  */
 public interface OperatorNode {
 
-    public boolean evaluate(TableSchema schema, Record record);
+    public boolean evaluate(TableSchema schema, Record record) throws Exception;
 
 }

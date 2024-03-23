@@ -279,7 +279,7 @@ public class DMLParser extends ParserCommon {
         return tableName;
     }
 
-    public static delete parseDelete(ArrayList<Token> tokens) throws Exception {
+    public static Delete parseDelete(ArrayList<Token> tokens) throws Exception {
         // delete from foo;
         // delete from foo where bar = 10;
         tokens.remove(0); // remove delete keyword
@@ -301,7 +301,7 @@ public class DMLParser extends ParserCommon {
         }
         tokens.remove(0); // remove semicolon
 
-        return new delete(tableName, whereTree);
+        return new Delete(tableName, whereTree);
     }
 
     public static void parseUpdate(String dmlStatement) {

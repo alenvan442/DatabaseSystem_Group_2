@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import Parser.Select;
+import Parser.WhereTreeNodes.WhereTree;
 import StorageManager.StorageManager;
 import StorageManager.TableSchema;
 import StorageManager.Objects.AttributeSchema;
@@ -24,19 +25,32 @@ public class SelectQueryExecutor implements QueryExecutorInterface {
   public void excuteQuery() throws Exception {
     // execute
     StorageManager storageManager = StorageManager.getStorageManager();
-    this.validateQuery();
-    List<Record> record = storageManager.getAllRecords(this.schema.getTableNumber());
+    this.buildSchema();
+    List<Record> record = this.getAllRecords(storageManager);
+
+    List<Record> finalRecords = new ArrayList<>();
+    if (this.select.getWhereTree() != null) {
+      WhereTree where = this.select.getWhereTree();
+      for (Record i : record) {
+        if (where.evaluate(this.schema, i)) {
+          finalRecords.add(i);
+        }
+      }
+    } else {
+      finalRecords.addAll(record);
+    }
+
     List<String> attributeNames = new ArrayList<>();
     for (AttributeSchema attributeSchema : this.schema.getAttributes()) {
       attributeNames.add(attributeSchema.getAttributeName());
     }
 
     // buid result string
-    System.out.println("\n" + buildResultString(record, attributeNames));
+    System.out.println("\n" + buildResultString(finalRecords, attributeNames));
     MessagePrinter.printMessage(MessageType.SUCCESS, null);
   }
 
-  private List<Record> getRecords() {
+  private List<Record> getAllRecords(StorageManager storageManager) {
     Catalog catalog = Catalog.getCatalog();
     // TODO call validate query to create the schema
 
@@ -98,7 +112,7 @@ public class SelectQueryExecutor implements QueryExecutorInterface {
     return resultString.toString();
   }
 
-  private void validateQuery() throws Exception {
+  private void buildSchema() throws Exception {
     Catalog catalog = Catalog.getCatalog();
     if (select.getTableNames().size() > 1) {
       this.schema = this.buildCartesianSchema();
