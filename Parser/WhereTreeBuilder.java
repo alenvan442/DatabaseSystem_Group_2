@@ -1,9 +1,7 @@
 package Parser;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Stack;
 
@@ -28,7 +26,6 @@ public class WhereTreeBuilder {
 
   public WhereTree buildWhereTree() throws Exception {
     Stack<Object> nodeStack = new Stack<>();
-    Queue<Token> tokens = new LinkedList<Token>(postfixExpression);
     boolean attributeSwitch = true; // if this is true, then the next operandNode is an attribue, if false, its a value
                                     // this will flip every time we read in another operandNode,
                                     // we are guarenteed the first should be the attribute name rather than the value
@@ -43,7 +40,7 @@ public class WhereTreeBuilder {
       if (operators.contains(value)) {
         // create comparison node
         if (nodeStack.size() < 2) {
-          // TODO throw error, not enough operand/operators for this operator
+          MessagePrinter.printMessage(MessageType.ERROR, "Invalid number of operator/operands, operator/operand mismatch.");
         }
 
         try {
@@ -59,13 +56,13 @@ public class WhereTreeBuilder {
           }
 
         } catch (Exception e) {
-          // TODO throw operator/operand mismatch error
+          MessagePrinter.printMessage(MessageType.ERROR, "Invalid number of operator/operands, operator/operand mismatch.");
         }
 
       } else if (comparisons.contains(value)) {
         // create operator node
         if (nodeStack.size() < 2) {
-          // TODO throw error, not enough operand/operators for this operator
+          MessagePrinter.printMessage(MessageType.ERROR, "Invalid number of operator/operands, operator/operand mismatch.");
         }
 
         try {
@@ -77,7 +74,7 @@ public class WhereTreeBuilder {
           nodeStack.push(new ComparisonOpNode(left, right, value));
 
         } catch (Exception e) {
-          // TODO throw error operator/operand mismatch error
+          MessagePrinter.printMessage(MessageType.ERROR, "Invalid number of operator/operands, operator/operand mismatch.");
         }
 
       } else {
@@ -96,7 +93,7 @@ public class WhereTreeBuilder {
                   operand = new ValueNode(false);
                   break;
                 default:
-                  // TODO throw invalid boolean string
+                MessagePrinter.printMessage(MessageType.ERROR, "Invalid value for type boolean.");
                   break;
               }
               break;
@@ -124,7 +121,7 @@ public class WhereTreeBuilder {
 
     if (nodeStack.size() != 1) {
       // mismatch of operands and operators occured
-      // TODO raise error
+      MessagePrinter.printMessage(MessageType.ERROR, "Invalid number of operator/operands, operator/operand mismatch.");
     }
 
     // after this algorithm, the last node in the node stack is guarenteed

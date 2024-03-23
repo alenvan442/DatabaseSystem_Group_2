@@ -56,6 +56,14 @@ public class ComparisonOpNode implements OperatorNode {
 
     }
 
+    /**
+     * Takes in two parameters of any type and compares them based on some comparison
+     * @param <T>
+     * @param left      The left operand
+     * @param right     The right operand
+     * @return          A boolean
+     * @throws Exception
+     */
     private <T extends Comparable<T>> boolean compareChildren (T left, T right) throws Exception {
         switch (this.operator) {
             case "=":

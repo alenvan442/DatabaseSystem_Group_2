@@ -16,6 +16,7 @@ import StorageManager.Objects.MessagePrinter.MessageType;
 public class SelectQueryExecutor implements QueryExecutorInterface {
   private Select select;
   private TableSchema schema;
+  private List<Record> records;
 
   public SelectQueryExecutor(Select select) {
     this.select = select;
@@ -24,21 +25,7 @@ public class SelectQueryExecutor implements QueryExecutorInterface {
   @Override
   public void excuteQuery() throws Exception {
     // execute
-    StorageManager storageManager = StorageManager.getStorageManager();
-    this.buildSchema();
-    List<Record> record = this.getAllRecords(storageManager);
-
-    List<Record> finalRecords = new ArrayList<>();
-    if (this.select.getWhereTree() != null) {
-      WhereTree where = this.select.getWhereTree();
-      for (Record i : record) {
-        if (where.evaluate(this.schema, i)) {
-          finalRecords.add(i);
-        }
-      }
-    } else {
-      finalRecords.addAll(record);
-    }
+    this.validateQuery();
 
     List<String> attributeNames = new ArrayList<>();
     for (AttributeSchema attributeSchema : this.schema.getAttributes()) {
@@ -46,7 +33,7 @@ public class SelectQueryExecutor implements QueryExecutorInterface {
     }
 
     // buid result string
-    System.out.println("\n" + buildResultString(finalRecords, attributeNames));
+    System.out.println("\n" + buildResultString(this.records, attributeNames));
     MessagePrinter.printMessage(MessageType.SUCCESS, null);
   }
 
@@ -60,6 +47,8 @@ public class SelectQueryExecutor implements QueryExecutorInterface {
     // TODO if more than one table, get all records
     // of all of the tables, and compute the cartesian product of them
     
+    return null;
+
   }
 
   private String buildResultString(List<Record> records, List<String> attributeNames) {
@@ -112,13 +101,30 @@ public class SelectQueryExecutor implements QueryExecutorInterface {
     return resultString.toString();
   }
 
-  private void buildSchema() throws Exception {
+  private void validateQuery() throws Exception {
     Catalog catalog = Catalog.getCatalog();
+    StorageManager storageManager = StorageManager.getStorageManager();
+
     if (select.getTableNames().size() > 1) {
       this.schema = this.buildCartesianSchema();
     } else {
       this.schema = catalog.getSchema(select.getTableNames().get(0));
     }
+
+    List<Record> allRecords = this.getAllRecords(storageManager);
+
+    this.records = new ArrayList<>();
+    if (this.select.getWhereTree() != null) {
+      WhereTree where = this.select.getWhereTree();
+      for (Record i : allRecords) {
+        if (where.evaluate(this.schema, i)) {
+          this.records.add(i);
+        }
+      }
+    } else {
+      this.records.addAll(allRecords);
+    }
+
   }
 
   private TableSchema buildCartesianSchema() {
