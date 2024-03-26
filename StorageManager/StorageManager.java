@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Random;
 
+import Parser.Insert;
+import QueryExecutor.InsertQueryExcutor;
 import StorageManager.Objects.AttributeSchema;
 import StorageManager.Objects.Catalog;
 import StorageManager.Objects.MessagePrinter;
@@ -320,8 +322,11 @@ public class StorageManager implements StorageManagerInterface {
     public void updateRecord(int tableNumber, Record newRecord, Object primaryKey) throws Exception {
 
 
-        Record oldRecord = deleteRecord(tableNumber, primaryKey); // if the delete was successful then deletePage !=
-                                                                  // null
+        Record oldRecord = deleteRecord(tableNumber, primaryKey); // if the delete was successful then deletePage != null
+
+        Insert insert = new Insert(Catalog.getCatalog().getSchema(tableNumber).getTableName(), null);
+        InsertQueryExcutor insertQueryExcutor = new InsertQueryExcutor(insert);
+        insertQueryExcutor.validateRecord(newRecord);
 
         try {
             this.insertRecord(tableNumber, newRecord);
