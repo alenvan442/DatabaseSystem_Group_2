@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import Parser.Insert;
 import StorageManager.StorageManager;
 import StorageManager.TableSchema;
 import StorageManager.Objects.AttributeSchema;
@@ -15,30 +16,26 @@ import StorageManager.Objects.MessagePrinter.MessageType;
 
 public class InsertQueryExcutor implements QueryExecutorInterface {
 
-  private String name;
-  private List<Record> records;
-  private String query;
+  private Insert insert;
 
-  public InsertQueryExcutor(String name, List<Record> records, String query) {
-    this.name = name;
-    this.records = records;
-    this.query = query;
+  public InsertQueryExcutor(Insert insert) {
+    this.insert = insert;
   }
 
   @Override
   public void excuteQuery() throws Exception {
 
-    for (Record record : this.records) {
-      int tableNumber = validateQuery(record);
+    for (Record record : this.insert.getRecords()) {
+      int tableNumber = validateRecord(record);
       StorageManager.getStorageManager().insertRecord(tableNumber, record);
     }
 
     MessagePrinter.printMessage(MessageType.SUCCESS, null);
   }
 
-  private int validateQuery(Record record) throws Exception {
+  public int validateRecord(Record record) throws Exception {
     Catalog catalog = Catalog.getCatalog();
-    TableSchema tableSchema = catalog.getSchema(this.name);
+    TableSchema tableSchema = catalog.getSchema(this.insert.getTableName());
     List<AttributeSchema> attributeSchemas = tableSchema.getAttributes();
     checkCorrectNumberOfValues(attributeSchemas, record);
     checkDataTypes(attributeSchemas, record);
@@ -47,10 +44,18 @@ public class InsertQueryExcutor implements QueryExecutorInterface {
     int primaryKeyIndex = tableSchema.getPrimaryIndex();
     List<AttributeSchema> attrs = tableSchema.getAttributes();
 
+    // check for unique primary key
+    if (StorageManager.getStorageManager().getRecord(tableSchema.getTableNumber(),
+        record.getValues().get(primaryKeyIndex)) != null) {
+      MessagePrinter.printMessage(MessageType.ERROR, String.format("row (%s): Duplicate %s for row (%s)",
+          printRow(record), "primary key", printRow(record)));
+    }
+
     // check unique constraints
+
     List<Integer> uniqueAttributes = new ArrayList<>();
     for (int i = 0; i < attrs.size(); i++) {
-      if (attrs.get(i).isUnique()) {
+      if (attrs.get(i).isUnique() && !attrs.get(i).isPrimaryKey()) {
         uniqueAttributes.add(i);
       }
     }
@@ -69,27 +74,15 @@ public class InsertQueryExcutor implements QueryExecutorInterface {
     if (attributeSchemas.size() != record.getValues().size()) {
       StringBuilder expected = new StringBuilder();
       StringBuilder got = new StringBuilder();
-      String row = "";
-
-      Pattern pattern = Pattern.compile("\\((.*?)\\)");
-      Matcher matcher = pattern.matcher(query);
-      int tupleIndex = 0;
-      while (matcher.find()) {
-        row = matcher.group(1);
-        if (tupleIndex == this.records.indexOf(record)) {
-          break;
-        }
-        ++tupleIndex;
-      }
 
       getGotAndExpected(attributeSchemas, record, got, expected);
 
       if (attributeSchemas.size() < record.getValues().size()) {
         MessagePrinter.printMessage(MessageType.ERROR,
-          String.format("row (%s): Too many attributes: expected (%s) got (%s)", row, expected, got));
+            String.format("row (%s): Too many attributes: expected (%s) got (%s)", printRow(record), expected, got));
       } else {
         MessagePrinter.printMessage(MessageType.ERROR,
-          String.format("row (%s): Too few attributes: expected (%s) got (%s)", row, expected, got));
+            String.format("row (%s): Too few attributes: expected (%s) got (%s)", printRow(record), expected, got));
       }
 
     }
@@ -104,83 +97,63 @@ public class InsertQueryExcutor implements QueryExecutorInterface {
         }
       }
 
-      Pattern pattern = Pattern.compile("\\((.*?)\\)");
-      Matcher matcher = pattern.matcher(this.query);
-
-      String row = "";
-      int tupleIndex = 0;
-      while (matcher.find()) {
-        row = matcher.group(1);
-        if (tupleIndex == this.records.indexOf(record)) {
-          break;
-        }
-        ++tupleIndex;
-      }
-
       String expectedDataType = attributeSchemas.get(i).getDataType();
-
 
       StringBuilder expected = new StringBuilder();
       StringBuilder got = new StringBuilder();
-
 
       if (expectedDataType.equals("integer")) {
         if (!(record.getValues().get(i) instanceof Integer)) {
           getGotAndExpected(attributeSchemas, record, got, expected);
           MessagePrinter.printMessage(MessageType.ERROR,
-              String.format("row (%s): Invalid data type: expected (%s) got (%s).", row, expected, got));
+              String.format("row (%s): Invalid data type: expected (%s) got (%s).", printRow(record), expected, got));
         }
       } else if (expectedDataType.equals("double")) {
         if (!(record.getValues().get(i) instanceof Double)) {
           getGotAndExpected(attributeSchemas, record, got, expected);
           MessagePrinter.printMessage(MessageType.ERROR,
-              String.format("row (%s): Invalid data type: expected (%s) got (%s).", row, expected, got));
+              String.format("row (%s): Invalid data type: expected (%s) got (%s).", printRow(record), expected, got));
         }
       } else if (expectedDataType.equals("boolean")) {
         if (!(record.getValues().get(i) instanceof Boolean)) {
           getGotAndExpected(attributeSchemas, record, got, expected);
           MessagePrinter.printMessage(MessageType.ERROR,
-              String.format("row (%s): Invalid data type: expected (%s) got (%s).", row, expected, got));
+              String.format("row (%s): Invalid data type: expected (%s) got (%s).", printRow(record), expected, got));
         }
       } else if (expectedDataType.contains("char") || expectedDataType.contains("varchar")) {
         if (!(record.getValues().get(i) instanceof String)) {
           getGotAndExpected(attributeSchemas, record, got, expected);
           MessagePrinter.printMessage(MessageType.ERROR,
-              String.format("row (%s): Invalid data type: expected (%s) got (%s).", row, expected, got));
+              String.format("row (%s): Invalid data type: expected (%s) got (%s).", printRow(record), expected, got));
         } else {
-          checkSizeOfStrings(((String) record.getValues().get(i)), expectedDataType);
+          checkSizeOfStrings(((String) record.getValues().get(i)), expectedDataType, record);
         }
       } else {
         MessagePrinter.printMessage(MessageType.ERROR,
-            String.format("row (%s): Invalid data type: expected (%s) got (%s).", row, expected, got));
+            String.format("row (%s): Invalid data type: expected (%s) got (%s).", printRow(record), expected, got));
       }
     }
   }
 
-  private void checkSizeOfStrings(String value, String dataType) throws Exception {
+  private void checkSizeOfStrings(String value, String dataType, Record record) throws Exception {
     Pattern pattern = Pattern.compile("\\((\\d+)\\)");
     Matcher matcher = pattern.matcher(dataType);
     int size = 0;
     while (matcher.find()) {
       size = Integer.parseInt(matcher.group(1));
     }
-    pattern = Pattern.compile("\\((.*?)\\)");
-    matcher = pattern.matcher(this.query);
-
-    String row = "";
-    while (matcher.find()) {
-      row = matcher.group(0);
-    }
 
     if (dataType.contains("varchar")) {
       if (value.length() > size) {
         MessagePrinter.printMessage(MessageType.ERROR, String.format(
-            "row (%s): %s can only accept %d chars or less; \"%s\" is %d", row, dataType, size, value, value.length()));
+            "row (%s): %s can only accept %d chars or less; \"%s\" is %d", printRow(record), dataType, size, value,
+            value.length()));
       }
     } else {
       if (value.length() != size) {
         MessagePrinter.printMessage(MessageType.ERROR,
-            String.format("row (%s): %s can only accept %d chars; \"%s\" is %d", row, dataType, size, value, value.length()));
+            String.format("row (%s): %s can only accept %d chars; \"%s\" is %d", printRow(record), dataType, size,
+                value, value.length()));
       }
     }
   }
@@ -191,13 +164,8 @@ public class InsertQueryExcutor implements QueryExecutorInterface {
     for (Record record : records) {
       for (Integer attributeIndex : uniqueAttributeIndexes) {
         if (newRecord.compareTo(record, attributeIndex) == 0) {
-          if (attributeIndex == primaryKeyIndex) {
-            MessagePrinter.printMessage(MessageType.ERROR, String.format("row (%s): Duplicate %s for row (%s)",
-                printRow(record), "primary key", printRow(record)));
-          } else {
-            MessagePrinter.printMessage(MessageType.ERROR,
-                String.format("row (%s): Duplicate %s for row (%s)", printRow(record), "value", printRow(record)));
-          }
+          MessagePrinter.printMessage(MessageType.ERROR,
+              String.format("row (%s): Duplicate %s for row (%s)", printRow(record), "value", printRow(record)));
         }
       }
     }
@@ -235,7 +203,7 @@ public class InsertQueryExcutor implements QueryExecutorInterface {
     for (Object value : record.getValues()) {
       if (addSpace)
         got.append(" ");
-      String valueDataType = getDataType(value, expected.toString().contains("varchar") ? "varchar": "char");
+      String valueDataType = getDataType(value, expected.toString().contains("varchar") ? "varchar" : "char");
       got.append(valueDataType);
       addSpace = true;
     }

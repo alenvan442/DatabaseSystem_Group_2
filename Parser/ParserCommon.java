@@ -101,7 +101,7 @@ public class ParserCommon { // extend me!
 					tokens.add(new Token(Type.QUALIFIER, currentToken));
 				}
 				else if (label) {
-					switch (currentToken.toLowerCase()) {
+					switch (currentToken) {
 						case "notnull":
 						case "primarykey":
 						case "unique":
@@ -111,8 +111,6 @@ public class ParserCommon { // extend me!
 						case "double":
 						case "boolean":
 						case "null":
-							tokens.add(new Token(Type.DATATYPE, currentToken));
-							break;
 						case "char":
 						case "varchar":
 							tokens.add(new Token(Type.DATATYPE, currentToken));
@@ -132,7 +130,7 @@ public class ParserCommon { // extend me!
 		}
 
 		if (!currentToken.isEmpty()) {
-			tokens.add(new Token(Type.IDKEY, currentToken));
+			tokens.add(new Token(Type.IDKEY, currentToken.toLowerCase()));
 		}
 
 		return tokens;

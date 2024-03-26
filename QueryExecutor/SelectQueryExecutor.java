@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import Parser.Select;
+import Parser.WhereTreeNodes.WhereTree;
 import StorageManager.StorageManager;
 import StorageManager.TableSchema;
 import StorageManager.Objects.AttributeSchema;
@@ -15,6 +16,7 @@ import StorageManager.Objects.MessagePrinter.MessageType;
 public class SelectQueryExecutor implements QueryExecutorInterface {
   private Select select;
   private TableSchema schema;
+  private List<Record> records;
 
   public SelectQueryExecutor(Select select) {
     this.select = select;
@@ -23,35 +25,30 @@ public class SelectQueryExecutor implements QueryExecutorInterface {
   @Override
   public void excuteQuery() throws Exception {
     // execute
-    StorageManager storageManager = StorageManager.getStorageManager();
     this.validateQuery();
-    List<Record> record = storageManager.getAllRecords(this.schema.getTableNumber());
+
     List<String> attributeNames = new ArrayList<>();
     for (AttributeSchema attributeSchema : this.schema.getAttributes()) {
       attributeNames.add(attributeSchema.getAttributeName());
     }
 
     // buid result string
-    System.out.println("\n" + buildResultString(record, attributeNames));
+    System.out.println("\n" + buildResultString(this.records, attributeNames));
     MessagePrinter.printMessage(MessageType.SUCCESS, null);
   }
 
-  private List<Record> getRecords() throws Exception {
+  private List<Record> getAllRecords(StorageManager storageManager) {
     Catalog catalog = Catalog.getCatalog();
     // TODO call validate query to create the schema
-    validateQuery();
 
     // TODO check to see if there is only 1 table
     // if so, return all records from that table
-    if(select.getTableNames().size()>1){
-      //return all records from that table
-    }else{
-      //get all records of all the tables and compute the cartesian product.
-    }
 
     // TODO if more than one table, get all records
     // of all of the tables, and compute the cartesian product of them
     
+    return null;
+
   }
 
   private String buildResultString(List<Record> records, List<String> attributeNames) {
@@ -106,11 +103,28 @@ public class SelectQueryExecutor implements QueryExecutorInterface {
 
   private void validateQuery() throws Exception {
     Catalog catalog = Catalog.getCatalog();
+    StorageManager storageManager = StorageManager.getStorageManager();
+
     if (select.getTableNames().size() > 1) {
       this.schema = this.buildCartesianSchema();
     } else {
       this.schema = catalog.getSchema(select.getTableNames().get(0));
     }
+
+    List<Record> allRecords = this.getAllRecords(storageManager);
+
+    this.records = new ArrayList<>();
+    if (this.select.getWhereTree() != null) {
+      WhereTree where = this.select.getWhereTree();
+      for (Record i : allRecords) {
+        if (where.evaluate(this.schema, i)) {
+          this.records.add(i);
+        }
+      }
+    } else {
+      this.records.addAll(allRecords);
+    }
+
   }
 
   private TableSchema buildCartesianSchema() {

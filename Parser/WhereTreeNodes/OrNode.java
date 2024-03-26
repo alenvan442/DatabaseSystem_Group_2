@@ -15,7 +15,7 @@ public class OrNode implements OperatorNode {
     }
 
     @Override
-    public boolean evaluate(TableSchema schema, Record record) {
+    public boolean evaluate(TableSchema schema, Record record) throws Exception {
         return leftChild.evaluate(schema, record) || rigthChild.evaluate(schema, record);
     }
 

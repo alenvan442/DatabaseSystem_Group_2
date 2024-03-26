@@ -15,7 +15,7 @@ import Parser.WhereTreeNodes.WhereTree;
 
 public class DMLParser extends ParserCommon {
 
-    public static Map<String, List<Record>> parseInsert(ArrayList<Token> tokens) throws Exception {
+    public static Insert parseInsert(ArrayList<Token> tokens) throws Exception {
         String tableName;
         tokens.remove(0);
         tokens.remove(0);
@@ -23,7 +23,7 @@ public class DMLParser extends ParserCommon {
         if (tokens.get(0).getType() != Type.IDKEY) {
             MessagePrinter.printMessage(MessageType.ERROR, "Invalid table name");
         }
-        tableName = tokens.remove(0).getVal().toLowerCase();
+        tableName = tokens.remove(0).getVal();
 
         if (!tokens.get(0).getVal().equalsIgnoreCase("values")) {
             MessagePrinter.printMessage(MessageType.ERROR, "Expected 'values' keyword");
@@ -45,7 +45,8 @@ public class DMLParser extends ParserCommon {
         tokens.remove(0); // remove semicolon
         Map<String, List<Record>> map = new HashMap<>();
         map.put(tableName, records);
-        return map;
+
+        return new Insert(tableName, records);
     }
 
     public static Record parseRecord(ArrayList<Token> tokens) throws Exception {
@@ -92,7 +93,7 @@ public class DMLParser extends ParserCommon {
                 MessagePrinter.printMessage(MessageType.ERROR, "Expected attribute name");
             }
 
-            attributeNames.add(tokens.remove(0).getVal().toLowerCase());
+            attributeNames.add(tokens.remove(0).getVal());
 
             while (!tokens.get(0).getVal().equalsIgnoreCase("from")) {
 
@@ -107,7 +108,7 @@ public class DMLParser extends ParserCommon {
                     MessagePrinter.printMessage(MessageType.ERROR, "Expected attribute name");
                 }
 
-                attributeNames.add(tokens.remove(0).getVal().toLowerCase());
+                attributeNames.add(tokens.remove(0).getVal());
 
             }
         } else {
@@ -134,7 +135,7 @@ public class DMLParser extends ParserCommon {
     }
 
     public static ArrayList<String> parseFrom(ArrayList<Token> tokens) throws Exception {
-        // from tableName, tableName, ......
+        // from tableName, ......
         tokens.remove(0); // remove from keyword
         ArrayList<String> tableNames = new ArrayList<>();
 
@@ -143,7 +144,7 @@ public class DMLParser extends ParserCommon {
             MessagePrinter.printMessage(MessageType.ERROR, "Expected table name");
         }
 
-        tableNames.add(tokens.remove(0).getVal().toLowerCase());
+        tableNames.add(tokens.remove(0).getVal());
 
         while (tokens.get(0).getType() != Type.SEMICOLON && !tokens.get(0).getVal().equalsIgnoreCase("where")) {
             if (tokens.get(0).getType() != Type.COMMA) {
@@ -156,7 +157,7 @@ public class DMLParser extends ParserCommon {
                 MessagePrinter.printMessage(MessageType.ERROR, "Expected table name");
             }
 
-            tableNames.add(tokens.remove(0).getVal().toLowerCase());
+            tableNames.add(tokens.remove(0).getVal());
 
         }
 
@@ -268,7 +269,7 @@ public class DMLParser extends ParserCommon {
             MessagePrinter.printMessage(MessageType.ERROR, "Expected table name");
         }
 
-        tableName = tokens.remove(0).getVal().toLowerCase();
+        tableName = tokens.remove(0).getVal();
 
         if (tokens.get(0).getType() != Type.SEMICOLON) {
             MessagePrinter.printMessage(MessageType.ERROR, "Expected ';'");
@@ -278,15 +279,65 @@ public class DMLParser extends ParserCommon {
         return tableName;
     }
 
-    public static void parseDelete(String dmlStatement) {
+    public static Delete parseDelete(ArrayList<Token> tokens) throws Exception {
         // delete from foo;
         // delete from foo where bar = 10;
-        // TODO
+        tokens.remove(0); // remove delete keyword
+        tokens.remove(0); // remove from keyword
+
+        if (tokens.get(0).getType() != Type.IDKEY && tokens.get(0).getType() != Type.DATATYPE
+                && tokens.get(0).getType() != Type.CONSTRAINT) {
+            MessagePrinter.printMessage(MessageType.ERROR, "Expected table name");
+        }
+
+        String tableName = String.valueOf(tokens.remove(0).getVal());
+        WhereTree whereTree = null;
+
+        if (tokens.get(0).getVal().equalsIgnoreCase("where")) {
+            whereTree = parseWhere(tokens);
+        }
+        //if (tokens.get(0).getType() != Type.SEMICOLON) {
+        //    MessagePrinter.printMessage(MessageType.ERROR, "Expected ';'");
+        //}
+        //tokens.remove(0); // remove semicolon
+
+        //parseWhere checks for the semicolon from what I can tell,
+        //in any case we have all the information we need. -Erika
+
+        return new Delete(tableName, whereTree);
     }
 
-    public static void parseUpdate(String dmlStatement) {
-        // delete / insert record
-        // TODO
+    public static Update parseUpdate(ArrayList<Token> tokens) throws Exception {
+        if(tokens.remove(0).getVal() != "update"){
+            throw new Exception("This should be an update statement?");
+        }
+        Token table = tokens.remove(0);
+        if (table.getType() != Type.IDKEY){
+            throw new Exception("Table name expected");
+        }
+        if(tokens.remove(0).getVal() != "set"){
+            throw new Exception("Set expected");
+        }
+        Token column1 = tokens.remove(0);
+        if(column1.getType() != Type.IDKEY){
+            throw new Exception("Column name expected");
+        }
+        if(tokens.remove(0).getVal() != "="){
+            throw new Exception("Equals expected");
+        }
+        Token value =  tokens.remove(0);
+        Type valType = value.getType();
+        String val = value.getVal();
+        if(!(valType == Type.STRING || valType == Type.INTEGER || valType == Type.DOUBLE || val.equals("true") || val.equals("false") || val.equals("null"))){
+            throw new Exception("Illegal data value, legal types are char, varchar, int, double, boolean, and null");
+        }
+        if(tokens.get(0).getVal() != "where"){
+            throw new Exception("WHERE statement expected.");
+        }
+        WhereTree where = parseWhere(tokens);
+        return new Update(table.getVal(), column1.getVal(), val, where);
+
+
     }
 
     public static int getPrecedent(Token operator) {

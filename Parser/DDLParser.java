@@ -47,9 +47,9 @@ public class DDLParser extends ParserCommon {
 				MessagePrinter.printMessage(MessageType.ERROR, "invalid data type " + "'" + tokens.get(0).getVal() + "'");
 			}
 
-			dataType = tokens.remove(0).getVal().toLowerCase();
+			dataType = tokens.remove(0).getVal();
 
-			if (dataType.equals("char") || dataType.equals("varchar")) {
+			if (dataType.equalsIgnoreCase("char") || dataType.equalsIgnoreCase("varchar")) {
 				if (tokens.get(0).getType() != Type.L_PAREN) {
 					MessagePrinter.printMessage(MessageType.ERROR, "Expected '(' afetr " + tokens.get(0).getVal());
 				}
@@ -118,7 +118,7 @@ public class DDLParser extends ParserCommon {
 				&& tokens.get(0).getType() != Type.CONSTRAINT) {
 			MessagePrinter.printMessage(MessageType.ERROR, "Expected a table name");
 		}
-		return tokens.get(0).getVal().toLowerCase();
+		return tokens.get(0).getVal();
 	}
 
 	/**
@@ -152,13 +152,13 @@ public class DDLParser extends ParserCommon {
 			MessagePrinter.printMessage(MessageType.ERROR, "Expected table name");
 		}
 
-		tableName = tokens.remove(0).getVal().toLowerCase();
+		tableName = tokens.remove(0).getVal();
 
 		if (!tokens.get(0).getVal().equalsIgnoreCase("drop") && !tokens.get(0).getVal().equalsIgnoreCase("add")) {
 			MessagePrinter.printMessage(MessageType.ERROR, "Expected 'drop' or 'add' kwyword");
 		}
 
-		adddrop = tokens.remove(0).getVal().toLowerCase();
+		adddrop = tokens.remove(0).getVal();
 
 		if (tokens.get(0).getType() != Type.IDKEY && tokens.get(0).getType() != Type.DATATYPE
 				&& tokens.get(0).getType() != Type.CONSTRAINT) {
@@ -167,13 +167,13 @@ public class DDLParser extends ParserCommon {
 
 		attriname = tokens.remove(0).getVal();
 
-		if (adddrop.equals("add")) {
+		if (adddrop.equalsIgnoreCase("add")) {
 			if (tokens.get(0).getType() != Type.DATATYPE) {
 				MessagePrinter.printMessage(MessageType.ERROR, "Expected a valid data type for " + attriname);
 			}
 			type = tokens.remove(0).getVal();
 
-			if (type.equals("char") || type.equals("varchar")) {
+			if (type.equalsIgnoreCase("char") || type.equalsIgnoreCase("varchar")) {
 				if (tokens.get(0).getType() != Type.L_PAREN) {
 					MessagePrinter.printMessage(MessageType.ERROR, "Expected '(' afetr " + tokens.get(0).getVal());
 				}

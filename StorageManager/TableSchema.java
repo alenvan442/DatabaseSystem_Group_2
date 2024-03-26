@@ -113,7 +113,7 @@ public class TableSchema implements SchemaInterface {
     }
 
     private int hashName() {
-      char[] chars = this.tableName.toLowerCase().toCharArray();
+      char[] chars = this.tableName.toCharArray();
       int hash = 0;
       int index = 0;
       for (char c : chars) {

@@ -21,7 +21,7 @@ public class AttributeNode implements OperandNode {
     }
 
     @Override
-    public Object getValue(TableSchema schema, Record record) {
+    public Object getValue(TableSchema schema, Record record) throws Exception {
         List<AttributeSchema> attrs = schema.getAttributes();
 
         for (int i = 0; i < attrs.size(); i++)  {
@@ -30,7 +30,8 @@ public class AttributeNode implements OperandNode {
             }
         }
 
-        return null; // invalid dataName TODO use messageprinter
+        MessagePrinter.printMessage(MessageType.ERROR, "Invalid attribute name: " + this.dataName + ".");
+        return null;
 
     }
 

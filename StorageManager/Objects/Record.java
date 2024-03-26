@@ -68,19 +68,19 @@ public class Record implements java.io.Serializable, StorageManagerObjectInteref
      *             <0: this < other
      *             >0: this > other
      */
-    public int compareTo(Object other, int keyIndex) {
+    public int compareTo(Object otherKey, int keyIndex) {
         Object thisKey = this.values.get(keyIndex);
 
         if (thisKey instanceof String) {
-            return ((String) thisKey).compareTo((String) other);
+            return ((String) thisKey).compareTo((String) otherKey);
         } else if (thisKey instanceof Integer) {
-            return Integer.compare((Integer) thisKey, (Integer) other);
+            return Integer.compare((Integer) thisKey, (Integer) otherKey);
         } else if (thisKey instanceof Boolean) {
             boolean thisBool = (Boolean) thisKey;
-            boolean otherBool = (Boolean) other;
+            boolean otherBool = (Boolean) otherKey;
             return Boolean.compare(otherBool, thisBool);
         } else if (thisKey instanceof Double) {
-            return Double.compare((Double) thisKey, (Double) other);
+            return Double.compare((Double) thisKey, (Double) otherKey);
         } else {
             throw new IllegalArgumentException("Unsupported datatype");
         }
@@ -152,7 +152,7 @@ public class Record implements java.io.Serializable, StorageManagerObjectInteref
             } else if (attributeSchema.getDataType().equalsIgnoreCase("boolean")) {
                 boolean value = tableAccessFile.readBoolean();
                 this.values.add(value);
-            } else if (attributeSchema.getDataType().toLowerCase().contains("char") || attributeSchema.getDataType().toLowerCase().contains("varchar")) {
+            } else if (attributeSchema.getDataType().contains("char") || attributeSchema.getDataType().contains("varchar")) {
                 String value = tableAccessFile.readUTF();
                 this.values.add(value);
             }

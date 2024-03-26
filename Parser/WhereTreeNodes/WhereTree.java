@@ -12,8 +12,8 @@ public class WhereTree {
     this.root = root;
   }
 
-  public boolean evaluate(TableSchema tableSchema, Record record) {
-    return root.evaluate(null, null);
+  public boolean evaluate(TableSchema tableSchema, Record record) throws Exception {
+    return root.evaluate(tableSchema, record);
   }
 
 

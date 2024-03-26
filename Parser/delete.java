@@ -2,12 +2,20 @@ package Parser;
 
 import Parser.WhereTreeNodes.WhereTree;
 
-public class delete {
-  String name;
+public class Delete {
+  String tableName;
   WhereTree whereTree;
-  
-  public delete(String name, WhereTree whereTree) {
-    this.name = name;
+
+  public Delete(String tableName, WhereTree whereTree) {
+    this.tableName = tableName;
     this.whereTree = whereTree;
+  }
+
+  public String getTableName() {
+    return tableName;
+  }
+
+  public WhereTree getWhereTree() {
+    return whereTree;
   }
 }

@@ -123,17 +123,14 @@ public class Page implements java.io.Serializable, Comparator<Page>, StorageMana
      *
      * @param index     The index to delete the record at
      *
-     * @return          The deleted record, null otherwise
+     * @return          The deleted record
      */
     public Record deleteRecord(int index) {
         Record removed = this.records.remove(index);
-        if (!removed.equals(null)) {
-            this.changed = true;
-            this.setPriority();
-            this.setNumRecords();
-            return removed;
-        }
-        return null;
+        this.changed = true;
+        this.setPriority();
+        this.setNumRecords();
+        return removed;
     }
 
     /*
@@ -229,7 +226,7 @@ public class Page implements java.io.Serializable, Comparator<Page>, StorageMana
                 Boolean bool1 = (Boolean) obj1;
                 Boolean bool2 = (Boolean) obj2;
                 return Boolean.compare(bool1, bool2);
-            } else if (dataType.toLowerCase().contains("char") || dataType.toLowerCase().contains("varchar")) {
+            } else if (dataType.contains("char") || dataType.contains("varchar")) {
                 String str1 = obj1.toString();
                 String str2 = obj2.toString();
                 return str1.compareTo(str2);
