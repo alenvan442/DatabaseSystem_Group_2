@@ -46,7 +46,7 @@ public class InsertQueryExcutor implements QueryExecutorInterface {
 
     // check for unique primary key
     if (StorageManager.getStorageManager().getRecord(tableSchema.getTableNumber(),
-        record.getValues().get(primaryKeyIndex)) == null) {
+        record.getValues().get(primaryKeyIndex)) != null) {
       MessagePrinter.printMessage(MessageType.ERROR, String.format("row (%s): Duplicate %s for row (%s)",
           printRow(record), "primary key", printRow(record)));
     }
