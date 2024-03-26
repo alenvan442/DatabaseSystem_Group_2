@@ -36,12 +36,18 @@ public class SelectQueryExecutor implements QueryExecutorInterface {
     MessagePrinter.printMessage(MessageType.SUCCESS, null);
   }
 
-  private List<Record> getRecords() {
+  private List<Record> getRecords() throws Exception {
     Catalog catalog = Catalog.getCatalog();
     // TODO call validate query to create the schema
+    validateQuery();
 
     // TODO check to see if there is only 1 table
     // if so, return all records from that table
+    if(select.getTableNames().size()>1){
+      //return all records from that table
+    }else{
+      //get all records of all the tables and compute the cartesian product.
+    }
 
     // TODO if more than one table, get all records
     // of all of the tables, and compute the cartesian product of them
