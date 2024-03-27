@@ -146,7 +146,8 @@ public class DMLParser extends ParserCommon {
 
         tableNames.add(tokens.remove(0).getVal());
 
-        while (tokens.get(0).getType() != Type.SEMICOLON && !tokens.get(0).getVal().equalsIgnoreCase("where")) {
+        while (tokens.get(0).getType() != Type.SEMICOLON && !tokens.get(0).getVal().equalsIgnoreCase("where") &&
+                !tokens.get(0).getVal().equalsIgnoreCase("orderby")) {
             if (tokens.get(0).getType() != Type.COMMA) {
                 MessagePrinter.printMessage(MessageType.ERROR, "Expected a ','");
             }

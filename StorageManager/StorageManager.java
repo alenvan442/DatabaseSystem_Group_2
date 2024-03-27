@@ -149,7 +149,7 @@ public class StorageManager implements StorageManagerInterface {
             }
         }
 
-        if (foundPage.equals(null)) {
+        if (foundPage == null) {
             // a page with the record was not found
             return null;
         } else {
@@ -274,7 +274,7 @@ public class StorageManager implements StorageManagerInterface {
             }
         }
 
-        if (foundPage.equals(null)) {
+        if (foundPage == null) {
             MessagePrinter.printMessage(MessageType.ERROR,
                     String.format("No record of primary key: (%d), was found.",
                             primaryKey));

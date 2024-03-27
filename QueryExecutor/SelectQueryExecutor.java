@@ -191,6 +191,10 @@ public class SelectQueryExecutor implements QueryExecutorInterface {
   private void orderBy() throws Exception {
     String orderAttr = this.select.getOrderByAttribute();
 
+    if (orderAttr == null) {
+      return;
+    }
+
     List<AttributeSchema> attrs = schema.getAttributes();
     List<String> potentialMatches = new ArrayList<>();
     List<Integer> foundIndex = new ArrayList<>();
