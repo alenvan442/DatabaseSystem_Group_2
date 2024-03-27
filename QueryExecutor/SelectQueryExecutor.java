@@ -1,6 +1,7 @@
 package QueryExecutor;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import Parser.Select;
@@ -24,8 +25,9 @@ public class SelectQueryExecutor implements QueryExecutorInterface {
 
   @Override
   public void excuteQuery() throws Exception {
-    // execute
+    // execute - gets all records that are valid per the query
     this.validateQuery();
+    this.orderBy();
 
     List<String> attributeNames = new ArrayList<>();
     for (AttributeSchema attributeSchema : this.schema.getAttributes()) {
@@ -44,9 +46,8 @@ public class SelectQueryExecutor implements QueryExecutorInterface {
    * @throws Exception
    */
   private List<Record> getAllRecords(StorageManager storageManager) throws Exception {
-    Catalog catalog = Catalog.getCatalog();
-    // call validate query to create the schema
-    this.validateQuery();
+    // call build schema to create the schema
+    this.buildSchema();
 
     // check to see if there is only 1 table
     // if so, return all records from that table
@@ -127,14 +128,7 @@ public class SelectQueryExecutor implements QueryExecutorInterface {
   }
 
   private void validateQuery() throws Exception {
-    Catalog catalog = Catalog.getCatalog();
     StorageManager storageManager = StorageManager.getStorageManager();
-
-    if (select.getTableNames().size() > 1) {
-      this.schema = this.buildCartesianSchema();
-    } else {
-      this.schema = catalog.getSchema(select.getTableNames().get(0));
-    }
 
     List<Record> allRecords = this.getAllRecords(storageManager);
 
@@ -154,36 +148,70 @@ public class SelectQueryExecutor implements QueryExecutorInterface {
 
   /**
    * Builds the schema for the result of a Cartesian Product.
-   * @return - the result of a Cartesian Product.
+   * saves the schema to this class
    * @throws Exception
    */
-  private TableSchema buildCartesianSchema() throws Exception {
+  private void buildSchema() throws Exception {
     Catalog catalog = Catalog.getCatalog();
 
-    // create new temp schema
-    TableSchema temp = new TableSchema("temp");
+    if (select.getTableNames().size() == 1) {
+      this.schema = catalog.getSchema(select.getTableNames().get(0));
+    } else if (select.getTableNames().size() > 1) {
 
-    ArrayList<TableSchema> cartSchemas = new ArrayList<TableSchema>();
+      // create new temp schema
+      TableSchema temp = new TableSchema("temp");
 
-    // loop through each table name and get their schema
-    List<String> tableNames = select.getTableNames();
-    for(int i=0; i<tableNames.size(); i++){
-        cartSchemas.add(catalog.getSchema(tableNames.get(i)));
-    }
+      ArrayList<TableSchema> cartSchemas = new ArrayList<TableSchema>();
 
-    // add each attribute in the form of x.y to the temp schema
-    // where x is the table name and y is the attribute name
-    // return the temp schema
-    for(int i=0; i<cartSchemas.size(); i++){
-        List<AttributeSchema> currentAttrSchema = cartSchemas.get(i).getAttributes();
-        for(int j=0; j<currentAttrSchema.size(); j++){
-            String name = tableNames.get(i)+"."+currentAttrSchema.get(i).getAttributeName();
-            temp.addAttribute(new AttributeSchema(name, currentAttrSchema.get(i)));
-
+      // loop through each table name and get their schema
+      List<String> tableNames = select.getTableNames();
+      for(int i=0; i<tableNames.size(); i++){
+          cartSchemas.add(catalog.getSchema(tableNames.get(i)));
       }
+
+      // add each attribute in the form of x.y to the temp schema
+      // where x is the table name and y is the attribute name
+      // return the temp schema
+      for(int i=0; i<cartSchemas.size(); i++){
+          List<AttributeSchema> currentAttrSchema = cartSchemas.get(i).getAttributes();
+          for(int j=0; j<currentAttrSchema.size(); j++){
+              String name = tableNames.get(i)+"."+currentAttrSchema.get(i).getAttributeName();
+              temp.addAttribute(new AttributeSchema(name, currentAttrSchema.get(i)));
+
+        }
+      }
+    
+      this.schema = temp;
+    } else {
+      MessagePrinter.printMessage(MessageType.ERROR, "No table present in the from clause");
     }
-   
-    return temp;
+
+  }
+
+  private void orderBy() throws Exception {
+    String orderAttr = this.select.getOrderByAttribute();
+
+    List<AttributeSchema> attrs = schema.getAttributes();
+    List<String> potentialMatches = new ArrayList<>();
+    List<Integer> foundIndex = new ArrayList<>();
+
+    potentialMatches.add(orderAttr.toLowerCase());
+    String[] spList = orderAttr.split(".");
+    if (spList.length > 1) {
+        potentialMatches.add(spList[1]);
+    }
+
+    for (int i = 0; i < attrs.size(); i++)  {
+        if (potentialMatches.contains(attrs.get(i).getAttributeName())) {
+            foundIndex.add(i);
+        }
+    }
+
+    if (foundIndex.size() != 1) {
+        MessagePrinter.printMessage(MessageType.ERROR, "Invalid attribute name: " + orderAttr + ".");
+    }
+
+    Collections.sort(this.records, (a, b) -> a.compareTo(b, foundIndex.get(0)));
 
   }
 
