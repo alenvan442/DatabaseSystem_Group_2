@@ -35,12 +35,14 @@ public class AttributeNode implements OperandNode {
 
         for (int i = 0; i < attrs.size(); i++)  {
             if (potentialMatches.contains(attrs.get(i).getAttributeName())) {
-                return record.getValues().get(i);
+                foundVal.add(record.getValues().get(i));
             }
         }
 
         if (foundVal.size() != 1) {
             MessagePrinter.printMessage(MessageType.ERROR, "Invalid attribute name: " + this.dataName + ".");
+        } else {
+            return foundVal.get(0);
         }
         return null;
 
