@@ -4,7 +4,7 @@ import java.io.RandomAccessFile;
 
 public interface SchemaInterface {
 
-  /*
+  /**
    * Loads schema information from the specified random access file.
    *
    * @param catalogAccessFile the random access file from which the schema information will be loaded

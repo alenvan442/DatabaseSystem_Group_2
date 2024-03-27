@@ -7,7 +7,7 @@ import StorageManager.Objects.Record;
 
 public interface StorageManagerInterface {
 
-    /*
+    /**
      * Gets a single record from a table
      *
      * @param tableNumber   the table to search in
@@ -18,7 +18,18 @@ public interface StorageManagerInterface {
      */
     public Record getRecord(int tableNumber, Object primaryKey) throws Exception;
 
-    /*
+    /**
+     * Gets a single record from a table
+     *
+     * @param tableName     the table to search in
+     * @param primaryKey    the key associated with the record
+     *                      we are looking for
+     *
+     * @return              the record that was found, otherwise null
+     */
+    public Record getRecord(String tableName, Object primaryKey) throws Exception;
+
+    /**
      * Gets all records from a table
      *
      * @param tableNumber   the table to search in
@@ -27,7 +38,16 @@ public interface StorageManagerInterface {
      */
     public List<Record> getAllRecords(int tableNumber) throws Exception;
 
-    /*
+    /**
+     * Gets all records from a table
+     *
+     * @param tableName     the table to search in
+     *
+     * @return              a list of all records in the table
+     */
+    public List<Record> getAllRecords(String tableName) throws Exception;
+
+    /**
      * Inserts a record into a specified table
      * Process:
      *      Read the page in which the record will be inserted into
@@ -41,7 +61,7 @@ public interface StorageManagerInterface {
      */
     public void insertRecord(int tableNumber, Record record) throws Exception;
 
-    /*
+    /**
      * Deletes a record from the DB
      * Given a primary key's value, read in pages from the given table
      * and find the record with the associated primary key,
@@ -52,7 +72,7 @@ public interface StorageManagerInterface {
      */
     public Record deleteRecord(int tableNumber, Object primaryKey) throws Exception;
 
-    /*
+    /**
      * Update a record in the DB
      * Given a primary key of a record, search for the record
      * Then update the founded record with the inputted record
@@ -70,7 +90,7 @@ public interface StorageManagerInterface {
 
     public Page getPage(int tableNumber, int pageNumber) throws Exception;
 
-    /*
+    /**
      * Writes all pages in the buffer to disk
      * This is used upon system shut off
      */

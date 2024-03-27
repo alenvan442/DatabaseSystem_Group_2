@@ -16,7 +16,7 @@ public class Record implements java.io.Serializable, StorageManagerObjectInteref
 
     public Record(Record a, Record b){
         this.values = a.values;
-        this.values.add(b.values);
+        this.values.addAll(b.values);
     }
 
     public List<Object> getValues() {
@@ -31,7 +31,7 @@ public class Record implements java.io.Serializable, StorageManagerObjectInteref
         this.values.add(val);
     }
 
-    /*
+    /**
      * Compares two values to one another
      * PreReq: The inputted record as well as this record, are from the same table
      *
@@ -61,7 +61,7 @@ public class Record implements java.io.Serializable, StorageManagerObjectInteref
         }
     }
 
-    /*
+    /**
      * Compares two values to one another
      * PreReq: The inputted object as well as the object at the index given,
      * must be of the same dataType
@@ -91,7 +91,7 @@ public class Record implements java.io.Serializable, StorageManagerObjectInteref
         }
     }
 
-    /*
+    /**
      * Returns the size of this record in number of bytes
      *
      * @return  the number of bytes this record is

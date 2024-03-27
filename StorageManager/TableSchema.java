@@ -8,122 +8,133 @@ import StorageManager.Objects.AttributeSchema;
 import StorageManager.Objects.SchemaInterface;
 
 public class TableSchema implements SchemaInterface {
-    private int tableNumber;
-    private String tableName;
-    private List<AttributeSchema> attributes;
-    private int numPages;
-    private List<Integer> pageOrder;
-    private int numRecords;
+  private int tableNumber;
+  private String tableName;
+  private List<AttributeSchema> attributes;
+  private int numPages;
+  private List<Integer> pageOrder;
+  private int numRecords;
 
-    public TableSchema(String tableName, int tableNumber) {
-      this.tableName = tableName;
-      this.tableNumber = tableNumber;
-      this.numPages = 0;
-      this.pageOrder = new ArrayList<Integer>();
-      this.numRecords = 0;
-      this.attributes = new ArrayList<AttributeSchema>();
-    }
-
-    public TableSchema(String tableName) {
-      this.tableName = tableName;
-      this.tableNumber = this.hashName();
-      this.numPages = 0;
-      this.pageOrder = new ArrayList<Integer>();
-      this.numRecords = 0;
-      this.attributes = new ArrayList<AttributeSchema>();
-    }
-
-    public int getTableNumber() {
-      return tableNumber;
-    }
-
-    public String getTableName() {
-      return tableName;
-    }
-
-
-    public void setTableName(String tableName) {
-      this.tableName = tableName;
-      this.tableNumber = this.hashName();
-    }
-
-
-    public List<AttributeSchema> getAttributes() {
-      return attributes;
-    }
-
-    public void setAttributes(List<AttributeSchema> attributes) {
-      this.attributes = attributes;
-    }
-
-    public int getNumPages() {
-      return numPages;
-    }
-
-
-    public void setNumPages() {
-      this.numPages = this.pageOrder.size();
-    }
-
-    public void incrementNumRecords() {
-      this.numRecords += 1;
-    }
-
-    public void decrementNumRecords() {
-      this.numRecords -= 1;
-    }
-
-    public List<Integer> getPageOrder() {
-      return this.pageOrder;
-    }
-
-    public void setPageOrder(List<Integer> pageOrder) {
-      this.pageOrder = pageOrder;
-    }
-
-    public void addPageNumber(int pageNumber) {
-      this.pageOrder.add(pageNumber);
-      this.setNumPages();
-    }
-
-    public void addPageNumber(int numberBefore, int pageNumber) {
-      int index = this.pageOrder.indexOf(numberBefore);
-      this.pageOrder.add(index + 1, pageNumber);
-      this.setNumPages();
-    }
-
-    /*
-     * deletes a page from the tableSchema
-     * then decrement all pageNumber that appear after
-     * the deleted page
-     */
-    public void deletePageNumber(int pageNumber) {
-      this.pageOrder.remove(pageNumber);
-      for (int i = 0; i < this.pageOrder.size(); i++) {
-        int pNum = this.pageOrder.get(i);
-        if (pNum > pageNumber) {
-          this.pageOrder.remove(i);
-          this.pageOrder.add(i, pNum - 1);
-        }
-      }
-    }
-
-    public int getRecords() {
-      return numRecords;
-    }
-
-    private int hashName() {
-      char[] chars = this.tableName.toCharArray();
-      int hash = 0;
-      int index = 0;
-      for (char c : chars) {
-          hash += Character.hashCode(c) + index;
-          index++;
-      }
-      return hash;
+  public TableSchema(String tableName, int tableNumber) {
+    this.tableName = tableName;
+    this.tableNumber = tableNumber;
+    this.numPages = 0;
+    this.pageOrder = new ArrayList<Integer>();
+    this.numRecords = 0;
+    this.attributes = new ArrayList<AttributeSchema>();
   }
 
-    /**
+  public TableSchema(String tableName) {
+    this.tableName = tableName;
+    this.tableNumber = this.hashName();
+    this.numPages = 0;
+    this.pageOrder = new ArrayList<Integer>();
+    this.numRecords = 0;
+    this.attributes = new ArrayList<AttributeSchema>();
+  }
+
+  public int getTableNumber() {
+    return tableNumber;
+  }
+
+  public String getTableName() {
+    return tableName;
+  }
+
+
+  public void setTableName(String tableName) {
+    this.tableName = tableName;
+    this.tableNumber = this.hashName();
+  }
+
+
+  public List<AttributeSchema> getAttributes() {
+    return attributes;
+  }
+
+  public void setAttributes(List<AttributeSchema> attributes) {
+    this.attributes = attributes;
+  }
+
+  public int getNumPages() {
+    return numPages;
+  }
+
+
+  public void setNumPages() {
+    this.numPages = this.pageOrder.size();
+  }
+
+  public void incrementNumRecords() {
+    this.numRecords += 1;
+  }
+
+  public void decrementNumRecords() {
+    this.numRecords -= 1;
+  }
+
+  public List<Integer> getPageOrder() {
+    return this.pageOrder;
+  }
+
+  public void setPageOrder(List<Integer> pageOrder) {
+    this.pageOrder = pageOrder;
+  }
+
+  public void addPageNumber(int pageNumber) {
+    this.pageOrder.add(pageNumber);
+    this.setNumPages();
+  }
+
+  public void addPageNumber(int numberBefore, int pageNumber) {
+    int index = this.pageOrder.indexOf(numberBefore);
+    this.pageOrder.add(index + 1, pageNumber);
+    this.setNumPages();
+  }
+
+  /**
+  * deletes a page from the tableSchema
+  * then decrement all pageNumber that appear after
+  * the deleted page
+  */
+  public void deletePageNumber(int pageNumber) {
+    this.pageOrder.remove(pageNumber);
+    for (int i = 0; i < this.pageOrder.size(); i++) {
+      int pNum = this.pageOrder.get(i);
+      if (pNum > pageNumber) {
+        this.pageOrder.remove(i);
+        this.pageOrder.add(i, pNum - 1);
+      }
+    }
+  }
+
+  public int getRecords() {
+    return numRecords;
+  }
+
+  private int hashName() {
+    char[] chars = this.tableName.toCharArray();
+    int hash = 0;
+    int index = 0;
+    for (char c : chars) {
+        hash += Character.hashCode(c) + index;
+        index++;
+    }
+    return hash;
+  }
+
+  public static int hashName(String name) {
+    char[] chars = name.toCharArray();
+    int hash = 0;
+    int index = 0;
+    for (char c : chars) {
+        hash += Character.hashCode(c) + index;
+        index++;
+    }
+    return hash;
+  }
+
+  /**
    * {@inheritDoc}
    */
   @Override
