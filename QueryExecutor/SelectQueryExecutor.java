@@ -37,6 +37,12 @@ public class SelectQueryExecutor implements QueryExecutorInterface {
     MessagePrinter.printMessage(MessageType.SUCCESS, null);
   }
 
+  /**
+   * Gets all relevant records, performs a cartesian product if necessary
+   * @param storageManager - Storage manager of the program
+   * @return - List of relavent records
+   * @throws Exception
+   */
   private List<Record> getAllRecords(StorageManager storageManager) throws Exception {
     Catalog catalog = Catalog.getCatalog();
     // TODO call validate query to create the schema
@@ -53,7 +59,7 @@ public class SelectQueryExecutor implements QueryExecutorInterface {
     // TODO if more than one table, get all records
     // of all of the tables, and compute the cartesian product of them
 
-    //List<Record> resultTable = new ArrayList<>();
+    //NOTE: CHECK FOR CLONING ISSUES?
 
     for(int i=1; i<tables.size(); i++){
       List<Record> nextTable = storageManager.getAllRecords(catalog.getSchema( select.getTableNames().get(i)).getTableNumber());
@@ -63,7 +69,6 @@ public class SelectQueryExecutor implements QueryExecutorInterface {
             resultTable.add(new Record(firstTable.get(j),nextTable.get(k)));
         }
       }
-      //Is this legal?
       firstTable= resultTable;
     }
     
@@ -147,9 +152,32 @@ public class SelectQueryExecutor implements QueryExecutorInterface {
 
   }
 
-  private TableSchema buildCartesianSchema() {
+  /**
+   * Builds the schema for the result of a Cartesian Product.
+   * @return - the result of a Cartesian Product.
+   * @throws Exception
+   */
+  private TableSchema buildCartesianSchema() throws Exception {
+    Catalog catalog = Catalog.getCatalog();
+
     // create new temp schema
     TableSchema temp = new TableSchema("temp");
+
+    ArrayList<TableSchema> cartSchemas = new ArrayList<TableSchema>();
+
+    List<String> tableNames = select.getTableNames();
+    for(int i=0; i<tableNames.size(); i++){
+        cartSchemas.add(catalog.getSchema(tableNames.get(i)));
+    }
+
+    for(int i=0; i<cartSchemas.size(); i++){
+        List<AttributeSchema> currentAttrSchema = cartSchemas.get(i).getAttributes();
+        for(int j=0; j<currentAttrSchema.size(); j++){
+            String name = tableNames.get(i)+"."+currentAttrSchema.get(i).getAttributeName();
+            temp.addAttribute(new AttributeSchema(name,currentAttrSchema.get(i)));
+
+      }
+    }
 
     // TODO loop through each table name and get their schema
     // then add each attribute in the form of x.y to the temp schema

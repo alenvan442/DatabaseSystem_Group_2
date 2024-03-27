@@ -18,6 +18,15 @@ public class AttributeSchema implements java.io.Serializable, SchemaInterface {
         this.unique = unique;
     }
 
+    public AttributeSchema(String attributeName, AttributeSchema oldSchema) {
+        this.attributeName = attributeName;
+        this.dataType = oldSchema.getDataType();
+        this.notNull = isNotNull();
+        this.primaryKey = oldSchema.isPrimaryKey();
+        this.unique = oldSchema.isUnique();
+    }
+
+
     public AttributeSchema(){
     }
 
