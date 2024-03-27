@@ -14,6 +14,11 @@ public class Record implements java.io.Serializable, StorageManagerObjectInteref
         this.values = values;
     }
 
+    public Record(Record a, Record b){
+        this.values = a.values;
+        this.values.add(b.values);
+    }
+
     public List<Object> getValues() {
         return values;
     }

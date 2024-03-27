@@ -37,17 +37,37 @@ public class SelectQueryExecutor implements QueryExecutorInterface {
     MessagePrinter.printMessage(MessageType.SUCCESS, null);
   }
 
-  private List<Record> getAllRecords(StorageManager storageManager) {
+  private List<Record> getAllRecords(StorageManager storageManager) throws Exception {
     Catalog catalog = Catalog.getCatalog();
     // TODO call validate query to create the schema
+    this.validateQuery();
 
     // TODO check to see if there is only 1 table
     // if so, return all records from that table
+    List<String> tables = select.getTableNames();
+    List<Record> firstTable = storageManager.getAllRecords(catalog.getSchema( select.getTableNames().get(0)).getTableNumber());
+    if(tables.size()>1){
+      return firstTable;
+    }
 
     // TODO if more than one table, get all records
     // of all of the tables, and compute the cartesian product of them
+
+    //List<Record> resultTable = new ArrayList<>();
+
+    for(int i=1; i<tables.size(); i++){
+      List<Record> nextTable = storageManager.getAllRecords(catalog.getSchema( select.getTableNames().get(i)).getTableNumber());
+      List<Record> resultTable = new ArrayList<>();
+      for( int j=0; j<firstTable.size(); j++){
+          for(int k=0; k<nextTable.size(); k++){
+            resultTable.add(new Record(firstTable.get(j),nextTable.get(k)));
+        }
+      }
+      //Is this legal?
+      firstTable= resultTable;
+    }
     
-    return null;
+    return firstTable;
 
   }
 
