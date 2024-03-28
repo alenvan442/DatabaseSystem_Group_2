@@ -6,13 +6,17 @@ import java.util.Scanner;
 
 import Parser.DDLParser;
 import Parser.DMLParser;
+import Parser.Delete;
 import Parser.ParserCommon;
 import Parser.Select;
 import Parser.Token;
+import Parser.Update;
 import Parser.Insert;
 import QueryExecutor.DDLQueryExecutor;
+import QueryExecutor.DeleteQueryExecutor;
 import QueryExecutor.InsertQueryExcutor;
 import QueryExecutor.SelectQueryExecutor;
+import QueryExecutor.UpdateQueryExecutor;
 import StorageManager.TableSchema;
 import StorageManager.Objects.AttributeSchema;
 import StorageManager.Objects.Catalog;
@@ -93,9 +97,13 @@ public class UserInterface {
                 selectQueryExecutor.excuteQuery();
             } else if (tokens.get(0).getVal().equalsIgnoreCase("delete") &&
                         tokens.get(1).getVal().equalsIgnoreCase("from")) {
-                // todo: add call to parser
+                Delete delete = DMLParser.parseDelete(tokens);
+                DeleteQueryExecutor deleteQueryExecutor = new DeleteQueryExecutor(delete);
+                deleteQueryExecutor.excuteQuery();
             } else if (tokens.get(0).getVal().equalsIgnoreCase("update")) {
-                // tode: add call to parser
+                Update update = DMLParser.parseUpdate(tokens);
+                UpdateQueryExecutor updateQueryExecutor = new UpdateQueryExecutor(update);
+                updateQueryExecutor.excuteQuery();
             } else if (tokens.get(0).getVal().equalsIgnoreCase("display") &&
                     tokens.get(1).getVal().equalsIgnoreCase("schema")) {
                 DMLParser.parseDisplaySchema(tokens);

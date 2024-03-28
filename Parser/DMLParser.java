@@ -20,13 +20,14 @@ public class DMLParser extends ParserCommon {
         tokens.remove(0);
         tokens.remove(0);
 
-        if (tokens.get(0).getType() != Type.IDKEY) {
-            MessagePrinter.printMessage(MessageType.ERROR, "Invalid table name");
+        if (tokens.get(0).getType() != Type.IDKEY && tokens.get(0).getType() != Type.DATATYPE
+                && tokens.get(0).getType() != Type.CONSTRAINT) {
+            MessagePrinter.printMessage(MessageType.ERROR, "Invalid table name got " + tokens.get(0).getVal());
         }
         tableName = tokens.remove(0).getVal();
 
         if (!tokens.get(0).getVal().equalsIgnoreCase("values")) {
-            MessagePrinter.printMessage(MessageType.ERROR, "Expected 'values' keyword");
+            MessagePrinter.printMessage(MessageType.ERROR, "Expected 'values' keyword got " + tokens.get(0).getVal());
         }
         tokens.remove(0);
 
@@ -35,7 +36,7 @@ public class DMLParser extends ParserCommon {
 
         while (tokens.get(0).getType() != Type.SEMICOLON) {
             if (tokens.get(0).getType() != Type.COMMA) {
-                MessagePrinter.printMessage(MessageType.ERROR, "Expected a ','");
+                MessagePrinter.printMessage(MessageType.ERROR, "Expected a ',' got " + tokens.get(0).getVal());
             }
 
             tokens.remove(0);
@@ -51,7 +52,7 @@ public class DMLParser extends ParserCommon {
 
     public static Record parseRecord(ArrayList<Token> tokens) throws Exception {
         if (tokens.get(0).getType() != Type.L_PAREN) {
-            MessagePrinter.printMessage(MessageType.ERROR, "Expected '('");
+            MessagePrinter.printMessage(MessageType.ERROR, "Expected '(' got " + tokens.get(0).getVal());
         }
         tokens.remove(0); // remove opening bracket
 
@@ -91,7 +92,7 @@ public class DMLParser extends ParserCommon {
 
             if (tokens.get(0).getType() != Type.IDKEY && tokens.get(0).getType() != Type.QUALIFIER
                     && tokens.get(0).getType() != Type.CONSTRAINT && tokens.get(0).getType() != Type.DATATYPE) {
-                MessagePrinter.printMessage(MessageType.ERROR, "Expected attribute name");
+                MessagePrinter.printMessage(MessageType.ERROR, "Expected attribute name got " + tokens.get(0).getVal());
             }
 
             attributeNames.add(tokens.remove(0).getVal());
@@ -99,14 +100,16 @@ public class DMLParser extends ParserCommon {
             while (!tokens.get(0).getVal().equalsIgnoreCase("from")) {
 
                 if (tokens.get(0).getType() != Type.COMMA) {
-                    MessagePrinter.printMessage(MessageType.ERROR, "Expected ',' after attribute name");
+                    MessagePrinter.printMessage(MessageType.ERROR,
+                            "Expected ',' after attribute name got " + tokens.get(0).getVal());
                 }
 
                 tokens.remove(0);
 
                 if (tokens.get(0).getType() != Type.IDKEY && tokens.get(0).getType() != Type.QUALIFIER
                         && tokens.get(0).getType() != Type.CONSTRAINT && tokens.get(0).getType() != Type.DATATYPE) {
-                    MessagePrinter.printMessage(MessageType.ERROR, "Expected attribute name");
+                    MessagePrinter.printMessage(MessageType.ERROR,
+                            "Expected attribute name got " + tokens.get(0).getVal());
                 }
 
                 attributeNames.add(tokens.remove(0).getVal());
@@ -128,7 +131,7 @@ public class DMLParser extends ParserCommon {
         }
 
         if (tokens.get(0).getType() != Type.SEMICOLON) {
-            MessagePrinter.printMessage(MessageType.ERROR, "Expected ';'");
+            MessagePrinter.printMessage(MessageType.ERROR, "Expected ';' got " + tokens.get(0).getVal());
         }
         tokens.remove(0); // remove semicolon
 
@@ -142,7 +145,7 @@ public class DMLParser extends ParserCommon {
 
         if (tokens.get(0).getType() != Type.IDKEY && tokens.get(0).getType() != Type.DATATYPE
                 && tokens.get(0).getType() != Type.CONSTRAINT) {
-            MessagePrinter.printMessage(MessageType.ERROR, "Expected table name");
+            MessagePrinter.printMessage(MessageType.ERROR, "Expected table name got " + tokens.get(0).getVal());
         }
 
         tableNames.add(tokens.remove(0).getVal());
@@ -150,13 +153,14 @@ public class DMLParser extends ParserCommon {
         while (tokens.get(0).getType() != Type.SEMICOLON && !tokens.get(0).getVal().equalsIgnoreCase("where") &&
                 !tokens.get(0).getVal().equalsIgnoreCase("orderby")) {
             if (tokens.get(0).getType() != Type.COMMA) {
-                MessagePrinter.printMessage(MessageType.ERROR, "Expected a ','");
+                MessagePrinter.printMessage(MessageType.ERROR, "Expected a ',' got " + tokens.get(0).getVal());
             }
 
             tokens.remove(0);
 
-            if (tokens.get(0).getType() != Type.IDKEY) {
-                MessagePrinter.printMessage(MessageType.ERROR, "Expected table name");
+            if (tokens.get(0).getType() != Type.IDKEY && tokens.get(0).getType() != Type.DATATYPE
+                    && tokens.get(0).getType() != Type.CONSTRAINT) {
+                MessagePrinter.printMessage(MessageType.ERROR, "Expected table name got " + tokens.get(0).getVal());
             }
 
             tableNames.add(tokens.remove(0).getVal());
@@ -174,14 +178,15 @@ public class DMLParser extends ParserCommon {
         // Expect attribute name
         if (tokens.get(0).getType() != Type.IDKEY && tokens.get(0).getType() != Type.QUALIFIER
                 && tokens.get(0).getType() != Type.CONSTRAINT && tokens.get(0).getType() != Type.DATATYPE) {
-            MessagePrinter.printMessage(MessageType.ERROR, "Expected attribute name");
+            MessagePrinter.printMessage(MessageType.ERROR, "Expected attribute name got " + tokens.get(0).getVal());
         }
 
         outputPostfix.add(tokens.remove(0));
 
         // Expect relational operation
         if (tokens.get(0).getType() != Type.REL_OP) {
-            MessagePrinter.printMessage(MessageType.ERROR, "Expected a relational operation");
+            MessagePrinter.printMessage(MessageType.ERROR,
+                    "Expected a relational operation got " + tokens.get(0).getVal());
         }
         Token currOperator = tokens.remove(0);
         while (!operatorStack.isEmpty() && getPrecedent(operatorStack.peek()) >= getPrecedent(currOperator)) {
@@ -191,27 +196,30 @@ public class DMLParser extends ParserCommon {
 
         // Expect attribute name or constant value
         if (!isAttributeOrConstant(tokens.get(0))) {
-            MessagePrinter.printMessage(MessageType.ERROR, "Attribute name or a constant value expected");
+            MessagePrinter.printMessage(MessageType.ERROR,
+                    "Attribute name or a constant value expected got " + tokens.get(0).getVal());
         }
         outputPostfix.add(tokens.remove(0));
 
         while (tokens.get(0).getType() != Type.SEMICOLON && !tokens.get(0).getVal().equalsIgnoreCase("orderby")) {
 
             if (!isLogicalOperator(tokens.get(0))) {
-                MessagePrinter.printMessage(MessageType.ERROR, "Expected either 'and' or 'or'");
+                MessagePrinter.printMessage(MessageType.ERROR,
+                        "Expected either 'and' or 'or' got " + tokens.get(0).getVal());
             }
 
             // Expect attribute name
             if (tokens.get(0).getType() != Type.IDKEY && tokens.get(0).getType() != Type.QUALIFIER
                     && tokens.get(0).getType() != Type.CONSTRAINT && tokens.get(0).getType() != Type.DATATYPE) {
-                MessagePrinter.printMessage(MessageType.ERROR, "Expected attribute name");
+                MessagePrinter.printMessage(MessageType.ERROR, "Expected attribute name got " + tokens.get(0).getVal());
             }
 
             outputPostfix.add(tokens.remove(0));
 
             // Expect relational operation
             if (tokens.get(0).getType() != Type.REL_OP) {
-                MessagePrinter.printMessage(MessageType.ERROR, "Expected a relational operation");
+                MessagePrinter.printMessage(MessageType.ERROR,
+                        "Expected a relational operation got " + tokens.get(0).getVal());
             }
             currOperator = tokens.remove(0);
             while (!operatorStack.isEmpty() && getPrecedent(operatorStack.peek()) >= getPrecedent(currOperator)) {
@@ -221,7 +229,8 @@ public class DMLParser extends ParserCommon {
 
             // Expect attribute name or constant value
             if (!isAttributeOrConstant(tokens.get(0))) {
-                MessagePrinter.printMessage(MessageType.ERROR, "Attribute name or a constant value expected");
+                MessagePrinter.printMessage(MessageType.ERROR,
+                        "Attribute name or a constant value expected got " + tokens.get(0).getVal());
             }
             outputPostfix.add(tokens.remove(0));
         }
@@ -240,7 +249,7 @@ public class DMLParser extends ParserCommon {
 
         if (tokens.get(0).getType() != Type.IDKEY && tokens.get(0).getType() != Type.QUALIFIER
                 && tokens.get(0).getType() != Type.CONSTRAINT && tokens.get(0).getType() != Type.DATATYPE) {
-            MessagePrinter.printMessage(MessageType.ERROR, "Expected attribute name");
+            MessagePrinter.printMessage(MessageType.ERROR, "Expected attribute name got " + tokens.get(0).getVal());
         }
 
         orderByAttribute = tokens.remove(0).getVal();
@@ -254,7 +263,7 @@ public class DMLParser extends ParserCommon {
         tokens.remove(0); // remove schema token
 
         if (tokens.get(0).getType() != Type.SEMICOLON) {
-            MessagePrinter.printMessage(MessageType.ERROR, "Expected ';'");
+            MessagePrinter.printMessage(MessageType.ERROR, "Expected ';' got " + tokens.get(0).getVal());
         }
         tokens.remove(0); // remove semicolon
     }
@@ -267,7 +276,8 @@ public class DMLParser extends ParserCommon {
         tokens.remove(0); // remove display token
         tokens.remove(0); // remove info token
 
-        if (tokens.get(0).getType() != Type.IDKEY) {
+        if (tokens.get(0).getType() != Type.IDKEY && tokens.get(0).getType() != Type.DATATYPE
+                && tokens.get(0).getType() != Type.CONSTRAINT) {
             MessagePrinter.printMessage(MessageType.ERROR, "Expected table name");
         }
 
@@ -289,7 +299,7 @@ public class DMLParser extends ParserCommon {
 
         if (tokens.get(0).getType() != Type.IDKEY && tokens.get(0).getType() != Type.DATATYPE
                 && tokens.get(0).getType() != Type.CONSTRAINT) {
-            MessagePrinter.printMessage(MessageType.ERROR, "Expected table name");
+            MessagePrinter.printMessage(MessageType.ERROR, "Expected table name got " + tokens.get(0).getVal());
         }
 
         String tableName = String.valueOf(tokens.remove(0).getVal());
@@ -298,47 +308,53 @@ public class DMLParser extends ParserCommon {
         if (tokens.get(0).getVal().equalsIgnoreCase("where")) {
             whereTree = parseWhere(tokens);
         }
-        //if (tokens.get(0).getType() != Type.SEMICOLON) {
-        //    MessagePrinter.printMessage(MessageType.ERROR, "Expected ';'");
-        //}
-        //tokens.remove(0); // remove semicolon
 
-        //parseWhere checks for the semicolon from what I can tell,
-        //in any case we have all the information we need. -Erika
+        if (tokens.get(0).getType() != Type.SEMICOLON) {
+            MessagePrinter.printMessage(MessageType.ERROR, "Expected ';' got " + tokens.get(0).getVal());
+        }
+        tokens.remove(0); // remove semicolon
+
+        // parseWhere checks for the semicolon from what I can tell,
+        // in any case we have all the information we need. -Erika
 
         return new Delete(tableName, whereTree);
     }
 
     public static Update parseUpdate(ArrayList<Token> tokens) throws Exception {
-        if(tokens.remove(0).getVal() != "update"){
-            MessagePrinter.printMessage(MessageType.ERROR,"This should be an update statement?");
-        }
+        tokens.remove(0); // remove update token
         Token table = tokens.remove(0);
-        if (table.getType() != Type.IDKEY){
-            MessagePrinter.printMessage(MessageType.ERROR,"Table name expected");
+        if (tokens.get(0).getType() != Type.IDKEY && tokens.get(0).getType() != Type.DATATYPE
+                && tokens.get(0).getType() != Type.CONSTRAINT) {
+            MessagePrinter.printMessage(MessageType.ERROR, "Table name expected got " + tokens.get(0).getVal());
         }
-        if(tokens.remove(0).getVal() != "set"){
-            MessagePrinter.printMessage(MessageType.ERROR,"Set expected");
+        if (!tokens.remove(0).getVal().equals("set")) {
+            MessagePrinter.printMessage(MessageType.ERROR, "Set expected got " + tokens.get(0).getVal());
         }
         Token column1 = tokens.remove(0);
-        if(column1.getType() != Type.IDKEY){
-            MessagePrinter.printMessage(MessageType.ERROR,"Column name expected");
+        if (column1.getType() != Type.IDKEY) {
+            MessagePrinter.printMessage(MessageType.ERROR, "Column name expected got " + tokens.get(0).getVal());
         }
-        if(tokens.remove(0).getVal() != "="){
-            MessagePrinter.printMessage(MessageType.ERROR,"Equals expected");
+        if (tokens.remove(0).getVal() != "=") {
+            MessagePrinter.printMessage(MessageType.ERROR, "Equals expected got " + tokens.get(0).getVal());
         }
-        Token value =  tokens.remove(0);
+        Token value = tokens.remove(0);
         Type valType = value.getType();
         String val = value.getVal();
-        if(!(valType == Type.STRING || valType == Type.INTEGER || valType == Type.DOUBLE || val.equals("true") || val.equals("false") || val.equals("null"))){
-            MessagePrinter.printMessage(MessageType.ERROR,"Illegal data value, legal types are char, varchar, int, double, boolean, and null");
+        if (!(valType == Type.STRING || valType == Type.INTEGER || valType == Type.DOUBLE || valType == Type.BOOLEAN || valType == Type.NULL)) {
+            MessagePrinter.printMessage(MessageType.ERROR,
+                    "Illegal data value, legal types are char, varchar, int, double, boolean, and null");
         }
-        if(tokens.get(0).getVal() != "where"){
-            MessagePrinter.printMessage(MessageType.ERROR,"WHERE statement expected.");
+        if (tokens.get(0).getVal() != "where") {
+            MessagePrinter.printMessage(MessageType.ERROR, "WHERE statement expected got " + tokens.get(0).getVal());
         }
         WhereTree where = parseWhere(tokens);
-        return new Update(table.getVal(), column1.getVal(), val, where);
 
+        if (tokens.get(0).getType() != Type.SEMICOLON) {
+            MessagePrinter.printMessage(MessageType.ERROR, "Expected ';' got " + tokens.get(0).getVal());
+        }
+        tokens.remove(0); // remove semicolon
+
+        return new Update(table.getVal(), column1.getVal(), val, where);
 
     }
 
