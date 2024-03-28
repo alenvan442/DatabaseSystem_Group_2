@@ -200,10 +200,11 @@ public class SelectQueryExecutor implements QueryExecutorInterface {
     List<String> potentialMatches = new ArrayList<>();
     List<Integer> foundIndex = new ArrayList<>();
 
-    potentialMatches.add(orderAttr.toLowerCase());
-    String[] spList = orderAttr.split(".");
+    String[] spList = orderAttr.split("\\.");
     if (spList.length > 1) {
       potentialMatches.add(spList[1]);
+    } else {
+      potentialMatches.add(orderAttr.toLowerCase());
     }
 
     for (int i = 0; i < attrs.size(); i++) {
@@ -238,6 +239,9 @@ public class SelectQueryExecutor implements QueryExecutorInterface {
       }
 
       for (String attributeName : selectedAttributeNames) {
+        if (this.select.getTableNames().size() == 1 && attributeName.contains(".")) {
+          attributeName = attributeName.split("\\.")[1];
+        }
         if (!attributeIndexMap.containsKey(attributeName)) {
           MessagePrinter.printMessage(MessageType.ERROR,
               String.format("%s could not be matched with any attribute", attributeName));
@@ -248,7 +252,7 @@ public class SelectQueryExecutor implements QueryExecutorInterface {
 
       for (Record record : this.records) {
         Record newRecord = new Record(new ArrayList<>());
-        for (String attributeName : selectedAttributeNames) {
+        for (String attributeName : attributeNames) {
           int index = attributeIndexMap.getOrDefault(attributeName, -1);
           if (index != -1) {
             newRecord.getValues().add(record.getValues().get(index));

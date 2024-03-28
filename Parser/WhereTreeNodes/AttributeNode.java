@@ -27,10 +27,11 @@ public class AttributeNode implements OperandNode {
         List<String> potentialMatches = new ArrayList<>();
         List<Object> foundVal = new ArrayList<>();
 
-        potentialMatches.add(dataName.toLowerCase());
-        String[] spList = dataName.split(".");
+        String[] spList = dataName.split("\\.");
         if (spList.length > 1) {
             potentialMatches.add(spList[1]);
+        } else {
+            potentialMatches.add(dataName.toLowerCase());
         }
 
         for (int i = 0; i < attrs.size(); i++)  {
