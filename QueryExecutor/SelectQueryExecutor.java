@@ -53,7 +53,7 @@ public class SelectQueryExecutor implements QueryExecutorInterface {
     // if so, return all records from that table
     List<String> tables = select.getTableNames();
     List<Record> firstTable = storageManager.getAllRecords(select.getTableNames().get(0));
-    if(tables.size()>1){
+    if(tables.size() == 1){
       return firstTable;
     }
 

@@ -116,6 +116,7 @@ public class ParserCommon { // extend me!
 							break;
 						case "null":
 							tokens.add(new Token(Type.NULL, currentToken));
+							break;
 						default:
 							tokens.add(new Token(Type.IDKEY, currentToken));
 					}
