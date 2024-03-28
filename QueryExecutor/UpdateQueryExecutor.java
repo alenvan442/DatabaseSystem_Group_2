@@ -56,13 +56,10 @@ public class UpdateQueryExecutor implements QueryExecutorInterface{
 
 
     List<Record> records = StorageManager.getStorageManager().getAllRecords(tableSchema.getTableNumber());
-    Insert insert = new Insert(this.update.getTableName(), null);
     int primaryKeyIndex = tableSchema.getPrimaryIndex();
-    InsertQueryExcutor insertQueryExcutor = new InsertQueryExcutor(insert);
     for (Record record : records) {
       if (update.getWhereTree().evaluate(tableSchema, record)) {
         record.getValues().set(attrbuteIndex, this.update.getValue());
-        insertQueryExcutor.validateRecord(record);
         this.newRecords.add(record);
         this.primaryKeys.add(record.getValues().get(primaryKeyIndex));
       }

@@ -7,15 +7,17 @@ import StorageManager.TableSchema;
 public interface CatalogInterface {
 
   /**
- * The method to create a table in the database.
- *
- * @param tableSchema The schema of the table to be created.
- * @throws Exception if an error occurs during the table creation process.
- */
+   * The method to create a table in the database.
+   *
+   * @param tableSchema The schema of the table to be created.
+   * @throws Exception if an error occurs during the table creation process.
+   */
   public void createTable(TableSchema tableSchema) throws Exception;
 
-   //  * Method that deletes the schema for a table that is being dropped.
-    //  * @param tableNumber - The old table # for the table we are updating due to being dropped.
+  /**
+  * Method that deletes the schema for a table that is being dropped.
+  * @param tableNumber - The old table # for the table we are updating due to being dropped.
+  */
   public void dropTableSchema(int tableNumber);
 
 

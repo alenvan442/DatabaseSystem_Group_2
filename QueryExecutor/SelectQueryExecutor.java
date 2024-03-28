@@ -1,6 +1,7 @@
 package QueryExecutor;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import Parser.Select;
@@ -24,8 +25,9 @@ public class SelectQueryExecutor implements QueryExecutorInterface {
 
   @Override
   public void excuteQuery() throws Exception {
-    // execute
+    // execute - gets all records that are valid per the query
     this.validateQuery();
+    this.orderBy();
 
     List<String> attributeNames = new ArrayList<>();
     for (AttributeSchema attributeSchema : this.schema.getAttributes()) {
@@ -37,17 +39,41 @@ public class SelectQueryExecutor implements QueryExecutorInterface {
     MessagePrinter.printMessage(MessageType.SUCCESS, null);
   }
 
-  private List<Record> getAllRecords(StorageManager storageManager) {
-    Catalog catalog = Catalog.getCatalog();
-    // TODO call validate query to create the schema
+  /**
+   * Gets all relevant records, performs a cartesian product if necessary
+   * @param storageManager - Storage manager of the program
+   * @return - List of relavent records
+   * @throws Exception
+   */
+  private List<Record> getAllRecords(StorageManager storageManager) throws Exception {
+    // call build schema to create the schema
+    this.buildSchema();
 
-    // TODO check to see if there is only 1 table
+    // check to see if there is only 1 table
     // if so, return all records from that table
+    List<String> tables = select.getTableNames();
+    List<Record> firstTable = storageManager.getAllRecords(select.getTableNames().get(0));
+    if(tables.size()>1){
+      return firstTable;
+    }
 
-    // TODO if more than one table, get all records
+    // if more than one table, get all records
     // of all of the tables, and compute the cartesian product of them
+
+    //NOTE: CHECK FOR CLONING ISSUES?
+
+    for(int i=1; i<tables.size(); i++){
+      List<Record> nextTable = storageManager.getAllRecords(select.getTableNames().get(i));
+      List<Record> resultTable = new ArrayList<>();
+      for( int j=0; j<firstTable.size(); j++){
+          for(int k=0; k<nextTable.size(); k++){
+            resultTable.add(new Record(firstTable.get(j), nextTable.get(k)));
+        }
+      }
+      firstTable = resultTable;
+    }
     
-    return null;
+    return firstTable;
 
   }
 
@@ -102,14 +128,7 @@ public class SelectQueryExecutor implements QueryExecutorInterface {
   }
 
   private void validateQuery() throws Exception {
-    Catalog catalog = Catalog.getCatalog();
     StorageManager storageManager = StorageManager.getStorageManager();
-
-    if (select.getTableNames().size() > 1) {
-      this.schema = this.buildCartesianSchema();
-    } else {
-      this.schema = catalog.getSchema(select.getTableNames().get(0));
-    }
 
     List<Record> allRecords = this.getAllRecords(storageManager);
 
@@ -127,16 +146,76 @@ public class SelectQueryExecutor implements QueryExecutorInterface {
 
   }
 
-  private TableSchema buildCartesianSchema() {
-    // create new temp schema
-    TableSchema temp = new TableSchema("temp");
+  /**
+   * Builds the schema for the result of a Cartesian Product.
+   * saves the schema to this class
+   * @throws Exception
+   */
+  private void buildSchema() throws Exception {
+    Catalog catalog = Catalog.getCatalog();
 
-    // TODO loop through each table name and get their schema
-    // then add each attribute in the form of x.y to the temp schema
-    // where x is the table name and y is the attribute name
-    // return the temp schema
-   
-    return temp;
+    if (select.getTableNames().size() == 1) {
+      this.schema = catalog.getSchema(select.getTableNames().get(0));
+    } else if (select.getTableNames().size() > 1) {
+
+      // create new temp schema
+      TableSchema temp = new TableSchema("temp");
+
+      ArrayList<TableSchema> cartSchemas = new ArrayList<TableSchema>();
+
+      // loop through each table name and get their schema
+      List<String> tableNames = select.getTableNames();
+      for(int i=0; i<tableNames.size(); i++){
+          cartSchemas.add(catalog.getSchema(tableNames.get(i)));
+      }
+
+      // add each attribute in the form of x.y to the temp schema
+      // where x is the table name and y is the attribute name
+      // return the temp schema
+      for(int i=0; i<cartSchemas.size(); i++){
+          List<AttributeSchema> currentAttrSchema = cartSchemas.get(i).getAttributes();
+          for(int j=0; j<currentAttrSchema.size(); j++){
+              String name = tableNames.get(i)+"."+currentAttrSchema.get(i).getAttributeName();
+              temp.addAttribute(new AttributeSchema(name, currentAttrSchema.get(i)));
+
+        }
+      }
+    
+      this.schema = temp;
+    } else {
+      MessagePrinter.printMessage(MessageType.ERROR, "No table present in the from clause");
+    }
+
+  }
+
+  private void orderBy() throws Exception {
+    String orderAttr = this.select.getOrderByAttribute();
+
+    if (orderAttr == null) {
+      return;
+    }
+
+    List<AttributeSchema> attrs = schema.getAttributes();
+    List<String> potentialMatches = new ArrayList<>();
+    List<Integer> foundIndex = new ArrayList<>();
+
+    potentialMatches.add(orderAttr.toLowerCase());
+    String[] spList = orderAttr.split(".");
+    if (spList.length > 1) {
+        potentialMatches.add(spList[1]);
+    }
+
+    for (int i = 0; i < attrs.size(); i++)  {
+        if (potentialMatches.contains(attrs.get(i).getAttributeName())) {
+            foundIndex.add(i);
+        }
+    }
+
+    if (foundIndex.size() != 1) {
+        MessagePrinter.printMessage(MessageType.ERROR, "Invalid attribute name: " + orderAttr + ".");
+    }
+
+    Collections.sort(this.records, (a, b) -> a.compareTo(b, foundIndex.get(0)));
 
   }
 

@@ -29,7 +29,7 @@ public class Page implements java.io.Serializable, Comparator<Page>, StorageMana
     public Page() {
 
     }
-    /*
+    /**
      * Gets the table number that this page is associated with
      *
      * @return  The associated table number
@@ -63,7 +63,7 @@ public class Page implements java.io.Serializable, Comparator<Page>, StorageMana
         this.setNumRecords();
     }
 
-    /*
+    /**
      * Returns whether or not this page has been changed
      *
      * @return  bool
@@ -72,14 +72,14 @@ public class Page implements java.io.Serializable, Comparator<Page>, StorageMana
         return this.changed;
     }
 
-    /*
+    /**
      * Sets the value that indicates that this page has been changed
      */
     public void setChanged() {
         this.changed = true;
     }
 
-    /*
+    /**
      * Sets the priority of this page
      * This is used in ordering the buffer for LRU
      */
@@ -87,7 +87,7 @@ public class Page implements java.io.Serializable, Comparator<Page>, StorageMana
         this.priority = System.currentTimeMillis();
     }
 
-    /*
+    /**
      * Adds a record to the page in the correct order
      *
      * @param record    The record to be inserted
@@ -118,7 +118,7 @@ public class Page implements java.io.Serializable, Comparator<Page>, StorageMana
         }
     }
 
-    /*
+    /**
      * Deletes a record at a specific index
      *
      * @param index     The index to delete the record at
@@ -133,7 +133,7 @@ public class Page implements java.io.Serializable, Comparator<Page>, StorageMana
         return removed;
     }
 
-    /*
+    /**
      * Replaces a record at a given index
      *
      * @param index     The index to replace the record at
@@ -152,7 +152,7 @@ public class Page implements java.io.Serializable, Comparator<Page>, StorageMana
         }
     }
 
-    /*
+    /**
      * returns the number of bytes of space is left in this page
      *
      * @return  int - number of bytes of space left
@@ -185,7 +185,7 @@ public class Page implements java.io.Serializable, Comparator<Page>, StorageMana
         }
     }
 
-    /*
+    /**
      * Compare function used for the priority queue
      * of the buffer to determine which page is LRU
      */
