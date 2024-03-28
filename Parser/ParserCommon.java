@@ -110,11 +110,12 @@ public class ParserCommon { // extend me!
 						case "integer":
 						case "double":
 						case "boolean":
-						case "null":
 						case "char":
 						case "varchar":
 							tokens.add(new Token(Type.DATATYPE, currentToken));
 							break;
+						case "null":
+							tokens.add(new Token(Type.NULL, currentToken));
 						default:
 							tokens.add(new Token(Type.IDKEY, currentToken));
 					}
