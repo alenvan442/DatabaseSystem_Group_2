@@ -76,7 +76,8 @@ public class DMLParser extends ParserCommon {
                     record.getValues().add(null);
                     break;
                 default:
-                    MessagePrinter.printMessage(MessageType.ERROR, tokens.get(0) + " is an invalid input");
+                    MessagePrinter.printMessage(MessageType.ERROR, tokens.get(0)
+                            + " Illegal data value, legal types are char, varchar, int, double, boolean, and null");
             }
         }
         tokens.remove(0); // remove closing bracket
@@ -117,6 +118,10 @@ public class DMLParser extends ParserCommon {
             }
         } else {
             attributeNames.add(tokens.remove(0).getVal()); // remove asterisk
+
+            if (!tokens.get(0).getVal().equalsIgnoreCase("from")) {
+                MessagePrinter.printMessage(MessageType.ERROR, "Expected from got " + tokens.get(0).getVal());
+            }
         }
 
         List<String> tableNames = parseFrom(tokens);
@@ -334,17 +339,32 @@ public class DMLParser extends ParserCommon {
         if (column1.getType() != Type.IDKEY) {
             MessagePrinter.printMessage(MessageType.ERROR, "Column name expected got " + tokens.get(0).getVal());
         }
-        if (tokens.remove(0).getVal() != "=") {
+        if (!tokens.remove(0).getVal().equals("=")) {
             MessagePrinter.printMessage(MessageType.ERROR, "Equals expected got " + tokens.get(0).getVal());
         }
         Token value = tokens.remove(0);
         Type valType = value.getType();
-        String val = value.getVal();
-        if (!(valType == Type.STRING || valType == Type.INTEGER || valType == Type.DOUBLE || valType == Type.BOOLEAN || valType == Type.NULL)) {
-            MessagePrinter.printMessage(MessageType.ERROR,
-                    "Illegal data value, legal types are char, varchar, int, double, boolean, and null");
+        Object val = null;
+        switch (valType) {
+            case INTEGER:
+                val = Integer.parseInt(value.getVal());
+                break;
+            case DOUBLE:
+                val = Double.parseDouble(value.getVal());
+                break;
+            case BOOLEAN:
+                val = Boolean.parseBoolean(value.getVal());
+                break;
+            case STRING:
+                val = value.getType();
+                break;
+            case NULL: // already null
+                break;
+            default:
+                MessagePrinter.printMessage(MessageType.ERROR, tokens.get(0)
+                        + " Illegal data value, legal types are char, varchar, int, double, boolean, and null");
         }
-        if (tokens.get(0).getVal() != "where") {
+        if (!tokens.get(0).getVal().equals("where")) {
             MessagePrinter.printMessage(MessageType.ERROR, "WHERE statement expected got " + tokens.get(0).getVal());
         }
         WhereTree where = parseWhere(tokens);

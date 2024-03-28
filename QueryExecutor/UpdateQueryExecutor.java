@@ -1,6 +1,7 @@
 package QueryExecutor;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import Parser.Insert;
@@ -30,7 +31,7 @@ public class UpdateQueryExecutor implements QueryExecutorInterface{
     validateQuery();
     StorageManager storageManager = StorageManager.getStorageManager();
     for (int i=0; i < this.newRecords.size(); ++i) {
-      storageManager.updateRecord(tableSchema.getTableNumber(), this.newRecords.get(i), storageManager);
+      storageManager.updateRecord(tableSchema.getTableNumber(), this.newRecords.get(i), this.primaryKeys.get(i));
     }
     MessagePrinter.printMessage(MessageType.SUCCESS, null);
   }
@@ -58,10 +59,12 @@ public class UpdateQueryExecutor implements QueryExecutorInterface{
     List<Record> records = StorageManager.getStorageManager().getAllRecords(tableSchema.getTableNumber());
     int primaryKeyIndex = tableSchema.getPrimaryIndex();
     for (Record record : records) {
+      List<Object> copyValues = new ArrayList<>(record.getValues());
+      Record newRecord = new Record(copyValues);
       if (update.getWhereTree().evaluate(tableSchema, record)) {
-        record.getValues().set(attrbuteIndex, this.update.getValue());
-        this.newRecords.add(record);
         this.primaryKeys.add(record.getValues().get(primaryKeyIndex));
+        newRecord.getValues().set(attrbuteIndex, this.update.getValue());
+        this.newRecords.add(newRecord);
       }
     }
   }
