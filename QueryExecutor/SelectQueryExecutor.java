@@ -1,8 +1,14 @@
 package QueryExecutor;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import Parser.Select;
 import Parser.WhereTreeNodes.WhereTree;
@@ -28,19 +34,14 @@ public class SelectQueryExecutor implements QueryExecutorInterface {
     // execute - gets all records that are valid per the query
     this.validateQuery();
     this.orderBy();
+    this.select();
 
-    List<String> attributeNames = new ArrayList<>();
-    for (AttributeSchema attributeSchema : this.schema.getAttributes()) {
-      attributeNames.add(attributeSchema.getAttributeName());
-    }
-
-    // buid result string
-    System.out.println("\n" + buildResultString(this.records, attributeNames));
     MessagePrinter.printMessage(MessageType.SUCCESS, null);
   }
 
   /**
    * Gets all relevant records, performs a cartesian product if necessary
+   *
    * @param storageManager - Storage manager of the program
    * @return - List of relavent records
    * @throws Exception
@@ -53,26 +54,26 @@ public class SelectQueryExecutor implements QueryExecutorInterface {
     // if so, return all records from that table
     List<String> tables = select.getTableNames();
     List<Record> firstTable = storageManager.getAllRecords(select.getTableNames().get(0));
-    if(tables.size() == 1){
+    if (tables.size() == 1) {
       return firstTable;
     }
 
     // if more than one table, get all records
     // of all of the tables, and compute the cartesian product of them
 
-    //NOTE: CHECK FOR CLONING ISSUES?
+    // NOTE: CHECK FOR CLONING ISSUES?
 
-    for(int i=1; i<tables.size(); i++){
+    for (int i = 1; i < tables.size(); i++) {
       List<Record> nextTable = storageManager.getAllRecords(select.getTableNames().get(i));
       List<Record> resultTable = new ArrayList<>();
-      for( int j=0; j<firstTable.size(); j++){
-          for(int k=0; k<nextTable.size(); k++){
-            resultTable.add(new Record(firstTable.get(j), nextTable.get(k)));
+      for (int j = 0; j < firstTable.size(); j++) {
+        for (int k = 0; k < nextTable.size(); k++) {
+          resultTable.add(new Record(firstTable.get(j), nextTable.get(k)));
         }
       }
       firstTable = resultTable;
     }
-    
+
     return firstTable;
 
   }
@@ -149,6 +150,7 @@ public class SelectQueryExecutor implements QueryExecutorInterface {
   /**
    * Builds the schema for the result of a Cartesian Product.
    * saves the schema to this class
+   *
    * @throws Exception
    */
   private void buildSchema() throws Exception {
@@ -165,22 +167,22 @@ public class SelectQueryExecutor implements QueryExecutorInterface {
 
       // loop through each table name and get their schema
       List<String> tableNames = select.getTableNames();
-      for(int i=0; i<tableNames.size(); i++){
-          cartSchemas.add(catalog.getSchema(tableNames.get(i)));
+      for (int i = 0; i < tableNames.size(); i++) {
+        cartSchemas.add(catalog.getSchema(tableNames.get(i)));
       }
 
       // add each attribute in the form of x.y to the temp schema
       // where x is the table name and y is the attribute name
       // return the temp schema
-      for(int i=0; i<cartSchemas.size(); i++){
-          List<AttributeSchema> currentAttrSchema = cartSchemas.get(i).getAttributes();
-          for(int j=0; j<currentAttrSchema.size(); j++){
-              String name = tableNames.get(i)+"."+currentAttrSchema.get(j).getAttributeName();
-              temp.addAttribute(new AttributeSchema(name, currentAttrSchema.get(i)));
+      for (int i = 0; i < cartSchemas.size(); i++) {
+        List<AttributeSchema> currentAttrSchema = cartSchemas.get(i).getAttributes();
+        for (int j = 0; j < currentAttrSchema.size(); j++) {
+          String name = tableNames.get(i) + "." + currentAttrSchema.get(i).getAttributeName();
+          temp.addAttribute(new AttributeSchema(name, currentAttrSchema.get(i)));
 
         }
       }
-    
+
       this.schema = temp;
     } else {
       MessagePrinter.printMessage(MessageType.ERROR, "No table present in the from clause");
@@ -202,21 +204,66 @@ public class SelectQueryExecutor implements QueryExecutorInterface {
     potentialMatches.add(orderAttr.toLowerCase());
     String[] spList = orderAttr.split(".");
     if (spList.length > 1) {
-        potentialMatches.add(spList[1]);
+      potentialMatches.add(spList[1]);
     }
 
-    for (int i = 0; i < attrs.size(); i++)  {
-        if (potentialMatches.contains(attrs.get(i).getAttributeName())) {
-            foundIndex.add(i);
-        }
+    for (int i = 0; i < attrs.size(); i++) {
+      if (potentialMatches.contains(attrs.get(i).getAttributeName())) {
+        foundIndex.add(i);
+      }
     }
 
     if (foundIndex.size() != 1) {
-        MessagePrinter.printMessage(MessageType.ERROR, "Invalid attribute name: " + orderAttr + ".");
+      MessagePrinter.printMessage(MessageType.ERROR, "Invalid attribute name: " + orderAttr + ".");
     }
 
     Collections.sort(this.records, (a, b) -> a.compareTo(b, foundIndex.get(0)));
 
+  }
+
+  private void select() throws Exception {
+    List<Record> recordsWithSelectedAttributes = new ArrayList<>();
+    List<String> attributeNames = new ArrayList<>();
+    Set<String> selectedAttributeNames = new LinkedHashSet<>(this.select.getAttributeNames());
+
+    if (selectedAttributeNames.contains("*")) {
+      for (AttributeSchema attributeSchema : this.schema.getAttributes()) {
+        attributeNames.add(attributeSchema.getAttributeName());
+      }
+      recordsWithSelectedAttributes.addAll(this.records);
+    } else {
+      Map<String, Integer> attributeIndexMap = new HashMap<>();
+      for (int i = 0; i < this.schema.getAttributes().size(); i++) {
+        AttributeSchema attributeSchema = this.schema.getAttributes().get(i);
+        attributeIndexMap.put(attributeSchema.getAttributeName(), i);
+      }
+
+      for (String attributeName : selectedAttributeNames) {
+        if (!attributeIndexMap.containsKey(attributeName)) {
+          MessagePrinter.printMessage(MessageType.ERROR,
+              String.format("%s could not be matched with any attribute", attributeName));
+        } else {
+          attributeNames.add(attributeName);
+        }
+      }
+
+      for (Record record : this.records) {
+        Record newRecord = new Record(new ArrayList<>());
+        for (String attributeName : selectedAttributeNames) {
+          int index = attributeIndexMap.getOrDefault(attributeName, -1);
+          if (index != -1) {
+            newRecord.getValues().add(record.getValues().get(index));
+          }
+        }
+        recordsWithSelectedAttributes.add(newRecord);
+      }
+    }
+
+    // build result string
+    StringBuilder resultStringBuilder = new StringBuilder();
+    resultStringBuilder.append("\n");
+    resultStringBuilder.append(buildResultString(recordsWithSelectedAttributes, attributeNames));
+    System.out.println(resultStringBuilder.toString());
   }
 
 }

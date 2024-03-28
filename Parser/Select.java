@@ -18,7 +18,7 @@ public class Select {
     this.orderByAttribute = orderByAttribute;
   }
 
-  public List<String> getAttrubuteNames() {
+  public List<String> getAttributeNames() {
     return attrubuteNames;
   }
 

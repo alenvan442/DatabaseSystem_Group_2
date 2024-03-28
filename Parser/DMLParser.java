@@ -113,7 +113,7 @@ public class DMLParser extends ParserCommon {
 
             }
         } else {
-            tokens.remove(0); // remove asterisk
+            attributeNames.add(tokens.remove(0).getVal()); // remove asterisk
         }
 
         List<String> tableNames = parseFrom(tokens);
