@@ -22,7 +22,7 @@ public class StorageManager implements StorageManagerInterface {
     private PriorityQueue<Page> buffer;
     private int bufferSize;
 
-    /*
+    /**
      * Constructor for the storage manager
      * initializes the class by initializing the buffer
      *
@@ -33,7 +33,7 @@ public class StorageManager implements StorageManagerInterface {
         this.buffer = new PriorityQueue<>(bufferSize, new Page());
     }
 
-    /*
+    /**
      * Static function that initializes the storageManager
      *
      * @param bufferSize The size of the buffer
@@ -42,7 +42,7 @@ public class StorageManager implements StorageManagerInterface {
         storageManager = new StorageManager(bufferSize);
     }
 
-    /*
+    /**
      * Getter for the global storageManager
      *
      * @return The storageManager
@@ -109,7 +109,7 @@ public class StorageManager implements StorageManagerInterface {
         this.addPageToBuffer(newPage);
     }
 
-    /*
+    /**
      * Construct the full table path according to where
      * the DB is located
      *
@@ -149,7 +149,7 @@ public class StorageManager implements StorageManagerInterface {
             }
         }
 
-        if (foundPage.equals(null)) {
+        if (foundPage == null) {
             // a page with the record was not found
             return null;
         } else {
@@ -162,16 +162,13 @@ public class StorageManager implements StorageManagerInterface {
             // record was not found
             return null;
         }
-
     }
 
-    /**
-     * Retrieves all records from a specified table.
-     *
-     * @param tableNumber The number of the table to retrieve records from.
-     * @return A list of records from the specified table.
-     * @throws Exception If an error occurs during the retrieval process.
-     */
+    public Record getRecord(String tableName, Object primaryKey) throws Exception {
+        int tableNumber = TableSchema.hashName(tableName);
+        return this.getRecord(tableNumber, primaryKey);
+    }
+
     public List<Record> getAllRecords(int tableNumber) throws Exception {
         List<Record> records = new ArrayList<>(); // List to store all records
         List<Page> allPagesForTable = new ArrayList<>();
@@ -186,6 +183,11 @@ public class StorageManager implements StorageManagerInterface {
         }
 
         return records;
+    }
+
+    public List<Record> getAllRecords(String tableName) throws Exception {
+        int tableNum = TableSchema.hashName(tableName);
+        return this.getAllRecords(tableNum);
     }
 
     public void insertRecord(int tableNumber, Record record) throws Exception {
@@ -272,7 +274,7 @@ public class StorageManager implements StorageManagerInterface {
             }
         }
 
-        if (foundPage.equals(null)) {
+        if (foundPage == null) {
             MessagePrinter.printMessage(MessageType.ERROR,
                     String.format("No record of primary key: (%d), was found.",
                             primaryKey));

@@ -1,5 +1,6 @@
 package Parser.WhereTreeNodes;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import Parser.WhereTreeNodes.Interfaces.OperandNode;
@@ -23,14 +24,26 @@ public class AttributeNode implements OperandNode {
     @Override
     public Object getValue(TableSchema schema, Record record) throws Exception {
         List<AttributeSchema> attrs = schema.getAttributes();
+        List<String> potentialMatches = new ArrayList<>();
+        List<Object> foundVal = new ArrayList<>();
+
+        potentialMatches.add(dataName.toLowerCase());
+        String[] spList = dataName.split(".");
+        if (spList.length > 1) {
+            potentialMatches.add(spList[1]);
+        }
 
         for (int i = 0; i < attrs.size(); i++)  {
-            if (attrs.get(i).getAttributeName().equals(dataName.toLowerCase())) {
-                return record.getValues().get(i);
+            if (potentialMatches.contains(attrs.get(i).getAttributeName())) {
+                foundVal.add(record.getValues().get(i));
             }
         }
 
-        MessagePrinter.printMessage(MessageType.ERROR, "Invalid attribute name: " + this.dataName + ".");
+        if (foundVal.size() != 1) {
+            MessagePrinter.printMessage(MessageType.ERROR, "Invalid attribute name: " + this.dataName + ".");
+        } else {
+            return foundVal.get(0);
+        }
         return null;
 
     }

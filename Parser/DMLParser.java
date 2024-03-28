@@ -146,7 +146,8 @@ public class DMLParser extends ParserCommon {
 
         tableNames.add(tokens.remove(0).getVal());
 
-        while (tokens.get(0).getType() != Type.SEMICOLON && !tokens.get(0).getVal().equalsIgnoreCase("where")) {
+        while (tokens.get(0).getType() != Type.SEMICOLON && !tokens.get(0).getVal().equalsIgnoreCase("where") &&
+                !tokens.get(0).getVal().equalsIgnoreCase("orderby")) {
             if (tokens.get(0).getType() != Type.COMMA) {
                 MessagePrinter.printMessage(MessageType.ERROR, "Expected a ','");
             }
@@ -309,30 +310,30 @@ public class DMLParser extends ParserCommon {
 
     public static Update parseUpdate(ArrayList<Token> tokens) throws Exception {
         if(tokens.remove(0).getVal() != "update"){
-            throw new Exception("This should be an update statement?");
+            MessagePrinter.printMessage(MessageType.ERROR,"This should be an update statement?");
         }
         Token table = tokens.remove(0);
         if (table.getType() != Type.IDKEY){
-            throw new Exception("Table name expected");
+            MessagePrinter.printMessage(MessageType.ERROR,"Table name expected");
         }
         if(tokens.remove(0).getVal() != "set"){
-            throw new Exception("Set expected");
+            MessagePrinter.printMessage(MessageType.ERROR,"Set expected");
         }
         Token column1 = tokens.remove(0);
         if(column1.getType() != Type.IDKEY){
-            throw new Exception("Column name expected");
+            MessagePrinter.printMessage(MessageType.ERROR,"Column name expected");
         }
         if(tokens.remove(0).getVal() != "="){
-            throw new Exception("Equals expected");
+            MessagePrinter.printMessage(MessageType.ERROR,"Equals expected");
         }
         Token value =  tokens.remove(0);
         Type valType = value.getType();
         String val = value.getVal();
         if(!(valType == Type.STRING || valType == Type.INTEGER || valType == Type.DOUBLE || val.equals("true") || val.equals("false") || val.equals("null"))){
-            throw new Exception("Illegal data value, legal types are char, varchar, int, double, boolean, and null");
+            MessagePrinter.printMessage(MessageType.ERROR,"Illegal data value, legal types are char, varchar, int, double, boolean, and null");
         }
         if(tokens.get(0).getVal() != "where"){
-            throw new Exception("WHERE statement expected.");
+            MessagePrinter.printMessage(MessageType.ERROR,"WHERE statement expected.");
         }
         WhereTree where = parseWhere(tokens);
         return new Update(table.getVal(), column1.getVal(), val, where);
