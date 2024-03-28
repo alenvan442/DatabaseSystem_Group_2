@@ -175,7 +175,7 @@ public class SelectQueryExecutor implements QueryExecutorInterface {
       for(int i=0; i<cartSchemas.size(); i++){
           List<AttributeSchema> currentAttrSchema = cartSchemas.get(i).getAttributes();
           for(int j=0; j<currentAttrSchema.size(); j++){
-              String name = tableNames.get(i)+"."+currentAttrSchema.get(i).getAttributeName();
+              String name = tableNames.get(i)+"."+currentAttrSchema.get(j).getAttributeName();
               temp.addAttribute(new AttributeSchema(name, currentAttrSchema.get(i)));
 
         }
