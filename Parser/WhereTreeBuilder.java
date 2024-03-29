@@ -26,10 +26,7 @@ public class WhereTreeBuilder {
 
   public WhereTree buildWhereTree() throws Exception {
     Stack<Object> nodeStack = new Stack<>();
-    boolean attributeSwitch = true; // if this is true, then the next operandNode is an attribue, if false, its a value
-                                    // this will flip every time we read in another operandNode,
-                                    // we are guarenteed the first should be the attribute name rather than the value
-                                    // error will be caught when we evaluate
+
     ArrayList<String> operators = new ArrayList<>(Arrays.asList("and", "or"));
     ArrayList<String> comparisons = new ArrayList<>(Arrays.asList(">", ">=", "<", "<=", "=", "!="));
 
@@ -79,43 +76,38 @@ public class WhereTreeBuilder {
 
       } else {
         // operand node
-        if (attributeSwitch) {
-          nodeStack.push(new AttributeNode(value));
-        } else {
-          ValueNode operand = null;
-          switch (token.getType()) {
-            case BOOLEAN:
-              switch (value) {
-                case "true":
-                  operand = new ValueNode(true);
-                  break;
-                case "false":
-                  operand = new ValueNode(false);
-                  break;
-                default:
-                MessagePrinter.printMessage(MessageType.ERROR, "Invalid value for type boolean.");
-                  break;
-              }
-              break;
-            case INTEGER:
-              operand = new ValueNode(Integer.parseInt(value));
-              break;
-            case DOUBLE:
-              operand = new ValueNode(Double.parseDouble(value));
-              break;
-            case STRING:
-              operand = new ValueNode(value);
-              break;
-            default:
-              MessagePrinter.printMessage(MessageType.ERROR, "Unknown data type found");
-              break;
-          }
-
-          nodeStack.push(operand);
+        OperandNode operand = null;
+        switch (token.getType()) {
+          case IDKEY:
+            operand = new AttributeNode(value);
+          case BOOLEAN:
+            switch (value) {
+              case "true":
+                operand = new ValueNode(true);
+                break;
+              case "false":
+                operand = new ValueNode(false);
+                break;
+              default:
+              MessagePrinter.printMessage(MessageType.ERROR, "Invalid value for type boolean.");
+                break;
+            }
+            break;
+          case INTEGER:
+            operand = new ValueNode(Integer.parseInt(value));
+            break;
+          case DOUBLE:
+            operand = new ValueNode(Double.parseDouble(value));
+            break;
+          case STRING:
+            operand = new ValueNode(value);
+            break;
+          default:
+            MessagePrinter.printMessage(MessageType.ERROR, "Unknown data type found");
+            break;
         }
 
-        attributeSwitch = !attributeSwitch;
-
+        nodeStack.push(operand);
       }
     }
 
