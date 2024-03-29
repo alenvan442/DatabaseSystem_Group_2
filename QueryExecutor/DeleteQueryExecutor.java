@@ -1,20 +1,25 @@
 package QueryExecutor;
 
+import java.lang.management.MemoryType;
+import java.util.ArrayList;
 import java.util.List;
 
 import Parser.Delete;
 import StorageManager.StorageManager;
 import StorageManager.TableSchema;
 import StorageManager.Objects.Catalog;
+import StorageManager.Objects.MessagePrinter;
 import StorageManager.Objects.Record;
+import StorageManager.Objects.MessagePrinter.MessageType;
 
 public class DeleteQueryExecutor implements QueryExecutorInterface{
   private Delete delete;
   private List<Object> primaryKeys;
   private TableSchema tableSchema;
 
-  public DeleteQueryExecutor(Parser.Delete delete) {
+  public DeleteQueryExecutor(Delete delete) {
     this.delete = delete;
+    this.primaryKeys = new ArrayList<>();
   }
 
   @Override
@@ -24,6 +29,7 @@ public class DeleteQueryExecutor implements QueryExecutorInterface{
     for (Object primaryKey: primaryKeys) {
       storageManager.deleteRecord(tableSchema.getTableNumber(), primaryKey);
     }
+    MessagePrinter.printMessage(MessageType.SUCCESS, null);
   }
 
   private void validateQuery() throws Exception {
