@@ -212,7 +212,7 @@ public class DMLParser extends ParserCommon {
                 MessagePrinter.printMessage(MessageType.ERROR,
                         "Expected either 'and' or 'or' got " + tokens.get(0).getVal());
             }
-            // TODO need to remove and/or and append it to operator stack
+            // remove and/or and append it to operator stack
             currOperator = tokens.remove(0);
             while (!operatorStack.isEmpty() && getPrecedent(operatorStack.peek()) >= getPrecedent(currOperator)) {
                 outputPostfix.add(operatorStack.pop());

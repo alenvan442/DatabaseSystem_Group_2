@@ -28,6 +28,11 @@ public class ComparisonOpNode implements OperatorNode {
         Object left = this.leftChild.getValue(schema, record);
 
         if (right == null || left == null) {
+            if (this.operator.equals("=")) {
+                return right == left;
+            } else if (this.operator.equals("!=")) {
+                return right != left;
+            }
             return false;
         }
 
