@@ -338,7 +338,7 @@ public class StorageManager implements StorageManagerInterface {
             // insert failed, restore the deleted record
             this.insertRecord(tableNumber, oldRecord);
             System.err.println(e.getMessage());
-            return false;
+            throw new Exception();
         }
     }
 

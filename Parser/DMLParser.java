@@ -370,10 +370,13 @@ public class DMLParser extends ParserCommon {
                 MessagePrinter.printMessage(MessageType.ERROR, tokens.get(0)
                         + " Illegal data value, legal types are char, varchar, int, double, boolean, and null");
         }
-        if (!tokens.get(0).getVal().equals("where")) {
-            MessagePrinter.printMessage(MessageType.ERROR, "WHERE statement expected got " + tokens.get(0).getVal());
+        WhereTree where = null;
+        if (tokens.get(0).getVal().equals("where")) {
+            where = parseWhere(tokens);
+        } else {
+            where = new WhereTree();
         }
-        WhereTree where = parseWhere(tokens);
+        
 
         if (tokens.get(0).getType() != Type.SEMICOLON) {
             MessagePrinter.printMessage(MessageType.ERROR, "Expected ';' got " + tokens.get(0).getVal());

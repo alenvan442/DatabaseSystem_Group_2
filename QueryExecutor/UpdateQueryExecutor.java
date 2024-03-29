@@ -32,7 +32,11 @@ public class UpdateQueryExecutor implements QueryExecutorInterface{
     StorageManager storageManager = StorageManager.getStorageManager();
     boolean result = false;
     for (int i=0; i < this.newRecords.size(); ++i) {
-       result = storageManager.updateRecord(tableSchema.getTableNumber(), this.newRecords.get(i), this.primaryKeys.get(i));
+      try {
+        result = storageManager.updateRecord(tableSchema.getTableNumber(), this.newRecords.get(i), this.primaryKeys.get(i));
+      } catch (Exception e) {
+        MessagePrinter.printMessage(MessageType.ERROR, "Error found in update. Stopping update...");
+      }
     }
     if (result) MessagePrinter.printMessage(MessageType.SUCCESS, null);
   }
