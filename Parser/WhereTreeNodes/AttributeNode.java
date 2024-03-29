@@ -24,17 +24,17 @@ public class AttributeNode implements OperandNode {
     @Override
     public Object getValue(TableSchema schema, Record record) throws Exception {
         List<AttributeSchema> attrs = schema.getAttributes();
-        List<String> potentialMatches = new ArrayList<>();
         List<Object> foundVal = new ArrayList<>();
 
-        String[] spList = dataName.split("\\.");
-        potentialMatches.add(dataName.toLowerCase());
-        if (spList.length > 1) {
-            potentialMatches.add(spList[1]);
-        }
-
         for (int i = 0; i < attrs.size(); i++)  {
-            if (potentialMatches.contains(attrs.get(i).getAttributeName())) {
+            String[] spList = attrs.get(i).getAttributeName().split("\\.");
+            List<String> potentialMatches = new ArrayList<>();
+            potentialMatches.add(attrs.get(i).getAttributeName().toLowerCase());
+            if (spList.length > 1) {
+                potentialMatches.add(spList[1]);
+            }
+
+            if (potentialMatches.contains(dataName)) {
                 foundVal.add(record.getValues().get(i));
             }
         }
