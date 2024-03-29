@@ -362,7 +362,7 @@ public class DMLParser extends ParserCommon {
                 val = Boolean.parseBoolean(value.getVal());
                 break;
             case STRING:
-                val = value.getType();
+                val = value.getVal();
                 break;
             case NULL: // already null
                 break;
