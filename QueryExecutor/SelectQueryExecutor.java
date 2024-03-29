@@ -242,8 +242,23 @@ public class SelectQueryExecutor implements QueryExecutorInterface {
           attributeName = attributeName.split("\\.")[1];
         }
         if (!attributeIndexMap.containsKey(attributeName)) {
-          MessagePrinter.printMessage(MessageType.ERROR,
+          // if the attribute name was not in the map, possible it was a y rather than x.y
+          // check if only one y is present, if not ERROR
+          boolean added = false;
+          for (String key : attributeIndexMap.keySet()) {
+            String[] keyParts = key.split("\\.");
+            if (keyParts.length > 1) {
+              if (keyParts[1].equals(attributeName)) {
+                attributeNames.add(key);
+                added = true;
+                break;
+              }
+            }
+          }
+          if (!added) {
+            MessagePrinter.printMessage(MessageType.ERROR,
               String.format("%s could not be matched with any attribute", attributeName));
+          }
         } else {
           attributeNames.add(attributeName);
         }
