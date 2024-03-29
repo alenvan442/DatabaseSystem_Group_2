@@ -253,7 +253,7 @@ public class SelectQueryExecutor implements QueryExecutorInterface {
               if (keyParts[1].equals(attributeName)) {
                 if (added) {
                   // was already found, multiple attribute error
-                  MessagePrinter.printMessage(MessageType.ERROR, "Invalid attribute name: " + attributeName + ".");
+                  MessagePrinter.printMessage(MessageType.ERROR, String.format("%s is ambigious", attributeName));
                 } else {
                   attributeNames.add(key);
                   added = true;
