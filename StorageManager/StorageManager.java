@@ -133,6 +133,10 @@ public class StorageManager implements StorageManagerInterface {
 
         for (int pageNumber : pageOrder) {
             Page page = this.getPage(tableNumber, pageNumber);
+            if (page.getNumRecords() == 0) {
+                return null;
+            }
+
             Record lastRecord = page.getRecords().get(page.getRecords().size() - 1);
             int comparison = lastRecord.compareTo(primaryKey, primaryKeyIndex);
 
@@ -218,9 +222,7 @@ public class StorageManager implements StorageManagerInterface {
 
             for (Integer pageNumber : tableSchema.getPageOrder()) {
                 Page page = this.getPage(tableNumber, pageNumber);
-                Record lastRecordInPage = page.getRecords().get(page.getRecords().size() - 1);
-                if (record.compareTo(lastRecordInPage, primaryKeyIndex) < 0) {
-                    // record is less than lastRecordPage
+                if (page.getNumRecords() == 0) {
                     if (!page.addNewRecord(record)) {
                         // page was full
                         this.pageSplit(page, record, tableSchema, primaryKeyIndex);
@@ -229,8 +231,10 @@ public class StorageManager implements StorageManagerInterface {
                     break;
                 }
 
-                // check if we are at last page
-                if (pageNumber == tableSchema.getPageOrder().get(tableSchema.getPageOrder().size() - 1)) {
+                Record lastRecordInPage = page.getRecords().get(page.getRecords().size() - 1);
+                if ((record.compareTo(lastRecordInPage, primaryKeyIndex) < 0) ||
+                    (pageNumber == tableSchema.getPageOrder().get(tableSchema.getPageOrder().size() - 1))) {
+                    // record is less than lastRecordPage
                     if (!page.addNewRecord(record)) {
                         // page was full
                         this.pageSplit(page, record, tableSchema, primaryKeyIndex);
