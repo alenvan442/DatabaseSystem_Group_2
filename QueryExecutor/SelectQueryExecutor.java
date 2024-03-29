@@ -197,20 +197,20 @@ public class SelectQueryExecutor implements QueryExecutorInterface {
     }
 
     List<AttributeSchema> attrs = schema.getAttributes();
-    List<String> potentialMatches = new ArrayList<>();
     List<Integer> foundIndex = new ArrayList<>();
 
-    String[] spList = orderAttr.split("\\.");
-    potentialMatches.add(orderAttr.toLowerCase());
-    if (spList.length > 1) {
-      potentialMatches.add(spList[1]);
-    }
-
-    for (int i = 0; i < attrs.size(); i++) {
-      if (potentialMatches.contains(attrs.get(i).getAttributeName())) {
-        foundIndex.add(i);
+    for (int i = 0; i < attrs.size(); i++)  {
+      String[] spList = attrs.get(i).getAttributeName().split("\\.");
+      List<String> potentialMatches = new ArrayList<>();
+      potentialMatches.add(attrs.get(i).getAttributeName().toLowerCase());
+      if (spList.length > 1) {
+          potentialMatches.add(spList[1]);
       }
-    }
+
+      if (potentialMatches.contains(orderAttr)) {
+          foundIndex.add(i);
+      }
+  }
 
     if (foundIndex.size() != 1) {
       MessagePrinter.printMessage(MessageType.ERROR, "Invalid attribute name: " + orderAttr + ".");
