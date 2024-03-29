@@ -11,6 +11,7 @@ public class WhereTree {
 
   public WhereTree(OperatorNode root) {
     this.root = root;
+    this.empty = false;
   }
 
   public WhereTree() {
