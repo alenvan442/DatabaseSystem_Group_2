@@ -64,7 +64,7 @@ public class ParserCommon { // extend me!
 					string = true;
 					currentToken += nextByte;
 				}
-			} else if ((Character.isDigit(nextByte) || (nextByte == '.' && !hasdecimal)) && !label) // only ONE decimal
+			} else if ((Character.isDigit(nextByte) || (nextByte == '.' && !hasdecimal)) || (nextByte == '-' && currentToken.isEmpty()) && !label) // only ONE decimal
 			// point per double!
 			{
 
@@ -90,7 +90,7 @@ public class ParserCommon { // extend me!
 					currentToken += nextByte;
 					continue;
 				}
-				if (number) {
+				if (number && !currentToken.endsWith("-")) {
 					if (hasdecimal) {
 						tokens.add(new Token(Type.DOUBLE, currentToken));
 					} else {
