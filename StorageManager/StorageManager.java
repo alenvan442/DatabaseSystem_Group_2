@@ -220,27 +220,37 @@ public class StorageManager implements StorageManagerInterface {
             // determine index of the primary key
             int primaryKeyIndex = tableSchema.getPrimaryIndex();
 
-            for (Integer pageNumber : tableSchema.getPageOrder()) {
-                Page page = this.getPage(tableNumber, pageNumber);
-                if (page.getNumRecords() == 0) {
-                    if (!page.addNewRecord(record)) {
-                        // page was full
-                        this.pageSplit(page, record, tableSchema, primaryKeyIndex);
-                    }
-                    tableSchema.incrementNumRecords();
-                    break;
-                }
+            if (tableSchema.getNumPages() == 0) {
+                Page _new = new Page(0, tableNumber, 1);
+                tableSchema.addPageNumber(_new.getPageNumber());
+                _new.addNewRecord(record);
+                tableSchema.incrementNumRecords();
+                // then add the page to the buffer
+                this.addPageToBuffer(_new);
+            } else {
 
-                Record lastRecordInPage = page.getRecords().get(page.getRecords().size() - 1);
-                if ((record.compareTo(lastRecordInPage, primaryKeyIndex) < 0) ||
-                    (pageNumber == tableSchema.getPageOrder().get(tableSchema.getPageOrder().size() - 1))) {
-                    // record is less than lastRecordPage
-                    if (!page.addNewRecord(record)) {
-                        // page was full
-                        this.pageSplit(page, record, tableSchema, primaryKeyIndex);
+                for (Integer pageNumber : tableSchema.getPageOrder()) {
+                    Page page = this.getPage(tableNumber, pageNumber);
+                    if (page.getNumRecords() == 0) {
+                        if (!page.addNewRecord(record)) {
+                            // page was full
+                            this.pageSplit(page, record, tableSchema, primaryKeyIndex);
+                        }
+                        tableSchema.incrementNumRecords();
+                        break;
                     }
-                    tableSchema.incrementNumRecords();
-                    break;
+
+                    Record lastRecordInPage = page.getRecords().get(page.getRecords().size() - 1);
+                    if ((record.compareTo(lastRecordInPage, primaryKeyIndex) < 0) ||
+                        (pageNumber == tableSchema.getPageOrder().get(tableSchema.getPageOrder().size() - 1))) {
+                        // record is less than lastRecordPage
+                        if (!page.addNewRecord(record)) {
+                            // page was full
+                            this.pageSplit(page, record, tableSchema, primaryKeyIndex);
+                        }
+                        tableSchema.incrementNumRecords();
+                        break;
+                    }
                 }
             }
         }
@@ -307,6 +317,7 @@ public class StorageManager implements StorageManagerInterface {
                 Page foundPage = this.getPage(schema.getTableNumber(), pageOrder.get(i));
                 if (foundPage.getPageNumber() > page.getPageNumber()) {
                     foundPage.decrementPageNumber();
+                    schema.setNumPages();
                 }
             }
 
@@ -450,7 +461,9 @@ public class StorageManager implements StorageManagerInterface {
     @Override
     public Page getPage(int tableNumber, int pageNumber) throws Exception {
         // check if page is in buffer
-        for (Page page : this.buffer) {
+        for (int i = this.buffer.size()-1; i >= 0; i--) {
+            Object[] bufferArray = this.buffer.toArray();
+            Page page = (Page) bufferArray[i];
             if (page.getTableNumber() == tableNumber && page.getPageNumber() == pageNumber) {
                 page.setPriority();
                 return page;

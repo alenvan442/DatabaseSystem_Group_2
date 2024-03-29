@@ -97,7 +97,7 @@ public class TableSchema implements SchemaInterface {
   * then decrement all pageNumber that appear after
   * the deleted page
   */
-  public void deletePageNumber(int pageNumber) {
+  public void deletePageNumber(Integer pageNumber) {
     this.pageOrder.remove(pageNumber);
     for (int i = 0; i < this.pageOrder.size(); i++) {
       int pNum = this.pageOrder.get(i);
@@ -106,6 +106,7 @@ public class TableSchema implements SchemaInterface {
         this.pageOrder.add(i, pNum - 1);
       }
     }
+    this.setNumPages();
   }
 
   public int getRecords() {
