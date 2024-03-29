@@ -205,6 +205,8 @@ public class SelectQueryExecutor implements QueryExecutorInterface {
       potentialMatches.add(attrs.get(i).getAttributeName().toLowerCase());
       if (spList.length > 1) {
           potentialMatches.add(spList[1]);
+      } else {
+        potentialMatches.add(schema.getTableName() + "." + attrs.get(i).getAttributeName());
       }
 
       if (potentialMatches.contains(orderAttr)) {
