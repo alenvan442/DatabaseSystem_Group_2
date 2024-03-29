@@ -322,7 +322,7 @@ public class StorageManager implements StorageManagerInterface {
         return deletedPair.second;
     }
 
-    public boolean updateRecord(int tableNumber, Record newRecord, Object primaryKey) throws Exception {
+    public void updateRecord(int tableNumber, Record newRecord, Object primaryKey) throws Exception {
 
 
         Record oldRecord = deleteRecord(tableNumber, primaryKey); // if the delete was successful then deletePage != null
@@ -333,7 +333,6 @@ public class StorageManager implements StorageManagerInterface {
         try {
             insertQueryExcutor.validateRecord(newRecord);
             this.insertRecord(tableNumber, newRecord);
-            return true;
         } catch (Exception e) {
             // insert failed, restore the deleted record
             this.insertRecord(tableNumber, oldRecord);

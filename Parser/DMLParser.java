@@ -318,6 +318,8 @@ public class DMLParser extends ParserCommon {
 
         if (tokens.get(0).getVal().equalsIgnoreCase("where")) {
             whereTree = parseWhere(tokens);
+        } else {
+            whereTree = new WhereTree();
         }
 
         if (tokens.get(0).getType() != Type.SEMICOLON) {
@@ -371,12 +373,12 @@ public class DMLParser extends ParserCommon {
                         + " Illegal data value, legal types are char, varchar, int, double, boolean, and null");
         }
         WhereTree where = null;
-        if (tokens.get(0).getVal().equals("where")) {
+        if (tokens.get(0).getVal().equalsIgnoreCase("where")) {
             where = parseWhere(tokens);
         } else {
             where = new WhereTree();
         }
-        
+
 
         if (tokens.get(0).getType() != Type.SEMICOLON) {
             MessagePrinter.printMessage(MessageType.ERROR, "Expected ';' got " + tokens.get(0).getVal());

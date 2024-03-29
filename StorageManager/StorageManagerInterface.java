@@ -85,7 +85,7 @@ public interface StorageManagerInterface {
      * @param primaryKey    value fo the primaryKey to search for
      * @param record        a record with the updated values
      */
-    public boolean updateRecord(int tableNumber, Record newRecord, Object primaryKey) throws Exception;
+    public void updateRecord(int tableNumber, Record newRecord, Object primaryKey) throws Exception;
 
 
     public Page getPage(int tableNumber, int pageNumber) throws Exception;
