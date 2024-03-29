@@ -30,10 +30,11 @@ public class UpdateQueryExecutor implements QueryExecutorInterface{
   public void excuteQuery() throws Exception {
     validateQuery();
     StorageManager storageManager = StorageManager.getStorageManager();
+    boolean result = false;
     for (int i=0; i < this.newRecords.size(); ++i) {
-      storageManager.updateRecord(tableSchema.getTableNumber(), this.newRecords.get(i), this.primaryKeys.get(i));
+       result = storageManager.updateRecord(tableSchema.getTableNumber(), this.newRecords.get(i), this.primaryKeys.get(i));
     }
-    MessagePrinter.printMessage(MessageType.SUCCESS, null);
+    if (result) MessagePrinter.printMessage(MessageType.SUCCESS, null);
   }
 
 

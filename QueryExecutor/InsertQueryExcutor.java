@@ -182,7 +182,7 @@ public class InsertQueryExcutor implements QueryExecutorInterface {
       if (!(value == null)) {
         row.append(value.toString());
       } else {
-        row.append("(null)");
+        row.append("null");
       }
       addSpace = true;
     }

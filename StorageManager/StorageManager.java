@@ -315,27 +315,30 @@ public class StorageManager implements StorageManagerInterface {
 
         TableSchema schema = Catalog.getCatalog().getSchema(tableNumber);
         Pair<Page, Record> deletedPair = deleteHelper(schema, primaryKey);
+        schema.decrementNumRecords();
         Page deletePage = deletedPair.first;
 
         this.checkDeletePage(schema, deletePage);
         return deletedPair.second;
     }
 
-    public void updateRecord(int tableNumber, Record newRecord, Object primaryKey) throws Exception {
+    public boolean updateRecord(int tableNumber, Record newRecord, Object primaryKey) throws Exception {
 
 
         Record oldRecord = deleteRecord(tableNumber, primaryKey); // if the delete was successful then deletePage != null
 
         Insert insert = new Insert(Catalog.getCatalog().getSchema(tableNumber).getTableName(), null);
         InsertQueryExcutor insertQueryExcutor = new InsertQueryExcutor(insert);
-        insertQueryExcutor.validateRecord(newRecord);
 
         try {
+            insertQueryExcutor.validateRecord(newRecord);
             this.insertRecord(tableNumber, newRecord);
+            return true;
         } catch (Exception e) {
             // insert failed, restore the deleted record
             this.insertRecord(tableNumber, oldRecord);
-
+            System.err.println(e.getMessage());
+            return false;
         }
     }
 
