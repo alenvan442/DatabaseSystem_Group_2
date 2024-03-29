@@ -2,6 +2,7 @@ package StorageManager.Objects;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.ArrayList;
 import java.util.List;
 
 import StorageManager.StorageManagerObjectIntereface;
@@ -15,8 +16,10 @@ public class Record implements java.io.Serializable, StorageManagerObjectInteref
     }
 
     public Record(Record a, Record b){
-        this.values = a.values;
+        this.values = new ArrayList<>();
+        this.values.addAll(a.values);
         this.values.addAll(b.values);
+        //System.out.println("yesyt");
     }
 
     public List<Object> getValues() {
