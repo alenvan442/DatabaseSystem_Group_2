@@ -251,9 +251,13 @@ public class SelectQueryExecutor implements QueryExecutorInterface {
             String[] keyParts = key.split("\\.");
             if (keyParts.length > 1) {
               if (keyParts[1].equals(attributeName)) {
-                attributeNames.add(key);
-                added = true;
-                break;
+                if (added) {
+                  // was already found, multiple attribute error
+                  MessagePrinter.printMessage(MessageType.ERROR, "Invalid attribute name: " + attributeName + ".");
+                } else {
+                  attributeNames.add(key);
+                  added = true;
+                }
               }
             }
           }
