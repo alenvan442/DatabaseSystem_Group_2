@@ -31,26 +31,26 @@ public class ComparisonOpNode implements OperatorNode {
             return false;
         }
 
-        if (right instanceof String) {
-            if (!(left instanceof String)) {
-                MessagePrinter.printMessage(MessageType.ERROR, "Mismatch data type in where comparison.");
+        if (left instanceof String) {
+            if (!(right instanceof String)) {
+                MessagePrinter.printMessage(MessageType.ERROR, "Mismatch data type in where comparison. Expected right side: String, Got: " + right);
             }
             return this.compareChildren((String) left, (String) right);
-        } else if (right instanceof Integer) {
-            if (!(left instanceof Integer)) {
-                MessagePrinter.printMessage(MessageType.ERROR, "Mismatch data type in where comparison.");
+        } else if (left instanceof Integer) {
+            if (!(right instanceof Integer)) {
+                MessagePrinter.printMessage(MessageType.ERROR, "Mismatch data type in where comparison. Expected right side: Integer, Got: " + right);
             }
             return this.compareChildren((Integer) left, (Integer) right);
-        } else if (right instanceof Boolean) {
-            if (!(left instanceof Boolean)) {
-                MessagePrinter.printMessage(MessageType.ERROR, "Mismatch data type in where comparison.");
+        } else if (left instanceof Boolean) {
+            if (!(right instanceof Boolean)) {
+                MessagePrinter.printMessage(MessageType.ERROR, "Mismatch data type in where comparison. Expected right side: Boolean, Got: " + right);
             }
             boolean leftBool = (Boolean) left;
             boolean rightBool = (Boolean) right;
             return this.compareChildren(leftBool, rightBool);
-        } else if (right instanceof Double) {
-            if (!(left instanceof Double)) {
-                MessagePrinter.printMessage(MessageType.ERROR, "Mismatch data type in where comparison.");
+        } else if (left instanceof Double) {
+            if (!(right instanceof Double)) {
+                MessagePrinter.printMessage(MessageType.ERROR, "Mismatch data type in where comparison. Expected right side: Double, Got: " + right);
             }
             return this.compareChildren((Double) left, (Double) right);
         } else {

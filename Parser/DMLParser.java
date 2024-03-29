@@ -212,6 +212,12 @@ public class DMLParser extends ParserCommon {
                 MessagePrinter.printMessage(MessageType.ERROR,
                         "Expected either 'and' or 'or' got " + tokens.get(0).getVal());
             }
+            // TODO need to remove and/or and append it to operator stack
+            currOperator = tokens.remove(0);
+            while (!operatorStack.isEmpty() && getPrecedent(operatorStack.peek()) >= getPrecedent(currOperator)) {
+                outputPostfix.add(operatorStack.pop());
+            }
+            operatorStack.push(currOperator);
 
             // Expect attribute name
             if (tokens.get(0).getType() != Type.IDKEY && tokens.get(0).getType() != Type.QUALIFIER
@@ -380,11 +386,11 @@ public class DMLParser extends ParserCommon {
 
     public static int getPrecedent(Token operator) {
         if (operator.getType() == Type.REL_OP) {
-            return 0;
+            return 2;
         } else if (operator.getVal().equalsIgnoreCase("and")) {
             return 1;
         } else {
-            return 2;
+            return 0;
         }
     }
 

@@ -80,6 +80,7 @@ public class WhereTreeBuilder {
         switch (token.getType()) {
           case IDKEY:
             operand = new AttributeNode(value);
+            break;
           case BOOLEAN:
             switch (value) {
               case "true":
