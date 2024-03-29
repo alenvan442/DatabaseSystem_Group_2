@@ -214,8 +214,10 @@ public class SelectQueryExecutor implements QueryExecutorInterface {
       }
   }
 
-    if (foundIndex.size() != 1) {
+    if (foundIndex.size() < 1) {
       MessagePrinter.printMessage(MessageType.ERROR, "Invalid attribute name: " + orderAttr + ".");
+    } else if (foundIndex.size() > 1) {
+      MessagePrinter.printMessage(MessageType.ERROR, String.format("%s is ambigious", orderAttr));
     }
 
     Collections.sort(this.records, (a, b) -> a.compareTo(b, foundIndex.get(0)));
