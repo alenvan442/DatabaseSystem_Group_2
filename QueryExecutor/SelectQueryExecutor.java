@@ -201,10 +201,9 @@ public class SelectQueryExecutor implements QueryExecutorInterface {
     List<Integer> foundIndex = new ArrayList<>();
 
     String[] spList = orderAttr.split("\\.");
+    potentialMatches.add(orderAttr.toLowerCase());
     if (spList.length > 1) {
       potentialMatches.add(spList[1]);
-    } else {
-      potentialMatches.add(orderAttr.toLowerCase());
     }
 
     for (int i = 0; i < attrs.size(); i++) {
