@@ -32,7 +32,7 @@ public class WhereTreeBuilder {
 
     while (!this.postfixExpression.isEmpty()) {
       Token token = this.postfixExpression.remove();
-      String value = token.getVal().toLowerCase().trim();
+      String value = token.getVal().trim();
 
       if (operators.contains(value)) {
         // create comparison node
