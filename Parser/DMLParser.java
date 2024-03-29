@@ -132,7 +132,7 @@ public class DMLParser extends ParserCommon {
         }
 
         if (tokens.get(0).getVal().equalsIgnoreCase("orderby")) {
-            ordeByAttribute = parseOrderBy(tokens);
+            ordeByAttribute = parseOrderBy(tokens, attributeNames);
         }
 
         if (tokens.get(0).getType() != Type.SEMICOLON) {
@@ -254,7 +254,7 @@ public class DMLParser extends ParserCommon {
         return whereTreeBuilder.buildWhereTree();
     }
 
-    public static String parseOrderBy(ArrayList<Token> tokens) throws Exception {
+    public static String parseOrderBy(ArrayList<Token> tokens, List<String> attributeNames) throws Exception {
         String orderByAttribute = "";
         tokens.remove(0); // remove orderby token
 
@@ -264,8 +264,12 @@ public class DMLParser extends ParserCommon {
         }
 
         orderByAttribute = tokens.remove(0).getVal();
-
-        return orderByAttribute;
+        if (attributeNames.get(0) == "*" || attributeNames.contains(orderByAttribute)) {
+            return orderByAttribute;
+        } else {
+            MessagePrinter.printMessage(MessageType.ERROR, "Orderby attribute must also appear in the select clause.");
+            return null;
+        }
     }
 
     public static void parseDisplaySchema(ArrayList<Token> tokens) throws Exception {
