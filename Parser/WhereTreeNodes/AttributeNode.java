@@ -41,8 +41,10 @@ public class AttributeNode implements OperandNode {
             }
         }
 
-        if (foundVal.size() != 1) {
+        if (foundVal.size() < 1) {
             MessagePrinter.printMessage(MessageType.ERROR, "Invalid attribute name: " + this.dataName + ".");
+        } else if (foundVal.size() > 1) {
+            MessagePrinter.printMessage(MessageType.ERROR, String.format("%s is ambigious", this.dataName));
         } else {
             return foundVal.get(0);
         }
