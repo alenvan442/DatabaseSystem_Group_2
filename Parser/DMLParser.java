@@ -397,9 +397,9 @@ public class DMLParser extends ParserCommon {
         if (operator.getType() == Type.REL_OP) {
             return 2;
         } else if (operator.getVal().equalsIgnoreCase("and")) {
-            return 1;
-        } else {
             return 0;
+        } else {
+            return 1;
         }
     }
 
