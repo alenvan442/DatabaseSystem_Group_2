@@ -27,7 +27,12 @@ public class DeleteQueryExecutor implements QueryExecutorInterface{
     validateQuery();
     StorageManager storageManager = StorageManager.getStorageManager();
     for (Object primaryKey: primaryKeys) {
-      storageManager.deleteRecord(tableSchema.getTableNumber(), primaryKey);
+      try {
+        storageManager.deleteRecord(tableSchema.getTableNumber(), primaryKey);
+      } catch (Exception e) {
+        System.err.println(e.getMessage());
+        MessagePrinter.printMessage(MessageType.ERROR, "Error found in delete. Stopping delete...");
+      }
     }
     MessagePrinter.printMessage(MessageType.SUCCESS, null);
   }
