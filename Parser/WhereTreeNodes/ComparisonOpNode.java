@@ -27,6 +27,10 @@ public class ComparisonOpNode implements OperatorNode {
         Object right = this.rigthChild.getValue(schema, record);
         Object left = this.leftChild.getValue(schema, record);
 
+        if (right == null || left == null) {
+            return false;
+        }
+
         if (right instanceof String) {
             if (!(left instanceof String)) {
                 MessagePrinter.printMessage(MessageType.ERROR, "Mismatch data type in where comparison.");
