@@ -58,8 +58,10 @@ public class Tokenizer {
 		Type type = null;
 		if (isKeyword(value.toLowerCase())) {
 			type = Type.NAME;
+			value = value.toLowerCase();
 		} else if (isConstraint(value.toLowerCase())) {
 			type = Type.CONSTRAINT;
+			value = value.toLowerCase();
 		} else if (value.equals(";")) {
 			type = Type.SEMICOLON;
 		} else if (isNumber(value)) {
@@ -83,14 +85,17 @@ public class Tokenizer {
 			type = Type.COMMA;
 		} else if (isDataType(value.toLowerCase())) {
 			type = Type.DATATYPE;
+			value = value.toLowerCase();
 		} else if (value.equals("*")) {
 			type = Type.ASTERISK;
 		} else if (isRelationalOperator(value)) {
 			type = Type.REL_OP;
-		} else if (isQualifier(value)) {
+		} else if (isQualifier(value.toLowerCase())) {
 			type = Type.QUALIFIER;
-		} else if (isName(value)) {
+			value = value.toLowerCase();
+		} else if (isName(value.toLowerCase())) {
 			type = Type.NAME;
+			value = value.toLowerCase();
 		} else {
 			MessagePrinter.printMessage(MessageType.ERROR, "Invalid value: " + value);
 		}
