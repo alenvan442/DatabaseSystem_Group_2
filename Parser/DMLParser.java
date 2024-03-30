@@ -13,15 +13,14 @@ import java.util.Stack;
 
 import Parser.WhereTreeNodes.WhereTree;
 
-public class DMLParser extends ParserCommon {
+public class DMLParser {
 
     public static Insert parseInsert(ArrayList<Token> tokens) throws Exception {
         String tableName;
         tokens.remove(0);
         tokens.remove(0);
 
-        if (tokens.get(0).getType() != Type.IDKEY && tokens.get(0).getType() != Type.DATATYPE
-                && tokens.get(0).getType() != Type.CONSTRAINT) {
+        if (tokens.get(0).getType() != Type.NAME) {
             MessagePrinter.printMessage(MessageType.ERROR, "Invalid table name got " + tokens.get(0).getVal());
         }
         tableName = tokens.remove(0).getVal();
@@ -91,8 +90,7 @@ public class DMLParser extends ParserCommon {
 
         if (tokens.get(0).getType() != Type.ASTERISK) {
 
-            if (tokens.get(0).getType() != Type.IDKEY && tokens.get(0).getType() != Type.QUALIFIER
-                    && tokens.get(0).getType() != Type.CONSTRAINT && tokens.get(0).getType() != Type.DATATYPE) {
+            if (tokens.get(0).getType() != Type.NAME && tokens.get(0).getType() != Type.QUALIFIER) {
                 MessagePrinter.printMessage(MessageType.ERROR, "Expected attribute name got " + tokens.get(0).getVal());
             }
 
@@ -107,8 +105,7 @@ public class DMLParser extends ParserCommon {
 
                 tokens.remove(0);
 
-                if (tokens.get(0).getType() != Type.IDKEY && tokens.get(0).getType() != Type.QUALIFIER
-                        && tokens.get(0).getType() != Type.CONSTRAINT && tokens.get(0).getType() != Type.DATATYPE) {
+                if (tokens.get(0).getType() != Type.NAME && tokens.get(0).getType() != Type.QUALIFIER) {
                     MessagePrinter.printMessage(MessageType.ERROR,
                             "Expected attribute name got " + tokens.get(0).getVal());
                 }
@@ -148,8 +145,7 @@ public class DMLParser extends ParserCommon {
         tokens.remove(0); // remove from keyword
         ArrayList<String> tableNames = new ArrayList<>();
 
-        if (tokens.get(0).getType() != Type.IDKEY && tokens.get(0).getType() != Type.DATATYPE
-                && tokens.get(0).getType() != Type.CONSTRAINT) {
+        if (tokens.get(0).getType() != Type.NAME) {
             MessagePrinter.printMessage(MessageType.ERROR, "Expected table name got " + tokens.get(0).getVal());
         }
 
@@ -163,8 +159,7 @@ public class DMLParser extends ParserCommon {
 
             tokens.remove(0);
 
-            if (tokens.get(0).getType() != Type.IDKEY && tokens.get(0).getType() != Type.DATATYPE
-                    && tokens.get(0).getType() != Type.CONSTRAINT) {
+            if (tokens.get(0).getType() != Type.NAME) {
                 MessagePrinter.printMessage(MessageType.ERROR, "Expected table name got " + tokens.get(0).getVal());
             }
 
@@ -181,8 +176,7 @@ public class DMLParser extends ParserCommon {
         tokens.remove(0); // Remove "where" token
 
         // Expect attribute name
-        if (tokens.get(0).getType() != Type.IDKEY && tokens.get(0).getType() != Type.QUALIFIER
-                && tokens.get(0).getType() != Type.CONSTRAINT && tokens.get(0).getType() != Type.DATATYPE) {
+        if (tokens.get(0).getType() != Type.NAME && tokens.get(0).getType() != Type.QUALIFIER) {
             MessagePrinter.printMessage(MessageType.ERROR, "Expected attribute name got " + tokens.get(0).getVal());
         }
 
@@ -220,8 +214,7 @@ public class DMLParser extends ParserCommon {
             operatorStack.push(currOperator);
 
             // Expect attribute name
-            if (tokens.get(0).getType() != Type.IDKEY && tokens.get(0).getType() != Type.QUALIFIER
-                    && tokens.get(0).getType() != Type.CONSTRAINT && tokens.get(0).getType() != Type.DATATYPE) {
+            if (tokens.get(0).getType() != Type.NAME && tokens.get(0).getType() != Type.QUALIFIER) {
                 MessagePrinter.printMessage(MessageType.ERROR, "Expected attribute name got " + tokens.get(0).getVal());
             }
 
@@ -258,8 +251,7 @@ public class DMLParser extends ParserCommon {
         String orderByAttribute = "";
         tokens.remove(0); // remove orderby token
 
-        if (tokens.get(0).getType() != Type.IDKEY && tokens.get(0).getType() != Type.QUALIFIER
-                && tokens.get(0).getType() != Type.CONSTRAINT && tokens.get(0).getType() != Type.DATATYPE) {
+        if (tokens.get(0).getType() != Type.NAME && tokens.get(0).getType() != Type.QUALIFIER) {
             MessagePrinter.printMessage(MessageType.ERROR, "Expected attribute name got " + tokens.get(0).getVal());
         }
 
@@ -291,8 +283,7 @@ public class DMLParser extends ParserCommon {
         tokens.remove(0); // remove display token
         tokens.remove(0); // remove info token
 
-        if (tokens.get(0).getType() != Type.IDKEY && tokens.get(0).getType() != Type.DATATYPE
-                && tokens.get(0).getType() != Type.CONSTRAINT) {
+        if (tokens.get(0).getType() != Type.NAME) {
             MessagePrinter.printMessage(MessageType.ERROR, "Expected table name");
         }
 
@@ -312,8 +303,7 @@ public class DMLParser extends ParserCommon {
         tokens.remove(0); // remove delete keyword
         tokens.remove(0); // remove from keyword
 
-        if (tokens.get(0).getType() != Type.IDKEY && tokens.get(0).getType() != Type.DATATYPE
-                && tokens.get(0).getType() != Type.CONSTRAINT) {
+        if (tokens.get(0).getType() != Type.NAME) {
             MessagePrinter.printMessage(MessageType.ERROR, "Expected table name got " + tokens.get(0).getVal());
         }
 
@@ -340,15 +330,14 @@ public class DMLParser extends ParserCommon {
     public static Update parseUpdate(ArrayList<Token> tokens) throws Exception {
         tokens.remove(0); // remove update token
         Token table = tokens.remove(0);
-        if (tokens.get(0).getType() != Type.IDKEY && tokens.get(0).getType() != Type.DATATYPE
-                && tokens.get(0).getType() != Type.CONSTRAINT) {
+        if (tokens.get(0).getType() != Type.NAME) {
             MessagePrinter.printMessage(MessageType.ERROR, "Table name expected got " + tokens.get(0).getVal());
         }
         if (!tokens.remove(0).getVal().equals("set")) {
             MessagePrinter.printMessage(MessageType.ERROR, "Set expected got " + tokens.get(0).getVal());
         }
         Token column1 = tokens.remove(0);
-        if (column1.getType() != Type.IDKEY) {
+        if (column1.getType() != Type.NAME) {
             MessagePrinter.printMessage(MessageType.ERROR, "Column name expected got " + tokens.get(0).getVal());
         }
         if (!tokens.remove(0).getVal().equals("=")) {
@@ -405,7 +394,7 @@ public class DMLParser extends ParserCommon {
 
     private static boolean isAttributeOrConstant(Token token) {
         Type type = token.getType();
-        return type == Type.IDKEY || type == Type.QUALIFIER || type == Type.DATATYPE || type == Type.CONSTRAINT ||
+        return type == Type.NAME || type == Type.QUALIFIER || type == Type.DATATYPE || type == Type.CONSTRAINT ||
                 type == Type.STRING || type == Type.DOUBLE || type == Type.INTEGER || type == Type.BOOLEAN;
     }
 

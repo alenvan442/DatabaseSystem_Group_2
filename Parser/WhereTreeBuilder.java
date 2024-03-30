@@ -78,10 +78,8 @@ public class WhereTreeBuilder {
         // operand node
         OperandNode operand = null;
         switch (token.getType()) {
-          case IDKEY:
+          case NAME:
           case QUALIFIER:
-          case CONSTRAINT:
-          case DATATYPE:
             operand = new AttributeNode(value);
             break;
           case BOOLEAN:

@@ -1,15 +1,14 @@
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
 import Parser.DDLParser;
 import Parser.DMLParser;
 import Parser.Delete;
-import Parser.ParserCommon;
 import Parser.Select;
 import Parser.Token;
+import Parser.Tokenizer;
 import Parser.Update;
 import Parser.Insert;
 import QueryExecutor.DDLQueryExecutor;
@@ -67,7 +66,7 @@ public class UserInterface {
 
     private void processUserCommand(String command) {
         try {
-            ArrayList<Token> tokens = ParserCommon.Tokenize(command);
+            ArrayList<Token> tokens = Tokenizer.Tokenize(command);
             if (tokens.get(0).getVal().equalsIgnoreCase("create") &&
                     tokens.get(1).getVal().equalsIgnoreCase("table")) {
                 TableSchema TableSchema = DDLParser.parseCreateTable(tokens);

@@ -1,6 +1,7 @@
 package Parser;
 public enum Type {
-    IDKEY,
+    KEYWORD,
+    NAME,
     QUALIFIER,
     REL_OP,
     SEMICOLON,

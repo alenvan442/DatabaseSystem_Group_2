@@ -8,7 +8,7 @@ import StorageManager.TableSchema;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-public class DDLParser extends ParserCommon {
+public class DDLParser {
 
 	public static TableSchema parseCreateTable(ArrayList<Token> tokens) throws Exception {
 		ArrayList<AttributeSchema> attributes = new ArrayList<AttributeSchema>();
@@ -17,8 +17,7 @@ public class DDLParser extends ParserCommon {
 		tokens.remove(0); // remove create token
 		tokens.remove(0); // remove table token
 
-		if (tokens.get(0).getType() != Type.IDKEY && tokens.get(0).getType() != Type.DATATYPE
-				&& tokens.get(0).getType() != Type.CONSTRAINT) {
+		if (tokens.get(0).getType() != Type.NAME) {
 			MessagePrinter.printMessage(MessageType.ERROR, "Expected table name");
 		}
 
@@ -36,8 +35,7 @@ public class DDLParser extends ParserCommon {
 			boolean primaryKey = false;
 			boolean unique = false;
 
-			if (tokens.get(0).getType() != Type.IDKEY && tokens.get(0).getType() != Type.DATATYPE
-					&& tokens.get(0).getType() != Type.CONSTRAINT) {
+			if (tokens.get(0).getType() != Type.NAME) {
 				MessagePrinter.printMessage(MessageType.ERROR, "Expected attribute name");
 			}
 
@@ -114,8 +112,7 @@ public class DDLParser extends ParserCommon {
 		tokens.remove(0); // remove drop token
 		tokens.remove(0); // remove table token
 
-		if (tokens.get(0).getType() != Type.IDKEY && tokens.get(0).getType() != Type.DATATYPE
-				&& tokens.get(0).getType() != Type.CONSTRAINT) {
+		if (tokens.get(0).getType() != Type.NAME) {
 			MessagePrinter.printMessage(MessageType.ERROR, "Expected a table name");
 		}
 		return tokens.get(0).getVal();
@@ -147,8 +144,7 @@ public class DDLParser extends ParserCommon {
 		tokens.remove(0); // remove alter token
 		tokens.remove(0); // remove table token
 
-		if (tokens.get(0).getType() != Type.IDKEY && tokens.get(0).getType() != Type.DATATYPE
-				&& tokens.get(0).getType() != Type.CONSTRAINT) {
+		if (tokens.get(0).getType() != Type.NAME) {
 			MessagePrinter.printMessage(MessageType.ERROR, "Expected table name");
 		}
 
@@ -160,8 +156,7 @@ public class DDLParser extends ParserCommon {
 
 		adddrop = tokens.remove(0).getVal();
 
-		if (tokens.get(0).getType() != Type.IDKEY && tokens.get(0).getType() != Type.DATATYPE
-				&& tokens.get(0).getType() != Type.CONSTRAINT) {
+		if (tokens.get(0).getType() != Type.NAME) {
 			MessagePrinter.printMessage(MessageType.ERROR, "Expected attribute name");
 		}
 
