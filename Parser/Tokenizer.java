@@ -75,8 +75,10 @@ public class Tokenizer {
 			value = value.replace("\"", "");
 		} else if (isBoolean(value.toLowerCase())) {
 			type = Type.BOOLEAN;
+			value = value.toLowerCase();
 		} else if (isNull(value.toLowerCase())) {
 			type = Type.NULL;
+			value = value.toLowerCase();
 		} else if (value.equals("(")) {
 			type = Type.L_PAREN;
 		} else if (value.equals(")")) {
