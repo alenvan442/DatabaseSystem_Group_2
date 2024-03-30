@@ -256,7 +256,7 @@ public class DMLParser {
         }
 
         orderByAttribute = tokens.remove(0).getVal();
-        if (attributeNames.get(0) == "*" || attributeNames.contains(orderByAttribute)) {
+        if (attributeNames.get(0).equals("*") || attributeNames.contains(orderByAttribute)) {
             return orderByAttribute;
         } else {
             MessagePrinter.printMessage(MessageType.ERROR, "Orderby attribute must also appear in the select clause.");
