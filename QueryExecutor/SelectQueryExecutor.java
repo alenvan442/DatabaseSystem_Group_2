@@ -87,19 +87,14 @@ public class SelectQueryExecutor implements QueryExecutorInterface {
       for (Record record : records) {
         Object value = record.getValues().get(i);
         if (value != null) {
-          maxWidth = Math.max(maxWidth, value.toString().length());
+          if (value instanceof String) {
+            maxWidth = Math.max(maxWidth, value.toString().length() + 2);
+          } else {
+            maxWidth = Math.max(maxWidth, value.toString().length());
+          }
         }
       }
       columnWidths[i] = maxWidth;
-    }
-
-    if (records.size() > 0) {
-      List<Object> temp = records.get(0).getValues();
-      for (int i = 0; i < numAttributes; i++) {
-        if (temp.get(i) instanceof String) {
-          columnWidths[i] += 2;
-        }
-      }
     }
 
     StringBuilder resultString = new StringBuilder();
