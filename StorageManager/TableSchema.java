@@ -56,6 +56,15 @@ public class TableSchema implements SchemaInterface {
     this.attributes = attributes;
   }
 
+  public boolean hasAttribute(String name) {
+    for (AttributeSchema attr : this.attributes) {
+      if (attr.getAttributeName().equals(name)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   public int getNumPages() {
     return numPages;
   }

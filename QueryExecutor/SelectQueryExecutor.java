@@ -17,6 +17,7 @@ import StorageManager.Objects.AttributeSchema;
 import StorageManager.Objects.Catalog;
 import StorageManager.Objects.MessagePrinter;
 import StorageManager.Objects.Record;
+import StorageManager.Objects.Table;
 import StorageManager.Objects.MessagePrinter.MessageType;
 
 public class SelectQueryExecutor implements QueryExecutorInterface {
@@ -201,12 +202,49 @@ public class SelectQueryExecutor implements QueryExecutorInterface {
   private void orderBy() throws Exception {
     String orderAttr = this.select.getOrderByAttribute();
 
+    Catalog catalog = Catalog.getCatalog();
+
     if (orderAttr == null) {
       return;
     }
 
+    String[] orderParts = orderAttr.split("\\.");
+
     List<AttributeSchema> attrs = schema.getAttributes();
     List<Integer> foundIndex = new ArrayList<>();
+
+    List<String> selectAttributes = this.select.getAttributeNames();
+    List<Integer> selectMatch = new ArrayList<>();
+
+    if (!selectAttributes.get(0).equals("*")) {
+      for (int i = 0; i < selectAttributes.size(); i++) {
+        String[] spList = selectAttributes.get(i).split("\\.");
+        List<String> potentialMatches = new ArrayList<>();
+        potentialMatches.add(selectAttributes.get(i).toLowerCase());
+        if (spList.length > 1) {
+            potentialMatches.add(spList[1]);
+        } else {
+          for (String tableName : this.select.getTableNames()) {
+            TableSchema tSchema = catalog.getSchema(tableName);
+            if (tSchema.hasAttribute(orderAttr)) {
+              potentialMatches.add(tableName + "." + selectAttributes.get(i));
+            } else if (orderParts.length > 1 && tSchema.hasAttribute(orderParts[1])) {
+              potentialMatches.add(tableName + "." + selectAttributes.get(i));
+            }
+          }
+        }
+
+        if (potentialMatches.contains(orderAttr)) {
+          selectMatch.add(i);
+        }
+      }
+
+      if (selectMatch.size() < 1) {
+        MessagePrinter.printMessage(MessageType.ERROR, "Orderby attribute must also appear in the select clause.");
+      } else if (selectMatch.size() > 1) {
+        MessagePrinter.printMessage(null, orderAttr);
+      }
+    }
 
     for (int i = 0; i < attrs.size(); i++)  {
       String[] spList = attrs.get(i).getAttributeName().split("\\.");
@@ -221,7 +259,7 @@ public class SelectQueryExecutor implements QueryExecutorInterface {
       if (potentialMatches.contains(orderAttr)) {
           foundIndex.add(i);
       }
-  }
+    }
 
     if (foundIndex.size() < 1) {
       MessagePrinter.printMessage(MessageType.ERROR, "Invalid attribute name: " + orderAttr + ".");
