@@ -57,7 +57,7 @@ public class Tokenizer {
 	public static Token createToken(String value) throws Exception {
 		Type type = null;
 		if (isKeyword(value.toLowerCase())) {
-			type = Type.NAME;
+			type = Type.KEYWORD;
 			value = value.toLowerCase();
 		} else if (isConstraint(value.toLowerCase())) {
 			type = Type.CONSTRAINT;
