@@ -290,6 +290,9 @@ public class SelectQueryExecutor implements QueryExecutorInterface {
 
       for (String attributeName : selectedAttributeNames) {
         if (this.select.getTableNames().size() == 1 && attributeName.contains(".")) {
+          if (!this.select.getTableNames().contains(attributeName.split("\\.")[0])) {
+            MessagePrinter.printMessage(MessageType.ERROR, "Invalid attribute name:" + attributeName);
+          }
           attributeName = attributeName.split("\\.")[1];
         }
         if (!attributeIndexMap.containsKey(attributeName)) {
