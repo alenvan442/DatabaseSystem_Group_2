@@ -93,6 +93,15 @@ public class SelectQueryExecutor implements QueryExecutorInterface {
       columnWidths[i] = maxWidth;
     }
 
+    if (records.size() > 0) {
+      List<Object> temp = records.get(0).getValues();
+      for (int i = 0; i < numAttributes; i++) {
+        if (temp.get(i) instanceof String) {
+          columnWidths[i] += 2;
+        }
+      }
+    }
+
     StringBuilder resultString = new StringBuilder();
 
     // Build top border
@@ -118,7 +127,12 @@ public class SelectQueryExecutor implements QueryExecutorInterface {
     for (Record record : records) {
       for (int i = 0; i < numAttributes; i++) {
         Object value = record.getValues().get(i);
-        String formattedValue = (value == null) ? "" : value.toString();
+        String formattedValue = "";
+        if (value instanceof String) {
+          formattedValue = (value == null) ? "" : "\"" + value.toString() + "\"";
+        } else {
+          formattedValue = (value == null) ? "" : value.toString();
+        }
         resultString.append(String.format("| %-" + (columnWidths[i]) + "s ", formattedValue));
       }
       resultString.append("|\n");
