@@ -325,10 +325,10 @@ public class DMLParser {
 
     public static Update parseUpdate(ArrayList<Token> tokens) throws Exception {
         tokens.remove(0); // remove update token
-        Token table = tokens.remove(0);
         if (tokens.get(0).getType() != Type.NAME) {
             MessagePrinter.printMessage(MessageType.ERROR, "Table name expected got " + tokens.get(0).getVal());
         }
+        Token table = tokens.remove(0);
         if (!tokens.remove(0).getVal().equals("set")) {
             MessagePrinter.printMessage(MessageType.ERROR, "Set expected got " + tokens.get(0).getVal());
         }
