@@ -8,9 +8,9 @@ import Parser.DMLParser;
 import Parser.Delete;
 import Parser.Select;
 import Parser.Token;
-import Parser.Tokenizer;
 import Parser.Update;
 import Parser.Insert;
+import Parser.ParserCommon;
 import QueryExecutor.DDLQueryExecutor;
 import QueryExecutor.DeleteQueryExecutor;
 import QueryExecutor.InsertQueryExcutor;
@@ -66,7 +66,7 @@ public class UserInterface {
 
     private void processUserCommand(String command) {
         try {
-            ArrayList<Token> tokens = Tokenizer.Tokenize(command);
+            ArrayList<Token> tokens = ParserCommon.Tokenize(command);
             if (tokens.get(0).getVal().equalsIgnoreCase("create") &&
                     tokens.get(1).getVal().equalsIgnoreCase("table")) {
                 TableSchema TableSchema = DDLParser.parseCreateTable(tokens);
