@@ -7,6 +7,7 @@ import java.util.ArrayList;
 public class InternalNode implements BPlusNode {
     private ArrayList<BPlusNode> children;
     private int n;
+    private Token value; // the search value of the node, mayormaynot be needed.
 
     /**
      * type size times pageSize = n
