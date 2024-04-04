@@ -1,5 +1,5 @@
 package StorageManager.BPlusTree;
 
-public class InternalNode {
+public class InternalNode implements BPlusNode {
     
 }
