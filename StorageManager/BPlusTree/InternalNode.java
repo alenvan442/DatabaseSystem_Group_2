@@ -11,8 +11,8 @@ public class InternalNode implements BPlusNode {
 
     /**
      * type size times pageSize = n
-     * @param PKType - The type (integer, double, char, varchar, bool?) of the primary key, implying data size
-     * @param pageSize - Size of the page
+     * @param value - search value
+     * @param n - Size
      */
     public InternalNode(int n, Object value){
         this.n = n;
@@ -25,7 +25,7 @@ public class InternalNode implements BPlusNode {
      * @param value
      * @returns the found node, for an insert or without a match, this is the node BEFORE the value's place.
      */
-    public BPlusNode search(Token value){
+    public BPlusNode search(Object value){
         return null;
     }
 
