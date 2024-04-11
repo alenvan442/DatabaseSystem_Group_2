@@ -7,15 +7,17 @@ import java.util.ArrayList;
 public class InternalNode implements BPlusNode {
     private ArrayList<BPlusNode> children;
     private int n;
-    private Token value; // the search value of the node, mayormaynot be needed.
+    private Object value; // the search value of the node, mayormaynot be needed.
 
     /**
      * type size times pageSize = n
      * @param PKType - The type (integer, double, char, varchar, bool?) of the primary key, implying data size
      * @param pageSize - Size of the page
      */
-    public InternalNode(Token PKType, int pageSize){
-
+    public InternalNode(int n, Object value){
+        this.n = n;
+        this.value = value;
+        children = new ArrayList<BPlusNode>();
     }
 
     /**
