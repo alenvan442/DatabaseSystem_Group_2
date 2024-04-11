@@ -14,23 +14,26 @@ public class TableSchema implements SchemaInterface {
   private int numPages;
   private List<Integer> pageOrder;
   private int numRecords;
+  private int root;
 
-  public TableSchema(String tableName, int tableNumber) {
+  public TableSchema(String tableName, int tableNumber, int root) {
     this.tableName = tableName;
     this.tableNumber = tableNumber;
     this.numPages = 0;
     this.pageOrder = new ArrayList<Integer>();
     this.numRecords = 0;
     this.attributes = new ArrayList<AttributeSchema>();
+    this.root = root;
   }
 
-  public TableSchema(String tableName) {
+  public TableSchema(String tableName, int root) {
     this.tableName = tableName;
     this.tableNumber = this.hashName();
     this.numPages = 0;
     this.pageOrder = new ArrayList<Integer>();
     this.numRecords = 0;
     this.attributes = new ArrayList<AttributeSchema>();
+    this.root = root;
   }
 
   public int getTableNumber() {
