@@ -1,6 +1,9 @@
 package Parser;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import StorageManager.Objects.MessagePrinter;
 import StorageManager.Objects.MessagePrinter.MessageType;
 
@@ -95,6 +98,8 @@ public class ParserCommon {
         return tokens;
     }
 
+
+
     private static boolean isRelationalOperator(char c) {
         return c == '=' || c == '>' || c == '<' || c == '!';
     }
@@ -109,6 +114,9 @@ public class ParserCommon {
 
     private static Token createLabelToken(String value) throws Exception {
         value = value.toLowerCase();
+        if (isKeyword(value)) {
+            return createTokenWithType(value, Type.KEYWORD);
+        }
         switch (value) {
             case "notnull":
             case "primarykey":
@@ -126,11 +134,18 @@ public class ParserCommon {
             case "false":
                 return createTokenWithType(value, Type.BOOLEAN);
             default:
-                return createTokenWithType(value, Type.KEYWORD);
+                return createTokenWithType(value, Type.NAME);
         }
     }
 
     private static Token createTokenWithType(String value, Type type) throws Exception {
         return new Token(type, value);
     }
+
+    public static boolean isKeyword(String value) {
+		List<String> keywords = Arrays.asList(
+				"create", "table", "drop", "alter", "and", "or", "update", "set", "delete", "drop", "add",
+				"default", "insert", "into", "values", "display", "schema", "display", "info", "select", "from", "where", "orderby");
+		return keywords.contains(value);
+	}
 }
