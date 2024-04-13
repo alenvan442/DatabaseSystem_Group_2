@@ -1,5 +1,7 @@
 package StorageManager.BPlusTree;
 
+import Parser.Token;
+
 public interface BPlusNode {
-    public BPlusNode search(Object value);
+    public Bucket search(Object value, Token primaryKey);
 }
