@@ -14,10 +14,9 @@ public class LeafNode extends BPlusNode{
     ArrayList<Bucket> buckets;
     LeafNode nextLeaf;
 
-
     int tableNumber;
-    public LeafNode(int tableNumber, int pageNumber, int n) {
-        super(tableNumber, pageNumber, n);
+    public LeafNode(int tableNumber, int pageNumber, int n, int parent) {
+        super(tableNumber, pageNumber, n, parent);
         buckets = new ArrayList<>();
     }
 

@@ -74,6 +74,27 @@ public class Page extends BufferPage implements java.io.Serializable, StorageMan
     }
 
     /**
+     * Adds a record to the page at a specific index
+     * @param record    The record to be inserted
+     * @param index     The index to insert at
+     * @return          true: insert success
+     *                  false: page is full
+     */
+    public boolean addNewRecord(Record record, int index) {
+        Catalog catalog = Catalog.getCatalog();
+        // check if record can fit in this page.
+        if ((catalog.getPageSize() - this.computeSize()) < record.computeSize()) {
+            return false;
+        } else {
+            this.records.add(index, record);
+            this.setNumRecords();
+            this.changed = true;
+            this.setPriority();
+            return true;
+        }
+    }
+
+    /**
      * Deletes a record at a specific index
      *
      * @param index     The index to delete the record at

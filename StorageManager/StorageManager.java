@@ -8,8 +8,12 @@ import java.util.PriorityQueue;
 import java.util.Random;
 
 import Parser.Insert;
+import Parser.Type;
 import QueryExecutor.InsertQueryExcutor;
 import StorageManager.BPlusTree.BPlusNode;
+import StorageManager.BPlusTree.Bucket;
+import StorageManager.BPlusTree.InternalNode;
+import StorageManager.BPlusTree.LeafNode;
 import StorageManager.Objects.AttributeSchema;
 import StorageManager.Objects.BufferPage;
 import StorageManager.Objects.Catalog;
@@ -122,6 +126,19 @@ public class StorageManager implements StorageManagerInterface {
     private String getTablePath(int tableNumber) {
         String dbLoc = Catalog.getCatalog().getDbLocation();
         return dbLoc + "/tables/" + Integer.toString(tableNumber);
+    }
+
+    /**
+     * Construct the full indexing file path according to where
+     * the DB is located
+     *
+     * @param tableNumber the id of the table
+     *
+     * @return the full indexing path
+     */
+    private String getIndexingPath(int tableNumber) {
+        String dbLoc = Catalog.getCatalog().getDbLocation();
+        return dbLoc + "/indexing/" + Integer.toString(tableNumber);
 
     }
 
@@ -197,13 +214,6 @@ public class StorageManager implements StorageManagerInterface {
     }
 
     public void insertRecord(int tableNumber, Record record, boolean indexing) throws Exception {
-        if (indexing) {
-            
-            return;
-        }
-
-        String tablePath = this.getTablePath(tableNumber);
-        File tableFile = new File(tablePath);
         Catalog catalog = Catalog.getCatalog();
         // get tableSchema from the catalog
         TableSchema tableSchema = catalog.getSchema(tableNumber);
@@ -211,6 +221,14 @@ public class StorageManager implements StorageManagerInterface {
             MessagePrinter.printMessage(MessageType.ERROR,
                     "Unable to insert record. The record size is larger than the page size.");
         }
+
+        String tablePath = this.getTablePath(tableNumber);
+        File tableFile = new File(tablePath);
+        String indexPath = this.getIndexingPath(tableNumber);
+        File indexFile = new File(indexPath);
+
+        // determine index of the primary key
+        int primaryKeyIndex = tableSchema.getPrimaryIndex();
 
         // check to see if the file exists, if not create it
         if (!tableFile.exists()) {
@@ -222,10 +240,30 @@ public class StorageManager implements StorageManagerInterface {
             tableSchema.incrementNumRecords();
             // then add the page to the buffer
             this.addPageToBuffer(_new);
-        } else {
 
-            // determine index of the primary key
-            int primaryKeyIndex = tableSchema.getPrimaryIndex();
+            if (indexing) {
+                // check if an index file already exists, if not create it, it should never exist at this point
+                // if it does error out saying the database is corrupted
+                if (!indexFile.exists()) {
+                    indexFile.createNewFile();
+                    // create a new leaf node and insert the new pk into it, this will be the first root node
+                    // TODO compute n, currently 0 is the placeholder
+                    int n = 0;
+                    LeafNode root = new LeafNode(tableNumber, 1, n, -1);
+                    tableSchema.incrementNumIndexPages();
+                    tableSchema.setRoot(1);
+                    Bucket bucket = new Bucket(1, 0, record.getValues().get(primaryKeyIndex));
+                    root.addBucket(bucket);
+                    
+                    // then add the page to the buffer
+                    this.addPageToBuffer(root);
+                } else {
+                    MessagePrinter.printMessage(MessageType.ERROR, "Database is corrupted. Index file found before table file was created.");
+                }
+    
+                return;
+            }
+        } else {
 
             if (tableSchema.getNumPages() == 0) {
                 Page _new = new Page(0, tableNumber, 1);
@@ -234,29 +272,61 @@ public class StorageManager implements StorageManagerInterface {
                 tableSchema.incrementNumRecords();
                 // then add the page to the buffer
                 this.addPageToBuffer(_new);
+                if (indexing && tableSchema.getNumIndexPages() == 0) {
+                    // create a new leaf node and insert the new record into it, this will be the first root node
+                    // TODO compute n, currently 0 is the placeholder
+                    int n = 0;
+                    LeafNode root = new LeafNode(tableNumber, 1, n, -1);
+                    tableSchema.incrementNumIndexPages();
+                    tableSchema.setRoot(1);
+                    
+                    // then add the page to the buffer
+                    this.addPageToBuffer(root);
+                }
             } else {
 
-                for (Integer pageNumber : tableSchema.getPageOrder()) {
-                    Page page = this.getPage(tableNumber, pageNumber);
-                    if (page.getNumRecords() == 0) {
-                        if (!page.addNewRecord(record)) {
-                            // page was full
-                            this.pageSplit(page, record, tableSchema, primaryKeyIndex);
-                        }
-                        tableSchema.incrementNumRecords();
-                        break;
+                if (indexing) {
+                    // set up while loop with the root as the first to search
+                    Object pk = record.getValues().get(primaryKeyIndex);
+                    Type pkType = null;
+                    Pair<Integer, Integer> location = new Pair<Integer,Integer>(tableSchema.getRootNumber(), -1);
+                    while (location.second == -1) {
+                        // read in node
+                        BPlusNode node = this.getIndexPage(tableNumber, location.first);
+                        location = node.insert(pk, pkType);
                     }
 
-                    Record lastRecordInPage = page.getRecords().get(page.getRecords().size() - 1);
-                    if ((record.compareTo(lastRecordInPage, primaryKeyIndex) < 0) ||
-                        (pageNumber == tableSchema.getPageOrder().get(tableSchema.getPageOrder().size() - 1))) {
-                        // record is less than lastRecordPage
-                        if (!page.addNewRecord(record)) {
-                            // page was full
-                            this.pageSplit(page, record, tableSchema, primaryKeyIndex);
+                    // get page and insert
+                    Page page = this.getPage(tableNumber, location.first);
+                    if (!page.addNewRecord(record, location.second)) {
+                        // page was full
+                        this.pageSplit(page, record, tableSchema, primaryKeyIndex);
+                    }
+                    tableSchema.incrementNumRecords();
+                } else {
+
+                    for (Integer pageNumber : tableSchema.getPageOrder()) {
+                        Page page = this.getPage(tableNumber, pageNumber);
+                        if (page.getNumRecords() == 0) {
+                            if (!page.addNewRecord(record)) {
+                                // page was full
+                                this.pageSplit(page, record, tableSchema, primaryKeyIndex);
+                            }
+                            tableSchema.incrementNumRecords();
+                            break;
                         }
-                        tableSchema.incrementNumRecords();
-                        break;
+
+                        Record lastRecordInPage = page.getRecords().get(page.getRecords().size() - 1);
+                        if ((record.compareTo(lastRecordInPage, primaryKeyIndex) < 0) ||
+                            (pageNumber == tableSchema.getPageOrder().get(tableSchema.getPageOrder().size() - 1))) {
+                            // record is less than lastRecordPage
+                            if (!page.addNewRecord(record)) {
+                                // page was full
+                                this.pageSplit(page, record, tableSchema, primaryKeyIndex);
+                            }
+                            tableSchema.incrementNumRecords();
+                            break;
+                        }
                     }
                 }
             }

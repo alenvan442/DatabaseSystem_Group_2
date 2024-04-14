@@ -7,18 +7,29 @@ import java.io.RandomAccessFile;
 import java.util.ArrayList;
 
 public class InternalNode extends BPlusNode {
-    private ArrayList<BPlusNode> children;
-    private Object value; // the search value of the node, mayormaynot be needed.
+    private ArrayList<Object> searchKeys;
+    private ArrayList<Pair<Integer, Integer>> pointers; // there should be searchKeys+1 pointers
 
     /**
      * type size times pageSize = n
-     * @param value - search value
-     * @param n - Size
+     * @param tableNumber   Table number this node is associated with
+     * @param pageNumber    pageNumber the index of this page on hardware
+     * @param n             size
+     * @param parent        Index of the parent node
      */
-    public InternalNode(Object value, int tableNumber, int pageNumber, int n){
-        super(tableNumber, pageNumber, n);
-        this.value = value;
-        children = new ArrayList<BPlusNode>();
+    public InternalNode(int tableNumber, int pageNumber, int n, int parent){
+        super(tableNumber, pageNumber, n, parent);
+        this.searchKeys = new ArrayList<>();
+        this.pointers = new ArrayList<>();
+    }
+
+    public void addSearchKey(Object val) {
+        // TODO ensure the node is sorted
+        this.searchKeys.add(val);
+    }
+
+    public void setParent(int parent) {
+        this.parent = parent;
     }
 
     /**

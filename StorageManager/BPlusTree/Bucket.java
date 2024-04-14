@@ -1,6 +1,5 @@
 package StorageManager.BPlusTree;
 
-import Parser.Token;
 import StorageManager.Objects.Catalog;
 
 import static java.lang.Math.floor;
@@ -17,7 +16,7 @@ public class Bucket {
      * @param pageNumber - corresponding page #
      * @param index - index on the page for the bucket.
      */
-    public Bucket(int pageNumber, int index, Token pk){
+    public Bucket(int pageNumber, int index, Object pk){
         this.pageNumber=pageNumber;
         this.index=index;
         primaryKey = pk;
