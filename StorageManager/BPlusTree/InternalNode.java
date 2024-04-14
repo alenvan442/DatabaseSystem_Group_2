@@ -1,6 +1,7 @@
 package StorageManager.BPlusTree;
 
 import Parser.Type;
+import StorageManager.Objects.MessagePrinter;
 import StorageManager.Objects.Utility.Pair;
 
 import java.io.RandomAccessFile;
@@ -37,8 +38,36 @@ public class InternalNode extends BPlusNode {
      * @param value
      * @returns the found node, for an insert or without a match, this is the node BEFORE the value's place.
      */
-    public Pair<Integer, Integer> search(Object value, Type type) {
-        return null;
+    public Pair<Integer, Integer> search(Object value, Type type) throws Exception {
+        if (pointers.size() == 0){
+            //error case?
+            MessagePrinter.printMessage(MessagePrinter.MessageType.ERROR, "Internal node has no children?");
+        }
+        for (int i = 0; i < searchKeys.size(); i++) {
+            Object searchVal = searchKeys.get(i);
+            switch (type) {
+                case Type.INTEGER:
+                    if ((int) searchVal > (int) value) { //I LOVE TYPECASTING RAHHHH
+                        return pointers.get(i);
+                    }
+                case Type.DOUBLE:
+                    if ((double) searchVal > (double) value) { //I LOVE TYPECASTING RAHHHH
+                        return pointers.get(i);
+                    }
+                case Type.STRING:
+                    String searchString = (String) searchVal;
+                    String inString = (String) value;
+                    if (searchString.compareTo(inString) > 0) { //I LOVE TYPECASTING RAHHHH
+                        return pointers.get(i);
+                    }
+                case Type.BOOLEAN: //this seems really silly but may as well, defining false < true
+                    if ((boolean) searchVal){ //if true, the value in can go before regardless of if it's true or false.
+                        return pointers.get(i);
+                    }
+            }
+            return pointers.get(pointers.size());
+        }
+
     }
 
     @Override

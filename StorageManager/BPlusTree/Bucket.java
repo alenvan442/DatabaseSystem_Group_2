@@ -44,7 +44,7 @@ public class Bucket {
         int pageSize;
         pageSize = catalog.getPageSize();
 
-    return floor (pageSize / (Integer.BYTES + Integer.BYTES) );
+    return floor (pageSize / (Integer.BYTES + Integer.BYTES) ); //I don't think we can be certain it's integer?
     }
 
 }
