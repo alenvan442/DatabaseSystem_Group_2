@@ -123,8 +123,12 @@ public class StorageManager implements StorageManagerInterface {
 
     }
 
-    public Record getRecord(int tableNumber, Object primaryKey) throws Exception {
+    public Record getRecord(int tableNumber, Object primaryKey, boolean indexing) throws Exception {
         // used for selecting based on primary key
+        if (indexing) {
+            
+        }
+
         Catalog catalog = Catalog.getCatalog();
         TableSchema schema = catalog.getSchema(tableNumber);
         int primaryKeyIndex = schema.getPrimaryIndex();
@@ -168,7 +172,7 @@ public class StorageManager implements StorageManagerInterface {
         }
     }
 
-    public Record getRecord(String tableName, Object primaryKey) throws Exception {
+    public Record getRecord(String tableName, Object primaryKey, boolean indexing) throws Exception {
         int tableNumber = TableSchema.hashName(tableName);
         return this.getRecord(tableNumber, primaryKey);
     }
@@ -194,7 +198,7 @@ public class StorageManager implements StorageManagerInterface {
         return this.getAllRecords(tableNum);
     }
 
-    public void insertRecord(int tableNumber, Record record) throws Exception {
+    public void insertRecord(int tableNumber, Record record, boolean indexing) throws Exception {
         String tablePath = this.getTablePath(tableNumber);
         File tableFile = new File(tablePath);
         Catalog catalog = Catalog.getCatalog();
@@ -326,7 +330,7 @@ public class StorageManager implements StorageManagerInterface {
         }
     }
 
-    public Record deleteRecord(int tableNumber, Object primaryKey) throws Exception {
+    public Record deleteRecord(int tableNumber, Object primaryKey, boolean indexing) throws Exception {
 
         TableSchema schema = Catalog.getCatalog().getSchema(tableNumber);
         Pair<Page, Record> deletedPair = deleteHelper(schema, primaryKey);
@@ -337,7 +341,7 @@ public class StorageManager implements StorageManagerInterface {
         return deletedPair.second;
     }
 
-    public void updateRecord(int tableNumber, Record newRecord, Object primaryKey) throws Exception {
+    public void updateRecord(int tableNumber, Record newRecord, Object primaryKey, boolean indexing) throws Exception {
 
 
         Record oldRecord = deleteRecord(tableNumber, primaryKey); // if the delete was successful then deletePage != null
