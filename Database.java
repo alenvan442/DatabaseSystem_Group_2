@@ -9,11 +9,13 @@ public class Database {
     private String dbLocation;
     private int pageSize;
     private int bufferSize;
+    private boolean indexing;
 
-    public Database(String dbLocation, int pageSize, int bufferSize) {
+    public Database(String dbLocation, int pageSize, int bufferSize, boolean indexing) {
         this.bufferSize = bufferSize;
         this.pageSize = pageSize;
         this.dbLocation = dbLocation;
+        this.indexing = indexing;
     }
 
     public void start() throws Exception {
@@ -47,6 +49,11 @@ public class Database {
                 System.out.println("New db created successfully");
                 System.out.println("Page Size: " + pageSize);
                 System.out.println("Buffer Size: " + bufferSize);
+                if (this.indexing) {
+                    System.out.println("Indexing: On");
+                } else {
+                    System.out.println("Indexing: Off");
+                }
             } else {
                 MessagePrinter.printMessage(MessageType.ERROR, "Unable to successfully create the database.");
             }

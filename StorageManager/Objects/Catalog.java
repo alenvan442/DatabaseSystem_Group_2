@@ -22,8 +22,9 @@ public class Catalog implements java.io.Serializable, CatalogInterface {
     private String catalogLocation;
     private int pageSize;
     private int bufferSize;
+    private boolean indexing;
 
-    private Catalog(String catalogLocation, String dbLocation, int pageSize, int bufferSize) throws Exception {
+    private Catalog(String catalogLocation, String dbLocation, int pageSize, int bufferSize, boolean indexing) throws Exception {
         this.catalogLocation = catalogLocation;
         this.dbLocation = dbLocation;
         this.bufferSize = bufferSize;
@@ -32,12 +33,13 @@ public class Catalog implements java.io.Serializable, CatalogInterface {
             loadCatalog();
         } else {
             this.pageSize = pageSize;
+            this.indexing = indexing;
         }
     }
 
-    public static void createCatalog(String dbLocation, String catalogLocation, int pageSize, int bufferSize)
+    public static void createCatalog(String dbLocation, String catalogLocation, int pageSize, int bufferSize, boolean indexing)
             throws Exception {
-        catalog = new Catalog(catalogLocation, dbLocation, pageSize, bufferSize);
+        catalog = new Catalog(catalogLocation, dbLocation, pageSize, bufferSize, indexing);
     }
 
     public static Catalog getCatalog() {
@@ -56,6 +58,9 @@ public class Catalog implements java.io.Serializable, CatalogInterface {
 
         // Write page size to the catalog file
         catalogAccessFile.writeInt(this.pageSize);
+
+        // Write indexing on:off to catalog file
+        catalogAccessFile.writeBoolean(this.indexing);
 
         // Write the number of schemas to the catalog file
         catalogAccessFile.writeInt(this.schemas.size());
@@ -82,6 +87,9 @@ public class Catalog implements java.io.Serializable, CatalogInterface {
 
         // Read page size from the catalog file
         this.pageSize = catalogAccessFile.readInt();
+
+        // Read indexing on:off from catalog file
+        this.indexing = catalogAccessFile.readBoolean();
 
         // Read the number of tables from the catalog file
         int numOfTables = catalogAccessFile.readInt();
@@ -222,7 +230,7 @@ public class Catalog implements java.io.Serializable, CatalogInterface {
 
         //call new storage manager method.
         StorageManager.getStorageManager().alterTable(tableNumber, op, attrName, val, isDeflt, attrList, indexing);
-        
+
         // save the schema afterwards in the off chance we need to rollback
         table.setAttributes(attrList);
     }
@@ -310,6 +318,10 @@ public class Catalog implements java.io.Serializable, CatalogInterface {
 
     public int getBufferSize() {
         return bufferSize;
+    }
+
+    public boolean isIndexingOn() {
+        return indexing;
     }
 
 }
