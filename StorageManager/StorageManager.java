@@ -405,13 +405,14 @@ public class StorageManager implements StorageManagerInterface {
         }
     }
 
-    public Record deleteRecord(int tableNumber, Object primaryKey, boolean indexing) throws Exception {
+    public Record deleteRecord(int tableNumber, Object primaryKey) throws Exception {
 
+        Catalog catalog = Catalog.getCatalog();
         TableSchema schema = Catalog.getCatalog().getSchema(tableNumber);
         Record deletedRecord = null;
         Page deletePage = null;
 
-        if (indexing) {
+        if (catalog.isIndexingOn()) {
             // get pk data type
             Type pkType = schema.getAttributeType(schema.getPrimaryIndex());
 
@@ -440,11 +441,12 @@ public class StorageManager implements StorageManagerInterface {
         return deletedRecord;
     }
 
-    public void updateRecord(int tableNumber, Record newRecord, Object primaryKey, boolean indexing) throws Exception {
+    public void updateRecord(int tableNumber, Record newRecord, Object primaryKey) throws Exception {
 
         // TODO indexing
+        Catalog catalog = Catalog.getCatalog();
 
-        Record oldRecord = deleteRecord(tableNumber, primaryKey, indexing); // if the delete was successful then deletePage != null
+        Record oldRecord = deleteRecord(tableNumber, primaryKey); // if the delete was successful then deletePage != null
 
         Insert insert = new Insert(Catalog.getCatalog().getSchema(tableNumber).getTableName(), null);
         InsertQueryExcutor insertQueryExcutor = new InsertQueryExcutor(insert);
@@ -509,7 +511,7 @@ public class StorageManager implements StorageManagerInterface {
      * @throws Exception
      */
     public Exception alterTable(int tableNumber, String op, String attrName, Object val, String isDeflt,
-            List<AttributeSchema> attrList, boolean indexing) throws Exception {
+            List<AttributeSchema> attrList) throws Exception {
         Catalog catalog = Catalog.getCatalog();
         TableSchema currentSchemea = catalog.getSchema(tableNumber);
         TableSchema newSchema = new TableSchema(currentSchemea.getTableName());
