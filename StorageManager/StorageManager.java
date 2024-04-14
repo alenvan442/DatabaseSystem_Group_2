@@ -442,8 +442,7 @@ public class StorageManager implements StorageManagerInterface {
     }
 
     public void updateRecord(int tableNumber, Record newRecord, Object primaryKey) throws Exception {
-
-        // TODO indexing
+        
         Catalog catalog = Catalog.getCatalog();
 
         Record oldRecord = deleteRecord(tableNumber, primaryKey); // if the delete was successful then deletePage != null
