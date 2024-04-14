@@ -66,9 +66,10 @@ public class InternalNode extends BPlusNode {
                     }
                 default:
                     MessagePrinter.printMessage(MessagePrinter.MessageType.ERROR, "Invalid type for B+ tree index!");
+                    return new Pair<>(-1, -1);
             }
-            return pointers.get(pointers.size());
         }
+        return pointers.get(pointers.size());
 
     }
 
