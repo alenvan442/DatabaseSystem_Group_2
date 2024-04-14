@@ -52,19 +52,4 @@ public abstract class BPlusNode extends BufferPage{
      */
     public abstract Pair<Integer, Integer> delete(Object value, Type type) throws Exception;
 
-    /**
-     * Will search the node to find and return the location of a specific search key
-     * 
-     * Will perform a delete, and then an insert. Will then return the location of both instances
-     * If during the insert, an error occurs, revert back and reinsert the old search key
-     * 
-     * @param value     The search key to find
-     * @param type      The data type of the search key
-     * @return          An array of two Pairs of two integer in the format <page_num, index>.
-     *                      The first pair will hold the pointer to the location in which the 
-     *                      record should be deleted from, and the second pair holds the pointer
-     *                      of the location in which the new record should be inserted into
-     * @throws Exception
-     */
-    public abstract Pair<Integer, Integer>[] update(Object value, Type type) throws Exception;
 }

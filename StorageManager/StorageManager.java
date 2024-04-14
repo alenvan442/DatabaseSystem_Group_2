@@ -229,6 +229,11 @@ public class StorageManager implements StorageManagerInterface {
 
         // determine index of the primary key
         int primaryKeyIndex = tableSchema.getPrimaryIndex();
+        int n = 0;
+
+        if (catalog.isIndexingOn()) {
+            n = tableSchema.computeN(catalog);
+        }
 
         // check to see if the file exists, if not create it
         if (!tableFile.exists()) {
@@ -247,8 +252,6 @@ public class StorageManager implements StorageManagerInterface {
                 if (!indexFile.exists()) {
                     indexFile.createNewFile();
                     // create a new leaf node and insert the new pk into it, this will be the first root node
-                    // TODO compute n, currently 0 is the placeholder
-                    int n = 0;
                     LeafNode root = new LeafNode(tableNumber, 1, n, -1);
                     tableSchema.incrementNumIndexPages();
                     tableSchema.setRoot(1);
@@ -274,8 +277,6 @@ public class StorageManager implements StorageManagerInterface {
                 this.addPageToBuffer(_new);
                 if (catalog.isIndexingOn() && tableSchema.getNumIndexPages() == 0) {
                     // create a new leaf node and insert the new record into it, this will be the first root node
-                    // TODO compute n, currently 0 is the placeholder
-                    int n = 0;
                     LeafNode root = new LeafNode(tableNumber, 1, n, -1);
                     tableSchema.incrementNumIndexPages();
                     tableSchema.setRoot(1);
@@ -407,43 +408,50 @@ public class StorageManager implements StorageManagerInterface {
 
     public Record deleteRecord(int tableNumber, Object primaryKey) throws Exception {
 
-        Catalog catalog = Catalog.getCatalog();
         TableSchema schema = Catalog.getCatalog().getSchema(tableNumber);
+        Catalog catalog = Catalog.getCatalog();
         Record deletedRecord = null;
         Page deletePage = null;
+        Pair<Page, Record> deletedPair = null;
 
         if (catalog.isIndexingOn()) {
-            // get pk data type
-            Type pkType = schema.getAttributeType(schema.getPrimaryIndex());
-
-            // find location
-            Pair<Integer, Integer> location = new Pair<Integer,Integer>(schema.getRootNumber(), -1);
-            while (location.second == -1) {
-                // read in node
-                BPlusNode node = this.getIndexPage(tableNumber, location.first);
-                location = node.insert(primaryKey, pkType);
-            }
-
-            // get page and delete
-            deletePage = this.getPage(tableNumber, location.first);
-            deletePage.deleteRecord(location.second);
-
-            // TODO merge/borrowing
-
+            deletedPair = deleteIndex(tableNumber, primaryKey);
         } else {
-            Pair<Page, Record> deletedPair = this.deleteHelper(schema, primaryKey);
-            deletePage = deletedPair.first;
-            deletedRecord = deletedPair.second;
+            deletedPair = this.deleteHelper(schema, primaryKey);
         }
+
+        deletePage = deletedPair.first;
+        deletedRecord = deletedPair.second;
 
         schema.decrementNumRecords();
         this.checkDeletePage(schema, deletePage);
         return deletedRecord;
     }
 
-    public void updateRecord(int tableNumber, Record newRecord, Object primaryKey) throws Exception {
+    private Pair<Page, Record> deleteIndex(int tableNumber, Object primaryKey) throws Exception {
+        TableSchema schema = Catalog.getCatalog().getSchema(tableNumber);
+        Page deletePage = null;
         
-        Catalog catalog = Catalog.getCatalog();
+        // get pk data type
+        Type pkType = schema.getAttributeType(schema.getPrimaryIndex());
+
+        // find location
+        Pair<Integer, Integer> location = new Pair<Integer,Integer>(schema.getRootNumber(), -1);
+        while (location.second == -1) {
+            // read in node
+            BPlusNode node = this.getIndexPage(tableNumber, location.first);
+            location = node.insert(primaryKey, pkType);
+        }
+
+        // get page and delete
+        deletePage = this.getPage(tableNumber, location.first);
+        return new Pair<Page, Record>(deletePage, deletePage.deleteRecord(location.second));
+
+        // TODO merge/borrowing
+        
+    }
+
+    public void updateRecord(int tableNumber, Record newRecord, Object primaryKey) throws Exception {
 
         Record oldRecord = deleteRecord(tableNumber, primaryKey); // if the delete was successful then deletePage != null
 
@@ -472,13 +480,18 @@ public class StorageManager implements StorageManagerInterface {
         // Checks the hardware for a tablefile. If it finds it remove it.
         String tablePath = this.getTablePath(tableNumber);
         File tableFile = new File(tablePath);
+        String indexPath = this.getIndexingPath(tableNumber);
+        File indexFile = new File(indexPath);
         try {
             // if its on the file system remove it.
             if (tableFile.exists()) {
                 tableFile.delete();
             }
 
-            // TODO if BPlus exists, drop it
+            // if BPlus exists, drop it
+            if (indexFile.exists()) {
+                tableFile.delete();
+            }
 
             // for every page in the buffer that has this table number, remove it.
             List<BufferPage> toRemove = new ArrayList<>();

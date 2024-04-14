@@ -59,7 +59,6 @@ public class UpdateQueryExecutor implements QueryExecutorInterface{
       MessagePrinter.printMessage(MessageType.ERROR, update.getColumn() + " does not exist for table " + update.getTableName());
     }
 
-
     List<Record> records = StorageManager.getStorageManager().getAllRecords(tableSchema.getTableNumber());
     int primaryKeyIndex = tableSchema.getPrimaryIndex();
     for (Record record : records) {
