@@ -64,6 +64,8 @@ public class InternalNode extends BPlusNode {
                     if ((boolean) searchVal){ //if true, the value in can go before regardless of if it's true or false.
                         return pointers.get(i);
                     }
+                default:
+                    MessagePrinter.printMessage(MessagePrinter.MessageType.ERROR, "Invalid type for B+ tree index!");
             }
             return pointers.get(pointers.size());
         }
@@ -72,14 +74,12 @@ public class InternalNode extends BPlusNode {
 
     @Override
     public Pair<Integer, Integer> insert(Object value, Type type) throws Exception {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'insert'");
+        return this.search(value, type);
     }
 
     @Override
     public Pair<Integer, Integer> delete(Object value, Type type) throws Exception {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'delete'");
+        return this.search(value, type)
     }
 
     @Override
