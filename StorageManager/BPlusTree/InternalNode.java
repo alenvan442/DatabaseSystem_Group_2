@@ -79,7 +79,7 @@ public class InternalNode extends BPlusNode {
 
     @Override
     public Pair<Integer, Integer> delete(Object value, Type type) throws Exception {
-        return this.search(value, type)
+        return this.search(value, type);
     }
 
     @Override
