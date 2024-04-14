@@ -11,9 +11,7 @@ public class Bucket {
 
     private int index;
 
-    private Token primaryKey;
-
-    private Bucket nextBucket;
+    private Object primaryKey;
 
     /**
      * Soecial type of page
@@ -26,7 +24,7 @@ public class Bucket {
         primaryKey = pk;
     }
 
-    public Token getPrimaryKey() {
+    public Object getPrimaryKey() {
         return primaryKey;
     }
 
