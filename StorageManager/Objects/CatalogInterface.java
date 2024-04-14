@@ -1,7 +1,5 @@
 package StorageManager.Objects;
 
-import java.io.IOException;
-
 import StorageManager.TableSchema;
 
 public interface CatalogInterface {
@@ -35,7 +33,7 @@ public interface CatalogInterface {
    * @return - If drop - The previous index of the dropped item. If add - the index of the new attr.
    */
   public void alterTableSchema(int tableNumber,String op, String attrName, String attrType, Object val, String isDeflt ,boolean notNull,
-                                boolean pKey, boolean unique) throws Exception;
+                                boolean pKey, boolean unique, boolean indexing) throws Exception;
 
   /**
    * Loads the catalog from hardware and obtains a random access file.

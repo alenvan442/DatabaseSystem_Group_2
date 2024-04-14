@@ -2,17 +2,13 @@ package StorageManager.Objects;
 
 import java.io.File;
 import java.io.RandomAccessFile;
-import java.text.AttributedCharacterIterator.Attribute;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import javax.management.RuntimeErrorException;
 
 import QueryExecutor.InsertQueryExcutor;
 import StorageManager.StorageManager;
@@ -127,7 +123,7 @@ public class Catalog implements java.io.Serializable, CatalogInterface {
      */
     @Override
     public void alterTableSchema(int tableNumber,String op, String attrName, String attrType, Object val,String isDeflt ,boolean notNull,
-                                boolean pKey, boolean unique) throws Exception {
+                                boolean pKey, boolean unique, boolean indexing) throws Exception {
         TableSchema table = schemas.get(tableNumber);
 
         if(isDeflt.equals("true")) {
@@ -225,7 +221,7 @@ public class Catalog implements java.io.Serializable, CatalogInterface {
         }
 
         //call new storage manager method.
-        StorageManager.getStorageManager().alterTable(tableNumber, op, attrName, val, isDeflt, attrList);
+        StorageManager.getStorageManager().alterTable(tableNumber, op, attrName, val, isDeflt, attrList, indexing);
         
         // save the schema afterwards in the off chance we need to rollback
         table.setAttributes(attrList);
@@ -244,7 +240,7 @@ public class Catalog implements java.io.Serializable, CatalogInterface {
 
         // check for one primary key
         boolean primaryKeyFound = false;
-        List<String> attributeNames = new ArrayList();
+        List<String> attributeNames = new ArrayList<String>();
         for (AttributeSchema attributeSchema : tableSchema.getAttributes()) {
             if (attributeSchema.isPrimaryKey() && !primaryKeyFound) {
                 primaryKeyFound = true;

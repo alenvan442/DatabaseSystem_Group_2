@@ -9,7 +9,9 @@ import java.util.Random;
 
 import Parser.Insert;
 import QueryExecutor.InsertQueryExcutor;
+import StorageManager.BPlusTree.BPlusNode;
 import StorageManager.Objects.AttributeSchema;
+import StorageManager.Objects.BufferPage;
 import StorageManager.Objects.Catalog;
 import StorageManager.Objects.MessagePrinter;
 import StorageManager.Objects.Page;
@@ -19,7 +21,7 @@ import StorageManager.Objects.Utility.Pair;
 
 public class StorageManager implements StorageManagerInterface {
     private static StorageManager storageManager;
-    private PriorityQueue<Page> buffer;
+    private PriorityQueue<BufferPage> buffer;
     private int bufferSize;
 
     /**
@@ -123,12 +125,8 @@ public class StorageManager implements StorageManagerInterface {
 
     }
 
-    public Record getRecord(int tableNumber, Object primaryKey, boolean indexing) throws Exception {
+    public Record getRecord(int tableNumber, Object primaryKey) throws Exception {
         // used for selecting based on primary key
-        if (indexing) {
-            
-        }
-
         Catalog catalog = Catalog.getCatalog();
         TableSchema schema = catalog.getSchema(tableNumber);
         int primaryKeyIndex = schema.getPrimaryIndex();
@@ -172,7 +170,7 @@ public class StorageManager implements StorageManagerInterface {
         }
     }
 
-    public Record getRecord(String tableName, Object primaryKey, boolean indexing) throws Exception {
+    public Record getRecord(String tableName, Object primaryKey) throws Exception {
         int tableNumber = TableSchema.hashName(tableName);
         return this.getRecord(tableNumber, primaryKey);
     }
@@ -199,6 +197,11 @@ public class StorageManager implements StorageManagerInterface {
     }
 
     public void insertRecord(int tableNumber, Record record, boolean indexing) throws Exception {
+        if (indexing) {
+            
+            return;
+        }
+
         String tablePath = this.getTablePath(tableNumber);
         File tableFile = new File(tablePath);
         Catalog catalog = Catalog.getCatalog();
@@ -344,17 +347,17 @@ public class StorageManager implements StorageManagerInterface {
     public void updateRecord(int tableNumber, Record newRecord, Object primaryKey, boolean indexing) throws Exception {
 
 
-        Record oldRecord = deleteRecord(tableNumber, primaryKey); // if the delete was successful then deletePage != null
+        Record oldRecord = deleteRecord(tableNumber, primaryKey, indexing); // if the delete was successful then deletePage != null
 
         Insert insert = new Insert(Catalog.getCatalog().getSchema(tableNumber).getTableName(), null);
         InsertQueryExcutor insertQueryExcutor = new InsertQueryExcutor(insert);
 
         try {
             insertQueryExcutor.validateRecord(newRecord);
-            this.insertRecord(tableNumber, newRecord);
+            this.insertRecord(tableNumber, newRecord, indexing);
         } catch (Exception e) {
             // insert failed, restore the deleted record
-            this.insertRecord(tableNumber, oldRecord);
+            this.insertRecord(tableNumber, oldRecord, indexing);
             System.err.println(e.getMessage());
             throw new Exception();
         }
@@ -377,15 +380,17 @@ public class StorageManager implements StorageManagerInterface {
                 tableFile.delete();
             }
 
+            // TODO if BPlus exists, drop it
+
             // for every page in the buffer that has this table number, remove it.
-            List<Page> toRemove = new ArrayList<>();
-            for (Page page : this.buffer) {
+            List<BufferPage> toRemove = new ArrayList<>();
+            for (BufferPage page : this.buffer) {
                 if (tableNumber == page.getTableNumber()) {
                     toRemove.add(page);
                 }
             }
 
-            for (Page page : toRemove) {
+            for (BufferPage page : toRemove) {
                 this.buffer.remove(page);
             }
 
@@ -407,7 +412,7 @@ public class StorageManager implements StorageManagerInterface {
      * @throws Exception
      */
     public Exception alterTable(int tableNumber, String op, String attrName, Object val, String isDeflt,
-            List<AttributeSchema> attrList) throws Exception {
+            List<AttributeSchema> attrList, boolean indexing) throws Exception {
         Catalog catalog = Catalog.getCatalog();
         TableSchema currentSchemea = catalog.getSchema(tableNumber);
         TableSchema newSchema = new TableSchema(currentSchemea.getTableName());
@@ -449,7 +454,7 @@ public class StorageManager implements StorageManagerInterface {
         catalog.createTable(newSchema);
 
         for (Record record : newRecords) {
-            this.insertRecord(tableNumber, record);
+            this.insertRecord(tableNumber, record, indexing);
         }
 
         return null;
@@ -457,9 +462,9 @@ public class StorageManager implements StorageManagerInterface {
 
     // ---------------------------- Page Buffer ------------------------------
 
-    private Page getLastPageInBuffer(PriorityQueue<Page> buffer) {
+    private BufferPage getLastPageInBuffer(PriorityQueue<BufferPage> buffer) {
         Object[] bufferArray = buffer.toArray();
-        return ((Page) bufferArray[bufferArray.length - 1]);
+        return ((BufferPage) bufferArray[bufferArray.length - 1]);
     }
 
     @Override
@@ -467,17 +472,33 @@ public class StorageManager implements StorageManagerInterface {
         // check if page is in buffer
         for (int i = this.buffer.size()-1; i >= 0; i--) {
             Object[] bufferArray = this.buffer.toArray();
-            Page page = (Page) bufferArray[i];
-            if (page.getTableNumber() == tableNumber && page.getPageNumber() == pageNumber) {
+            BufferPage page = (BufferPage) bufferArray[i];
+            if (page instanceof Page && page.getTableNumber() == tableNumber && page.getPageNumber() == pageNumber) {
                 page.setPriority();
-                return page;
+                return (Page) page;
             }
         }
 
         // read page from hardware into buffer
         readPageHardware(tableNumber, pageNumber);
-        return getLastPageInBuffer(this.buffer);
+        return (Page) getLastPageInBuffer(this.buffer);
+    }
 
+    @Override
+    public BPlusNode getIndexPage(int tableNumber, int pageNumber) throws Exception {
+        // check if page is in buffer
+        for (int i = this.buffer.size()-1; i >= 0; i--) {
+            Object[] bufferArray = this.buffer.toArray();
+            BufferPage page = (BufferPage) bufferArray[i];
+            if (page instanceof BPlusNode && page.getTableNumber() == tableNumber && page.getPageNumber() == pageNumber) {
+                page.setPriority();
+                return (BPlusNode) page;
+            }
+        }
+
+        // read page from hardware into buffer
+        readIndexPageHardware(tableNumber, pageNumber);
+        return (BPlusNode) getLastPageInBuffer(this.buffer);
     }
 
     private void readPageHardware(int tableNumber, int pageNumber) throws Exception {
@@ -497,7 +518,12 @@ public class StorageManager implements StorageManagerInterface {
         tableAccessFile.close();
     }
 
-    private void writePageHardware(Page page) throws Exception {
+    private void readIndexPageHardware(int tableNumber, int pageNumber) throws Exception {
+        // TODO
+    }
+
+    private void writePageHardware(BufferPage page) throws Exception {
+        // TODO check between indexPage and regular page
         Catalog catalog = Catalog.getCatalog();
         TableSchema tableSchema = catalog.getSchema(page.getTableNumber());
         String filePath = this.getTablePath(page.getTableNumber());
@@ -520,9 +546,9 @@ public class StorageManager implements StorageManagerInterface {
         tableAccessFile.close();
     }
 
-    private void addPageToBuffer(Page page) throws Exception {
+    private void addPageToBuffer(BufferPage page) throws Exception {
         if (this.buffer.size() == this.bufferSize) {
-            Page lruPage = this.buffer.poll(); // assuming the first Page in the buffer is LRU
+            BufferPage lruPage = this.buffer.poll(); // assuming the first Page in the buffer is LRU
             if (lruPage.isChanged()) {
                 this.writePageHardware(lruPage);
             }
@@ -531,7 +557,7 @@ public class StorageManager implements StorageManagerInterface {
     }
 
     public void writeAll() throws Exception {
-        for (Page page : buffer) {
+        for (BufferPage page : buffer) {
             if (page.isChanged()) {
                 writePageHardware(page);
             }

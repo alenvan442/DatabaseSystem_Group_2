@@ -8,7 +8,6 @@ import static java.lang.Math.floor;
 public class Bucket {
 
     private int pageNumber;
-
     private int index;
 
     private Object primaryKey;

@@ -4,20 +4,21 @@ import Parser.Token;
 import Parser.Type;
 import StorageManager.Objects.Catalog;
 import StorageManager.Objects.MessagePrinter;
+import StorageManager.Objects.MessagePrinter.MessageType;
 import StorageManager.Objects.Utility.Pair;
 
+import java.io.RandomAccessFile;
 import java.util.ArrayList;
 
-public class LeafNode implements BPlusNode{
+public class LeafNode extends BPlusNode{
     ArrayList<Bucket> buckets;
     LeafNode nextLeaf;
 
 
     int tableNumber;
-    public LeafNode(int tableNumber) {
+    public LeafNode(int tableNumber, int pageNumber, int n) {
+        super(tableNumber, pageNumber, n);
         buckets = new ArrayList<>();
-        this.tableNumber = tableNumber;
-
     }
 
     public void addBucket(Bucket b){
@@ -31,8 +32,7 @@ public class LeafNode implements BPlusNode{
 
     @Override
     public Pair<Integer, Integer> search(Object value, Type type) throws Exception {
-
-        for(int i=0; i<buckets.size(); i++){
+        for(int i = 0; i < buckets.size(); i++){
             try {
                 Object pk = buckets.get(i).getPrimaryKey();
                 boolean found = false;
@@ -80,6 +80,30 @@ public class LeafNode implements BPlusNode{
         }
         Bucket last = buckets.get(-1);
         return new Pair<Integer, Integer>(last.getPageNumber(), last.getIndex());
+    }
+
+    @Override
+    public Pair<Integer, Integer> insert(Object value, Type type) throws Exception {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'insert'");
+    }
+
+    @Override
+    public Pair<Integer, Integer> delete(Object value, Type type) throws Exception {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'delete'");
+    }
+
+    @Override
+    public Pair<Integer, Integer>[] update(Object value, Type type) throws Exception {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'update'");
+    }
+
+    @Override
+    public void writeToHardware(RandomAccessFile tableAccessFile) throws Exception {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'writeToHardware'");
     }
 
 

@@ -1,6 +1,4 @@
 import java.io.File;
-import java.security.MessageDigest;
-
 import StorageManager.StorageManager;
 import StorageManager.Objects.Catalog;
 import StorageManager.Objects.MessagePrinter;

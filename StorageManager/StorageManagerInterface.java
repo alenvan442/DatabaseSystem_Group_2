@@ -2,6 +2,8 @@ package StorageManager;
 
 import java.util.List;
 
+import StorageManager.BPlusTree.BPlusNode;
+import StorageManager.Objects.BufferPage;
 import StorageManager.Objects.Page;
 import StorageManager.Objects.Record;
 
@@ -16,7 +18,7 @@ public interface StorageManagerInterface {
      *
      * @return              the record that was found, otherwise null
      */
-    public Record getRecord(int tableNumber, Object primaryKey, boolean indexing) throws Exception;
+    public Record getRecord(int tableNumber, Object primaryKey) throws Exception;
 
     /**
      * Gets a single record from a table
@@ -27,7 +29,7 @@ public interface StorageManagerInterface {
      *
      * @return              the record that was found, otherwise null
      */
-    public Record getRecord(String tableName, Object primaryKey, boolean indexing) throws Exception;
+    public Record getRecord(String tableName, Object primaryKey) throws Exception;
 
     /**
      * Gets all records from a table
@@ -87,8 +89,8 @@ public interface StorageManagerInterface {
      */
     public void updateRecord(int tableNumber, Record newRecord, Object primaryKey, boolean indexing) throws Exception;
 
-
     public Page getPage(int tableNumber, int pageNumber) throws Exception;
+    public BPlusNode getIndexPage(int tableNumber, int pageNumber) throws Exception;
 
     /**
      * Writes all pages in the buffer to disk
