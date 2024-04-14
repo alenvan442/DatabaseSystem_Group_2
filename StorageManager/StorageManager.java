@@ -288,12 +288,14 @@ public class StorageManager implements StorageManagerInterface {
                 if (indexing) {
                     // set up while loop with the root as the first to search
                     Object pk = record.getValues().get(primaryKeyIndex);
-                    Type pkType = null;
+                    Type pkType = tableSchema.getAttributeType(primaryKeyIndex);    
+
                     Pair<Integer, Integer> location = new Pair<Integer,Integer>(tableSchema.getRootNumber(), -1);
                     while (location.second == -1) {
                         // read in node
                         BPlusNode node = this.getIndexPage(tableNumber, location.first);
                         location = node.insert(pk, pkType);
+                        // TODO splits
                     }
 
                     // get page and insert
@@ -333,7 +335,7 @@ public class StorageManager implements StorageManagerInterface {
         }
     }
 
-    public Pair<Page, Record> deleteHelper(TableSchema schema, Object primaryKey) throws Exception {
+    private Pair<Page, Record> deleteHelper(TableSchema schema, Object primaryKey) throws Exception {
 
         Integer tableNumber = schema.getTableNumber();
         int primaryIndex = schema.getPrimaryIndex();
@@ -406,16 +408,41 @@ public class StorageManager implements StorageManagerInterface {
     public Record deleteRecord(int tableNumber, Object primaryKey, boolean indexing) throws Exception {
 
         TableSchema schema = Catalog.getCatalog().getSchema(tableNumber);
-        Pair<Page, Record> deletedPair = deleteHelper(schema, primaryKey);
-        schema.decrementNumRecords();
-        Page deletePage = deletedPair.first;
+        Record deletedRecord = null;
+        Page deletePage = null;
 
+        if (indexing) {
+            // get pk data type
+            Type pkType = schema.getAttributeType(schema.getPrimaryIndex());
+
+            // find location
+            Pair<Integer, Integer> location = new Pair<Integer,Integer>(schema.getRootNumber(), -1);
+            while (location.second == -1) {
+                // read in node
+                BPlusNode node = this.getIndexPage(tableNumber, location.first);
+                location = node.insert(primaryKey, pkType);
+            }
+
+            // get page and delete
+            deletePage = this.getPage(tableNumber, location.first);
+            deletePage.deleteRecord(location.second);
+
+            // TODO merge/borrowing
+
+        } else {
+            Pair<Page, Record> deletedPair = this.deleteHelper(schema, primaryKey);
+            deletePage = deletedPair.first;
+            deletedRecord = deletedPair.second;
+        }
+
+        schema.decrementNumRecords();
         this.checkDeletePage(schema, deletePage);
-        return deletedPair.second;
+        return deletedRecord;
     }
 
     public void updateRecord(int tableNumber, Record newRecord, Object primaryKey, boolean indexing) throws Exception {
 
+        // TODO indexing
 
         Record oldRecord = deleteRecord(tableNumber, primaryKey, indexing); // if the delete was successful then deletePage != null
 

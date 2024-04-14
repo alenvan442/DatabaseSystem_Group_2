@@ -4,7 +4,10 @@ import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.List;
 
+import Parser.Type;
 import StorageManager.Objects.AttributeSchema;
+import StorageManager.Objects.MessagePrinter;
+import StorageManager.Objects.MessagePrinter.MessageType;
 import StorageManager.Objects.SchemaInterface;
 
 public class TableSchema implements SchemaInterface {
@@ -143,6 +146,31 @@ public class TableSchema implements SchemaInterface {
 
   public int getRecords() {
     return numRecords;
+  }
+
+  public Type getAttributeType(int index) throws Exception {
+    String type = this.attributes.get(index).getDataType().toLowerCase();
+    Type pkType = null;
+    switch (type) {
+      case "integer":
+          pkType = Type.INTEGER;
+          break;
+      case "double":
+          pkType = Type.DOUBLE;
+          break;
+      case "boolean":
+          pkType = Type.BOOLEAN;
+          break;
+      default:
+          if (type.contains("char")) {
+              pkType = Type.STRING;
+          } else {
+              MessagePrinter.printMessage(MessageType.ERROR, String.format("Invalid data type: %s", type));
+          }
+          // should never reach the break because of the error message, just in case, test this
+          break;
+    }
+    return pkType;
   }
 
   private int hashName() {
