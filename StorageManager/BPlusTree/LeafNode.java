@@ -94,12 +94,6 @@ public class LeafNode extends BPlusNode{
     }
 
     @Override
-    public Pair<Integer, Integer>[] update(Object value, Type type) throws Exception {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'update'");
-    }
-
-    @Override
     public void writeToHardware(RandomAccessFile tableAccessFile) throws Exception {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'writeToHardware'");

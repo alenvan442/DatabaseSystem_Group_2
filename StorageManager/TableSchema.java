@@ -3,9 +3,12 @@ package StorageManager;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import Parser.Type;
 import StorageManager.Objects.AttributeSchema;
+import StorageManager.Objects.Catalog;
 import StorageManager.Objects.MessagePrinter;
 import StorageManager.Objects.MessagePrinter.MessageType;
 import StorageManager.Objects.SchemaInterface;
@@ -171,6 +174,37 @@ public class TableSchema implements SchemaInterface {
           break;
     }
     return pkType;
+  }
+
+  public int computeN(Catalog catalog) throws Exception {
+    int pageSize = catalog.getPageSize();
+    int dataSize = 0;
+    String dataType = this.attributes.get(this.getPrimaryIndex()).getDataType();
+
+    switch (dataType) {
+      case "integer":
+        dataSize = Integer.BYTES;
+        break;
+      case "double":
+        dataSize = Double.BYTES;
+        break;
+      case "boolean":
+        dataSize = 1;
+        break;
+      default:
+        if (dataType.contains("char")) {
+          Pattern pattern = Pattern.compile("\\((\\d+)\\)");
+          Matcher matcher = pattern.matcher(dataType);
+          while (matcher.find()) {
+            dataSize = Integer.parseInt(matcher.group(1));
+          }
+        } else {
+            MessagePrinter.printMessage(MessageType.ERROR, String.format("Invalid data type: %s", dataType));
+        }
+        // should never reach the break because of the error message, just in case, test this
+        break;
+    }         
+    return Math.floorDiv(pageSize, dataSize+4) - 1;
   }
 
   private int hashName() {
