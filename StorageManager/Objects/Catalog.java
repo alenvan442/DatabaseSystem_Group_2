@@ -229,7 +229,7 @@ public class Catalog implements java.io.Serializable, CatalogInterface {
         }
 
         //call new storage manager method.
-        StorageManager.getStorageManager().alterTable(tableNumber, op, attrName, val, isDeflt, attrList, indexing);
+        StorageManager.getStorageManager().alterTable(tableNumber, op, attrName, val, isDeflt, attrList);
 
         // save the schema afterwards in the off chance we need to rollback
         table.setAttributes(attrList);

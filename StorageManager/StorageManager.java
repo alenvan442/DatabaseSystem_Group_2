@@ -619,8 +619,6 @@ public class StorageManager implements StorageManagerInterface {
 
     private void readIndexPageHardware(int tableNumber, int pageNumber) throws Exception {
         // TODO
-        String file
-
     }
 
     private void writePageHardware(BufferPage page) throws Exception {
