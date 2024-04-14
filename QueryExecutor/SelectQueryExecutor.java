@@ -17,7 +17,6 @@ import StorageManager.Objects.AttributeSchema;
 import StorageManager.Objects.Catalog;
 import StorageManager.Objects.MessagePrinter;
 import StorageManager.Objects.Record;
-import StorageManager.Objects.Table;
 import StorageManager.Objects.MessagePrinter.MessageType;
 
 public class SelectQueryExecutor implements QueryExecutorInterface {

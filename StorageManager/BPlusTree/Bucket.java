@@ -1,6 +1,5 @@
 package StorageManager.BPlusTree;
 
-import Parser.Token;
 import StorageManager.Objects.Catalog;
 
 import static java.lang.Math.floor;
@@ -8,25 +7,22 @@ import static java.lang.Math.floor;
 public class Bucket {
 
     private int pageNumber;
-
     private int index;
 
-    private Token primaryKey;
-
-    private Bucket nextBucket;
+    private Object primaryKey;
 
     /**
      * Soecial type of page
      * @param pageNumber - corresponding page #
      * @param index - index on the page for the bucket.
      */
-    public Bucket(int pageNumber, int index, Token pk){
+    public Bucket(int pageNumber, int index, Object pk){
         this.pageNumber=pageNumber;
         this.index=index;
         primaryKey = pk;
     }
 
-    public Token getPrimaryKey() {
+    public Object getPrimaryKey() {
         return primaryKey;
     }
 

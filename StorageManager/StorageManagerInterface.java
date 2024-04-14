@@ -2,6 +2,8 @@ package StorageManager;
 
 import java.util.List;
 
+import StorageManager.BPlusTree.BPlusNode;
+import StorageManager.Objects.BufferPage;
 import StorageManager.Objects.Page;
 import StorageManager.Objects.Record;
 
@@ -59,7 +61,7 @@ public interface StorageManagerInterface {
      * @param record        the record to insert
      *
      */
-    public void insertRecord(int tableNumber, Record record) throws Exception;
+    public void insertRecord(int tableNumber, Record record, boolean indexing) throws Exception;
 
     /**
      * Deletes a record from the DB
@@ -70,7 +72,7 @@ public interface StorageManagerInterface {
      * @param tableNumber   the table to delete from
      * @param primaryKey    the value of the primaryKey to search for
      */
-    public Record deleteRecord(int tableNumber, Object primaryKey) throws Exception;
+    public Record deleteRecord(int tableNumber, Object primaryKey, boolean indexing) throws Exception;
 
     /**
      * Update a record in the DB
@@ -85,10 +87,10 @@ public interface StorageManagerInterface {
      * @param primaryKey    value fo the primaryKey to search for
      * @param record        a record with the updated values
      */
-    public void updateRecord(int tableNumber, Record newRecord, Object primaryKey) throws Exception;
-
+    public void updateRecord(int tableNumber, Record newRecord, Object primaryKey, boolean indexing) throws Exception;
 
     public Page getPage(int tableNumber, int pageNumber) throws Exception;
+    public BPlusNode getIndexPage(int tableNumber, int pageNumber) throws Exception;
 
     /**
      * Writes all pages in the buffer to disk

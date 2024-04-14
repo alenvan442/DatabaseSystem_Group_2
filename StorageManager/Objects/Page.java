@@ -9,41 +9,20 @@ import java.util.Map;
 import StorageManager.StorageManagerObjectIntereface;
 import StorageManager.TableSchema;
 
-public class Page implements java.io.Serializable, Comparator<Page>, StorageManagerObjectIntereface {
+public class Page extends BufferPage implements java.io.Serializable, StorageManagerObjectIntereface {
     private int numRecords;
     private List<Record> records;
-    private long priority;
-    private boolean changed;
-    private int tableNumber;
-    private int pageNumber;
 
     public Page(int numRecords, int tableNumber, int pageNumber) {
+        super(tableNumber, pageNumber);
         this.numRecords = numRecords;
-        this.tableNumber = tableNumber;
-        this.pageNumber = pageNumber;
         this.changed = false;
         this.priority = System.currentTimeMillis();
         this.records = new ArrayList<>();
     }
 
     public Page() {
-
-    }
-    /**
-     * Gets the table number that this page is associated with
-     *
-     * @return  The associated table number
-     */
-    public int getTableNumber() {
-        return this.tableNumber;
-    }
-
-    public int getPageNumber() {
-        return this.pageNumber;
-    }
-
-    public void decrementPageNumber() {
-        this.pageNumber--;
+        super(0, 0);
     }
 
     public int getNumRecords() {
@@ -61,30 +40,6 @@ public class Page implements java.io.Serializable, Comparator<Page>, StorageMana
     public void setRecords(List<Record> records) {
         this.records = records;
         this.setNumRecords();
-    }
-
-    /**
-     * Returns whether or not this page has been changed
-     *
-     * @return  bool
-     */
-    public boolean isChanged() {
-        return this.changed;
-    }
-
-    /**
-     * Sets the value that indicates that this page has been changed
-     */
-    public void setChanged() {
-        this.changed = true;
-    }
-
-    /**
-     * Sets the priority of this page
-     * This is used in ordering the buffer for LRU
-     */
-    public void setPriority() {
-        this.priority = System.currentTimeMillis();
     }
 
     /**
@@ -111,6 +66,27 @@ public class Page implements java.io.Serializable, Comparator<Page>, StorageMana
             // sort
             this.records.sort(comparator);
 
+            this.setNumRecords();
+            this.changed = true;
+            this.setPriority();
+            return true;
+        }
+    }
+
+    /**
+     * Adds a record to the page at a specific index
+     * @param record    The record to be inserted
+     * @param index     The index to insert at
+     * @return          true: insert success
+     *                  false: page is full
+     */
+    public boolean addNewRecord(Record record, int index) {
+        Catalog catalog = Catalog.getCatalog();
+        // check if record can fit in this page.
+        if ((catalog.getPageSize() - this.computeSize()) < record.computeSize()) {
+            return false;
+        } else {
+            this.records.add(index, record);
             this.setNumRecords();
             this.changed = true;
             this.setPriority();
@@ -182,21 +158,6 @@ public class Page implements java.io.Serializable, Comparator<Page>, StorageMana
             Record record = new Record(new ArrayList<>());
             record.readFromHardware(tableAccessFile, tableSchema);
             this.records.add(record);
-        }
-    }
-
-    /**
-     * Compare function used for the priority queue
-     * of the buffer to determine which page is LRU
-     */
-    @Override
-    public int compare(Page o1, Page o2) {
-        if (o1.priority > o2.priority) {
-            return 1;
-        } else if (o1.priority == o2.priority) {
-            return 0;
-        } else {
-            return -1;
         }
     }
 

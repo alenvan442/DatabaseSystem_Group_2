@@ -4,7 +4,10 @@ import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.List;
 
+import Parser.Type;
 import StorageManager.Objects.AttributeSchema;
+import StorageManager.Objects.MessagePrinter;
+import StorageManager.Objects.MessagePrinter.MessageType;
 import StorageManager.Objects.SchemaInterface;
 
 public class TableSchema implements SchemaInterface {
@@ -14,26 +17,29 @@ public class TableSchema implements SchemaInterface {
   private int numPages;
   private List<Integer> pageOrder;
   private int numRecords;
-  private int root;
+  private int indexRootNumber;
+  private int numIndexPages;
 
   public TableSchema(String tableName, int tableNumber, int root) {
     this.tableName = tableName;
     this.tableNumber = tableNumber;
     this.numPages = 0;
+    this.numIndexPages = 0;
     this.pageOrder = new ArrayList<Integer>();
     this.numRecords = 0;
     this.attributes = new ArrayList<AttributeSchema>();
-    this.root = root;
+    this.indexRootNumber = -1; // initialize to -1 in the case that there is no current B+ tree
   }
 
   public TableSchema(String tableName, int root) {
     this.tableName = tableName;
     this.tableNumber = this.hashName();
     this.numPages = 0;
+    this.numIndexPages = 0;
     this.pageOrder = new ArrayList<Integer>();
     this.numRecords = 0;
     this.attributes = new ArrayList<AttributeSchema>();
-    this.root = root;
+    this.indexRootNumber = -1; // initialize to -1 in the case that there is no current B+ tree
   }
 
   public int getTableNumber() {
@@ -44,12 +50,10 @@ public class TableSchema implements SchemaInterface {
     return tableName;
   }
 
-
   public void setTableName(String tableName) {
     this.tableName = tableName;
     this.tableNumber = this.hashName();
   }
-
 
   public List<AttributeSchema> getAttributes() {
     return attributes;
@@ -72,9 +76,20 @@ public class TableSchema implements SchemaInterface {
     return numPages;
   }
 
-
   public void setNumPages() {
     this.numPages = this.pageOrder.size();
+  }
+
+  public int getNumIndexPages() {
+    return this.numIndexPages;
+  }
+
+  public void incrementNumIndexPages() {
+    this.numIndexPages++;
+  }
+
+  public void decrementNumIndexPages() {
+    this.numIndexPages--;
   }
 
   public void incrementNumRecords() {
@@ -83,6 +98,14 @@ public class TableSchema implements SchemaInterface {
 
   public void decrementNumRecords() {
     this.numRecords -= 1;
+  }
+
+  public void setRoot(int rootNumber) {
+    this.indexRootNumber = rootNumber;
+  }
+
+  public int getRootNumber() {
+    return this.indexRootNumber;
   }
 
   public List<Integer> getPageOrder() {
@@ -125,6 +148,31 @@ public class TableSchema implements SchemaInterface {
     return numRecords;
   }
 
+  public Type getAttributeType(int index) throws Exception {
+    String type = this.attributes.get(index).getDataType().toLowerCase();
+    Type pkType = null;
+    switch (type) {
+      case "integer":
+          pkType = Type.INTEGER;
+          break;
+      case "double":
+          pkType = Type.DOUBLE;
+          break;
+      case "boolean":
+          pkType = Type.BOOLEAN;
+          break;
+      default:
+          if (type.contains("char")) {
+              pkType = Type.STRING;
+          } else {
+              MessagePrinter.printMessage(MessageType.ERROR, String.format("Invalid data type: %s", type));
+          }
+          // should never reach the break because of the error message, just in case, test this
+          break;
+    }
+    return pkType;
+  }
+
   private int hashName() {
     char[] chars = this.tableName.toCharArray();
     int hash = 0;
@@ -158,6 +206,12 @@ public class TableSchema implements SchemaInterface {
     // Write table number to the catalog file
     catalogAccessFile.writeInt(this.tableNumber);
 
+    // Write the pageNumber of the root of the B+ tree
+    catalogAccessFile.writeInt(this.indexRootNumber);
+
+    // Write number of index pages to the catalog file
+    catalogAccessFile.writeInt(this.numIndexPages);
+
     // Write the number of pages to the catalog file
     catalogAccessFile.writeInt(this.numPages);
 
@@ -187,6 +241,14 @@ public class TableSchema implements SchemaInterface {
    */
   @Override
   public void loadSchema(RandomAccessFile catalogAccessFile) throws Exception {
+    // at this point both table name and table number have already been read
+
+    // Read the pageNumber of the root of the B+ Tree
+    this.indexRootNumber = catalogAccessFile.readInt();
+
+    // Read the number of index pages from the catalog file
+    this.numIndexPages = catalogAccessFile.readInt();
+
     // Read the number of pages from the catalog file
     this.numPages = catalogAccessFile.readInt();
 
