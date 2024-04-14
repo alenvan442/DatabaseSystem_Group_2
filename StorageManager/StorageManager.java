@@ -213,7 +213,7 @@ public class StorageManager implements StorageManagerInterface {
         return this.getAllRecords(tableNum);
     }
 
-    public void insertRecord(int tableNumber, Record record, boolean indexing) throws Exception {
+    public void insertRecord(int tableNumber, Record record) throws Exception {
         Catalog catalog = Catalog.getCatalog();
         // get tableSchema from the catalog
         TableSchema tableSchema = catalog.getSchema(tableNumber);
@@ -241,7 +241,7 @@ public class StorageManager implements StorageManagerInterface {
             // then add the page to the buffer
             this.addPageToBuffer(_new);
 
-            if (indexing) {
+            if (catalog.isIndexingOn()) {
                 // check if an index file already exists, if not create it, it should never exist at this point
                 // if it does error out saying the database is corrupted
                 if (!indexFile.exists()) {
@@ -254,13 +254,13 @@ public class StorageManager implements StorageManagerInterface {
                     tableSchema.setRoot(1);
                     Bucket bucket = new Bucket(1, 0, record.getValues().get(primaryKeyIndex));
                     root.addBucket(bucket);
-                    
+
                     // then add the page to the buffer
                     this.addPageToBuffer(root);
                 } else {
                     MessagePrinter.printMessage(MessageType.ERROR, "Database is corrupted. Index file found before table file was created.");
                 }
-    
+
                 return;
             }
         } else {
@@ -272,23 +272,23 @@ public class StorageManager implements StorageManagerInterface {
                 tableSchema.incrementNumRecords();
                 // then add the page to the buffer
                 this.addPageToBuffer(_new);
-                if (indexing && tableSchema.getNumIndexPages() == 0) {
+                if (catalog.isIndexingOn() && tableSchema.getNumIndexPages() == 0) {
                     // create a new leaf node and insert the new record into it, this will be the first root node
                     // TODO compute n, currently 0 is the placeholder
                     int n = 0;
                     LeafNode root = new LeafNode(tableNumber, 1, n, -1);
                     tableSchema.incrementNumIndexPages();
                     tableSchema.setRoot(1);
-                    
+
                     // then add the page to the buffer
                     this.addPageToBuffer(root);
                 }
             } else {
 
-                if (indexing) {
+                if (catalog.isIndexingOn()) {
                     // set up while loop with the root as the first to search
                     Object pk = record.getValues().get(primaryKeyIndex);
-                    Type pkType = tableSchema.getAttributeType(primaryKeyIndex);    
+                    Type pkType = tableSchema.getAttributeType(primaryKeyIndex);
 
                     Pair<Integer, Integer> location = new Pair<Integer,Integer>(tableSchema.getRootNumber(), -1);
                     while (location.second == -1) {
@@ -451,10 +451,10 @@ public class StorageManager implements StorageManagerInterface {
 
         try {
             insertQueryExcutor.validateRecord(newRecord);
-            this.insertRecord(tableNumber, newRecord, indexing);
+            this.insertRecord(tableNumber, newRecord);
         } catch (Exception e) {
             // insert failed, restore the deleted record
-            this.insertRecord(tableNumber, oldRecord, indexing);
+            this.insertRecord(tableNumber, oldRecord);
             System.err.println(e.getMessage());
             throw new Exception();
         }
@@ -551,7 +551,7 @@ public class StorageManager implements StorageManagerInterface {
         catalog.createTable(newSchema);
 
         for (Record record : newRecords) {
-            this.insertRecord(tableNumber, record, indexing);
+            this.insertRecord(tableNumber, record);
         }
 
         return null;
@@ -617,6 +617,8 @@ public class StorageManager implements StorageManagerInterface {
 
     private void readIndexPageHardware(int tableNumber, int pageNumber) throws Exception {
         // TODO
+        String file
+
     }
 
     private void writePageHardware(BufferPage page) throws Exception {

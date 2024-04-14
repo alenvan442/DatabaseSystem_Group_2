@@ -20,7 +20,7 @@ public class TableSchema implements SchemaInterface {
   private int indexRootNumber;
   private int numIndexPages;
 
-  public TableSchema(String tableName, int tableNumber, int root) {
+  public TableSchema(String tableName, int tableNumber) {
     this.tableName = tableName;
     this.tableNumber = tableNumber;
     this.numPages = 0;
@@ -31,7 +31,7 @@ public class TableSchema implements SchemaInterface {
     this.indexRootNumber = -1; // initialize to -1 in the case that there is no current B+ tree
   }
 
-  public TableSchema(String tableName, int root) {
+  public TableSchema(String tableName) {
     this.tableName = tableName;
     this.tableNumber = this.hashName();
     this.numPages = 0;
