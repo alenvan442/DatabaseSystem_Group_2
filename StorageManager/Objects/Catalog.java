@@ -131,7 +131,7 @@ public class Catalog implements java.io.Serializable, CatalogInterface {
      */
     @Override
     public void alterTableSchema(int tableNumber,String op, String attrName, String attrType, Object val,String isDeflt ,boolean notNull,
-                                boolean pKey, boolean unique, boolean indexing) throws Exception {
+                                boolean pKey, boolean unique) throws Exception {
         TableSchema table = schemas.get(tableNumber);
 
         if(isDeflt.equals("true")) {

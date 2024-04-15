@@ -46,21 +46,21 @@ public class InternalNode extends BPlusNode {
         for (int i = 0; i < searchKeys.size(); i++) {
             Object searchVal = searchKeys.get(i);
             switch (type) {
-                case Type.INTEGER:
+                case INTEGER:
                     if ((int) searchVal > (int) value) { //I LOVE TYPECASTING RAHHHH
                         return pointers.get(i);
                     }
-                case Type.DOUBLE:
+                case DOUBLE:
                     if ((double) searchVal > (double) value) { //I LOVE TYPECASTING RAHHHH
                         return pointers.get(i);
                     }
-                case Type.STRING:
+                case STRING:
                     String searchString = (String) searchVal;
                     String inString = (String) value;
                     if (searchString.compareTo(inString) > 0) { //I LOVE TYPECASTING RAHHHH
                         return pointers.get(i);
                     }
-                case Type.BOOLEAN: //this seems really silly but may as well, defining false < true
+                case BOOLEAN: //this seems really silly but may as well, defining false < true
                     if ((boolean) searchVal){ //if true, the value in can go before regardless of if it's true or false.
                         return pointers.get(i);
                     }

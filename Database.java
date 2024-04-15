@@ -30,14 +30,19 @@ public class Database {
             System.out.println("Database found..." + "\n" +
             "Restarting the database...");
             if (schemaFile.length() == 0) {
-                Catalog.createCatalog(dbDirectory.getAbsolutePath(), schemaFile.getAbsolutePath(), pageSize, bufferSize);
+                Catalog.createCatalog(dbDirectory.getAbsolutePath(), schemaFile.getAbsolutePath(), pageSize, bufferSize, indexing);
             } else {
                 System.out.println("\tIgnoring provided pages size, using stored page size");
-                Catalog.createCatalog(dbDirectory.getAbsolutePath(), schemaFile.getAbsolutePath(), -1, bufferSize);
+                Catalog.createCatalog(dbDirectory.getAbsolutePath(), schemaFile.getAbsolutePath(), -1, bufferSize, true);
             }
             StorageManager.createStorageManager(bufferSize);
             System.out.println("Page Size: " + Catalog.getCatalog().getPageSize());
             System.out.println("Buffer Size: " + bufferSize + "\n");
+            if (Catalog.getCatalog().isIndexingOn()) {
+                System.out.println("Indexing: On");
+            } else {
+                System.out.println("Indexing: Off");
+            }
             System.out.println("Database restarted successfully");
         } else {
             System.out.println("Creating new db at " + dbDirectory.getAbsolutePath());
@@ -45,7 +50,7 @@ public class Database {
             boolean success = tableDirectory.mkdir() && schemaFile.createNewFile();
             if (success){
                 StorageManager.createStorageManager(bufferSize);
-                Catalog.createCatalog(dbDirectory.getAbsolutePath(), schemaFile.getAbsolutePath(), pageSize, bufferSize);
+                Catalog.createCatalog(dbDirectory.getAbsolutePath(), schemaFile.getAbsolutePath(), pageSize, bufferSize, indexing);
                 System.out.println("New db created successfully");
                 System.out.println("Page Size: " + pageSize);
                 System.out.println("Buffer Size: " + bufferSize);

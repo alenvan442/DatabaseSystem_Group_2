@@ -36,28 +36,28 @@ public class LeafNode extends BPlusNode{
                 Object pk = buckets.get(i).getPrimaryKey();
                 boolean found = false;
                 switch (type) {
-                    case Type.INTEGER:
+                    case INTEGER:
                         int incoming = (Integer) value;
                         int current = (Integer) pk;
                         if (incoming == current) {
                             found = true;
                         }
                         break;
-                    case Type.DOUBLE:
+                    case DOUBLE:
                         double incomingD = (Double) value;
                         double currentD = (Double) pk;
                         if (incomingD == currentD) {
                             found = true;
                         }
                         break;
-                    case Type.BOOLEAN:
+                    case BOOLEAN:
                         boolean incomingB = (Boolean) value;
                         boolean currentB = (Boolean) pk;
                         if (incomingB == currentB) {
                             found = true;
                         }
                         break;
-                    case Type.STRING:
+                    case STRING:
                         String incomingS = (String) value;
                         String currentS = (String) pk;
                         if (incomingS == currentS) {
