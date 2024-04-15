@@ -8,7 +8,7 @@ public class Main {
       int pageSize =  Integer.parseInt(args[1]);
       int bufferSize = Integer.parseInt(args[2]);
       boolean indexing = Boolean.parseBoolean(args[3]);
-      Database database = new Database(dbLocation, pageSize, bufferSize);
+      Database database = new Database(dbLocation, pageSize, bufferSize, indexing);
       try {
         database.start();
       } catch (Exception e) {
