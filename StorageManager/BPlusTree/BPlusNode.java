@@ -6,12 +6,14 @@ import StorageManager.Objects.Utility.Pair;
 
 public abstract class BPlusNode extends BufferPage{
     protected int n;
+    protected boolean type; // 0/false for internal, 1/true for leaf
     protected int parent; // this wil be the pageNumber of the parent
 
-    public BPlusNode(int tableNumber, int pageNumber, int n, int parent) {
+    public BPlusNode(int tableNumber, int pageNumber, int n, int parent, boolean type) {
         super(tableNumber, pageNumber);
         this.n = n;
         this.parent = parent;
+        this.type = type;
     }
 
     /**

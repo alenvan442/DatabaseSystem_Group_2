@@ -19,7 +19,7 @@ public class InternalNode extends BPlusNode {
      * @param parent        Index of the parent node
      */
     public InternalNode(int tableNumber, int pageNumber, int n, int parent){
-        super(tableNumber, pageNumber, n, parent);
+        super(tableNumber, pageNumber, n, parent, false);
         this.searchKeys = new ArrayList<>();
         this.pointers = new ArrayList<>();
     }
