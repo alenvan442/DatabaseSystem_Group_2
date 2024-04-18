@@ -49,8 +49,9 @@ public class Page extends BufferPage implements java.io.Serializable, StorageMan
      *
      * @return          true: insert success
      *                  false: page is full
+     * @throws Exception
      */
-    public boolean addNewRecord(Record record) {
+    public boolean addNewRecord(Record record) throws Exception {
         Catalog catalog = Catalog.getCatalog();
         // check if record can fit in this page.
         if ((catalog.getPageSize() - this.computeSize()) < record.computeSize()) {
@@ -79,8 +80,9 @@ public class Page extends BufferPage implements java.io.Serializable, StorageMan
      * @param index     The index to insert at
      * @return          true: insert success
      *                  false: page is full
+     * @throws Exception
      */
-    public boolean addNewRecord(Record record, int index) {
+    public boolean addNewRecord(Record record, int index) throws Exception {
         Catalog catalog = Catalog.getCatalog();
         // check if record can fit in this page.
         if ((catalog.getPageSize() - this.computeSize()) < record.computeSize()) {
@@ -132,9 +134,10 @@ public class Page extends BufferPage implements java.io.Serializable, StorageMan
      * returns the number of bytes of space is left in this page
      *
      * @return  int - number of bytes of space left
+     * @throws Exception
      */
     @Override
-    public int computeSize() {
+    public int computeSize() throws Exception {
         // Page: numRecord, PageNumber, records..
         int size = Integer.BYTES * 2;
         for (Record record: this.records) {
