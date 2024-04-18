@@ -46,5 +46,6 @@ public class Bucket {
 
     return floor (pageSize / (Integer.BYTES + Integer.BYTES) ); //I don't think we can be certain it's integer?
     }
+    // dataType's Bytes + Integer.BYTES + Integer.BYTES
 
 }
