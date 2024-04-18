@@ -8,6 +8,6 @@ public interface StorageManagerObjectIntereface {
 
   public void readFromHardware(RandomAccessFile tableAccessFile, TableSchema tableSchema) throws Exception;
 
-  public int computeSize() throws Exception;
+  public int computeSize();
 
 }

@@ -137,7 +137,7 @@ public class Page extends BufferPage implements java.io.Serializable, StorageMan
      * @throws Exception
      */
     @Override
-    public int computeSize() throws Exception {
+    public int computeSize() {
         // Page: numRecord, PageNumber, records..
         int size = Integer.BYTES * 2;
         for (Record record: this.records) {

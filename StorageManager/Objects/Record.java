@@ -102,13 +102,13 @@ public class Record implements java.io.Serializable, StorageManagerObjectInteref
      * @throws Exception
      */
     @Override
-    public int computeSize() throws Exception {
+    public int computeSize() {
         int size = 0;
         for (Object value: this.values) {
             if (value instanceof Integer) {
                 size += Integer.BYTES;
             } else if (value instanceof String) {
-                size += (((String) value).getBytes("UTF-8").length * 2) + Short.BYTES;
+                size += ((String) value).length() + Short.BYTES;
             } else if (value instanceof Boolean) {
                 size += 1;
             } else if (value instanceof Double) {
