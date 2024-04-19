@@ -2,6 +2,7 @@ package StorageManager.Objects;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -98,6 +99,7 @@ public class Record implements java.io.Serializable, StorageManagerObjectInteref
      * Returns the size of this record in number of bytes
      *
      * @return  the number of bytes this record is
+     * @throws Exception
      */
     @Override
     public int computeSize() {
@@ -106,7 +108,7 @@ public class Record implements java.io.Serializable, StorageManagerObjectInteref
             if (value instanceof Integer) {
                 size += Integer.BYTES;
             } else if (value instanceof String) {
-                size += ((String) value).length();
+                size += ((String) value).length() + Short.BYTES;
             } else if (value instanceof Boolean) {
                 size += 1;
             } else if (value instanceof Double) {
