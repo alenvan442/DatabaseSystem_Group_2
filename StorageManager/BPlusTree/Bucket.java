@@ -1,6 +1,9 @@
 package StorageManager.BPlusTree;
 
+import Parser.Type;
 import StorageManager.Objects.Catalog;
+import StorageManager.Objects.MessagePrinter;
+
 
 import static java.lang.Math.floor;
 
@@ -38,15 +41,32 @@ public class Bucket {
      * calculates the size of the bucket
      * @return - size of the bucket
      */
-    public double calculateBucketSize(){
+    public double calculateBucketSize(Type type) throws Exception {
         Catalog catalog = Catalog.getCatalog();
         //int floor;
         int pageSize;
         pageSize = catalog.getPageSize();
-
-    return floor (pageSize / (Integer.BYTES + Integer.BYTES) ); //I don't think we can be certain it's integer?
+        int bytes=0;
+        switch (type) {
+            case INTEGER:
+                bytes=Integer.BYTES;
+                break;
+            case DOUBLE:
+                bytes=Double.BYTES;
+                break;
+            case BOOLEAN:
+                bytes=1;
+                break;
+            case STRING:
+                String holder = (String) primaryKey;
+                bytes = holder.length();
+                break;
+            default:
+                MessagePrinter.printMessage(MessagePrinter.MessageType.ERROR, "Error in data type");
+                break;
+        }
+    return bytes+Integer.BYTES+Integer.BYTES;
     }
-    // dataType's Bytes + Integer.BYTES + Integer.BYTES
-    // For String: convert it to a byte array with UTF8 encoding, take the length and multiply by 2
+
 
 }
