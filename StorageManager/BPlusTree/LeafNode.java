@@ -9,10 +9,11 @@ import StorageManager.Objects.Utility.Pair;
 
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
+import java.util.List;
 
 public class LeafNode extends BPlusNode{
     ArrayList<Bucket> buckets;
-    LeafNode nextLeaf;
+    Pair<Integer, Integer> nextLeaf;
 
     int tableNumber;
     public LeafNode(int tableNumber, int pageNumber, int n, int parent) {
@@ -20,12 +21,35 @@ public class LeafNode extends BPlusNode{
         buckets = new ArrayList<>();
     }
 
-    public void addBucket(Bucket b){
+    public ArrayList<Bucket> getSK() {
+        return this.buckets;
+    }
+
+    public void setSK(List<Bucket> newbuckets) {
+        this.buckets.clear();
+        this.buckets.addAll(newbuckets);
+        this.setChanged();
+    }
+
+    public int addBucket(Bucket b){
         buckets.add(b);
+        this.setChanged();
+        // TODO insert into the correct spot and return the idnex it was inserted into
+        return 0;
     }
 
     public void assignNextLeaf(LeafNode ln){
-        nextLeaf=ln;
+        nextLeaf = new Pair<Integer,Integer>(ln.pageNumber, -1);
+        this.setChanged();
+    }
+
+    public void assignNextLeaf(int ln){
+        nextLeaf = new Pair<Integer,Integer>(ln, -1);
+        this.setChanged();
+    }
+
+    public Pair<Integer, Integer> getNextLeaf() {
+        return this.nextLeaf;
     }
 
 
@@ -83,6 +107,8 @@ public class LeafNode extends BPlusNode{
 
     @Override
     public Pair<Integer, Integer> insert(Object value, Type type) throws Exception {
+        // TODO insert the search key and the pointer
+        // TODO return the new pointer ex. if incoming is less than something, then the pointer should be the same page, but one less index
         for(int i = 0; i < buckets.size(); i++){
             try {
                 Object pk = buckets.get(i).getPrimaryKey();
@@ -159,6 +185,18 @@ public class LeafNode extends BPlusNode{
     public void writeToHardware(RandomAccessFile tableAccessFile) throws Exception {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'writeToHardware'");
+    }
+
+    @Override
+    public boolean underfull() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'underfull'");
+    }
+
+    @Override
+    public boolean overfull() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'overfull'");
     }
 
 

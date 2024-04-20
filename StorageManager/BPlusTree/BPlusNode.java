@@ -1,5 +1,7 @@
 package StorageManager.BPlusTree;
 
+import java.util.ArrayList;
+
 import Parser.Type;
 import StorageManager.Objects.BufferPage;
 import StorageManager.Objects.Utility.Pair;
@@ -15,6 +17,27 @@ public abstract class BPlusNode extends BufferPage{
         this.parent = parent;
         this.type = type;
     }
+
+    public int getParent() {
+        return this.parent;
+    }
+
+    public void setParent(int parent) {
+        this.parent = parent;
+        this.setChanged();
+    }
+
+    /**
+     * 
+     * @return
+     */
+    public abstract boolean underfull();
+
+    /**
+     * 
+     * @return
+     */
+    public abstract boolean overfull();
 
     /**
      * Will search the node to find and return the location of a specific search key

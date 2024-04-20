@@ -6,6 +6,7 @@ import StorageManager.Objects.Utility.Pair;
 
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
+import java.util.List;
 
 public class InternalNode extends BPlusNode {
     private ArrayList<Object> searchKeys;
@@ -24,13 +25,39 @@ public class InternalNode extends BPlusNode {
         this.pointers = new ArrayList<>();
     }
 
-    public void addSearchKey(Object val) {
-        // TODO ensure the node is sorted
-        this.searchKeys.add(val);
+    public ArrayList<Pair<Integer, Integer>> getPointers() {
+        return this.pointers;
     }
 
-    public void setParent(int parent) {
-        this.parent = parent;
+    public void setPointers(List<Pair<Integer, Integer>> newPointers) {
+        this.pointers.clear();
+        this.pointers.addAll(newPointers);
+        this.setChanged();
+    }
+
+    public ArrayList<Object> getSK() {
+        return this.searchKeys;
+    }
+
+    public void setSK(List<Object> newSK) {
+        this.searchKeys.clear();
+        this.searchKeys.addAll(newSK);
+        this.setChanged();
+    }
+
+    /**
+     * Insert a new search key. This is used during the split algorithm for overfull conflicts
+     * @param val       The search key to append
+     * @param pointer   The pointer for the new node that was created.
+     *                  this node will consist of the second half of the search keys
+     */
+    public void addSearchKey(Object val, Pair<Integer, Integer> pointer) {
+        // TODO ensure the node is sorted and insert the pointer at the +1 index.
+        // we insert the pointer into the +1 index since the same index will still hold the pointer to the old node
+        int i = 0;
+        this.searchKeys.add(i, val);
+        this.pointers.add(i+1, pointer);
+        this.setChanged();
     }
 
     /**
@@ -87,6 +114,18 @@ public class InternalNode extends BPlusNode {
     public void writeToHardware(RandomAccessFile tableAccessFile) throws Exception {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'writeToHardware'");
+    }
+
+    @Override
+    public boolean underfull() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'underfull'");
+    }
+
+    @Override
+    public boolean overfull() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'overfull'");
     }
 
 }

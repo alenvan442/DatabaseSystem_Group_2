@@ -87,20 +87,24 @@ public class TableSchema implements SchemaInterface {
     return this.numIndexPages;
   }
 
-  public void incrementNumIndexPages() {
+  public int incrementNumIndexPages() {
     this.numIndexPages++;
+    return this.numIndexPages;
   }
 
-  public void decrementNumIndexPages() {
+  public int decrementNumIndexPages() {
     this.numIndexPages--;
+    return this.numIndexPages;
   }
 
-  public void incrementNumRecords() {
+  public int incrementNumRecords() {
     this.numRecords += 1;
+    return this.numRecords;
   }
 
-  public void decrementNumRecords() {
+  public int decrementNumRecords() {
     this.numRecords -= 1;
+    return this.numRecords;
   }
 
   public void setRoot(int rootNumber) {
