@@ -287,89 +287,7 @@ public class StorageManager implements StorageManagerInterface {
             } else {
 
                 if (catalog.isIndexingOn()) {
-                    // set up while loop with the root as the first to search
-                    Object pk = record.getValues().get(primaryKeyIndex);
-                    Type pkType = tableSchema.getAttributeType(primaryKeyIndex);
-
-                    Pair<Integer, Integer> location = new Pair<Integer,Integer>(tableSchema.getRootNumber(), -1);
-                    BPlusNode node = null;
-                    
-                    while (location.second == -1) {
-                        // read in node
-                        node = this.getIndexPage(tableNumber, location.first);
-                        location = node.insert(pk, pkType);
-                    }
-
-                    while (node.overfull()) {
-                        // get array in node
-                        InternalNode parent = null;
-                        if (node.getParent() == -1) {
-                            // this is the root node that is overfull
-                            // create new parent node which will be the new root
-                            parent = new InternalNode(tableNumber, tableSchema.incrementNumIndexPages(), n, -1);
-                            node.setParent(parent.getPageNumber());
-                            tableSchema.setRoot(parent.getPageNumber());
-                        } else {
-                            parent = (InternalNode)this.getIndexPage(tableNumber, node.getParent()); // only internals can be a parent
-                        }
-
-                        if (node instanceof InternalNode) {
-                            InternalNode internal = (InternalNode)node;
-                            ArrayList<Object> searchKeys = internal.getSK(); 
-                            ArrayList<Pair<Integer, Integer>> pointers = internal.getPointers();
-
-                            // split search keys into two
-                            int skNum = searchKeys.size();
-                            List<Object> firstSK = searchKeys.subList(0, skNum/2);
-                            Object goingUp = searchKeys.get(skNum/2);
-                            List<Object> secondSK = searchKeys.subList(skNum/2+1, skNum);
-
-                            // split pointers into two
-                            int pointNum = pointers.size();
-                            int splitIndex = Math.ceilDiv(pointNum, 2);
-                            List<Pair<Integer, Integer>> firstPointers = pointers.subList(0, splitIndex);
-                            // no need for a going up for the pointers
-                            List<Pair<Integer, Integer>> secondPointers = pointers.subList(splitIndex, pointNum);
-                            
-                            InternalNode newNode = new InternalNode(tableNumber, tableSchema.incrementNumIndexPages(), n, parent.getPageNumber());
-                            
-                            // set the searck keys and pointers for the two child nodes
-                            internal.setSK(firstSK);
-                            internal.setPointers(firstPointers);
-                            newNode.setSK(secondSK);
-                            newNode.setPointers(secondPointers);
-            
-                            // append new search key to parent
-                            parent.addSearchKey(goingUp, new Pair<Integer,Integer>(newNode.getPageNumber(), -1)); 
-                            
-                            this.addPageToBuffer(newNode);
-                        } else if (node instanceof LeafNode) {
-                            LeafNode leaf = (LeafNode)node;
-                            ArrayList<Bucket> sks = leaf.getSK();
-                            
-                            // split into two
-                            List<Bucket> first = sks.subList(0, sks.size()/2);
-                            List<Bucket> second = sks.subList(sks.size()/2, sks.size());
-
-                            // get next search key
-                            Object goingUp = second.get(0).getPrimaryKey();
-
-                            // create new node
-                            LeafNode newNode = new LeafNode(tableNumber, tableSchema.incrementNumIndexPages(), n, parent.getPageNumber());
-                            leaf.setSK(first);
-                            newNode.setSK(second);
-                            newNode.assignNextLeaf(leaf.getNextLeaf().first);
-                            leaf.assignNextLeaf(newNode.getPageNumber());
-
-                            // append new search key to parent
-                            parent.addSearchKey(goingUp, new Pair<Integer,Integer>(newNode.getPageNumber(), -1)); 
-
-                            this.addPageToBuffer(newNode);
-                        }
-                        // get new parent and node
-                        // repeat
-                        node = parent;
-                    }
+                    Pair<Integer, Integer> location = this.insertIndex(record, tableNumber, n, tableSchema);
 
                     // get page and insert
                     Page page = this.getPage(tableNumber, location.first);
@@ -406,6 +324,95 @@ public class StorageManager implements StorageManagerInterface {
                 }
             }
         }
+    }
+
+    private Pair<Integer, Integer> insertIndex(Record record, int tableNumber, int n, TableSchema tableSchema) throws Exception {
+        // set up while loop with the root as the first to search
+        int primaryKeyIndex = tableSchema.getPrimaryIndex();
+        Object pk = record.getValues().get(primaryKeyIndex);
+        Type pkType = tableSchema.getAttributeType(primaryKeyIndex);
+
+        Pair<Integer, Integer> location = new Pair<Integer,Integer>(tableSchema.getRootNumber(), -1);
+        BPlusNode node = null;
+        
+        while (location.second == -1) {
+            // read in node
+            node = this.getIndexPage(tableNumber, location.first);
+            location = node.insert(pk, pkType);
+        }
+
+        while (node.overfull()) {
+            // get array in node
+            InternalNode parent = null;
+            if (node.getParent() == -1) {
+                // this is the root node that is overfull
+                // create new parent node which will be the new root
+                parent = new InternalNode(tableNumber, tableSchema.incrementNumIndexPages(), n, -1);
+                node.setParent(parent.getPageNumber());
+                tableSchema.setRoot(parent.getPageNumber());
+            } else {
+                parent = (InternalNode)this.getIndexPage(tableNumber, node.getParent()); // only internals can be a parent
+            }
+
+            if (node instanceof InternalNode) {
+                InternalNode internal = (InternalNode)node;
+                ArrayList<Object> searchKeys = internal.getSK(); 
+                ArrayList<Pair<Integer, Integer>> pointers = internal.getPointers();
+
+                // split search keys into two
+                int skNum = searchKeys.size();
+                List<Object> firstSK = searchKeys.subList(0, skNum/2);
+                Object goingUp = searchKeys.get(skNum/2);
+                List<Object> secondSK = searchKeys.subList(skNum/2+1, skNum);
+
+                // split pointers into two
+                int pointNum = pointers.size();
+                int splitIndex = Math.ceilDiv(pointNum, 2);
+                List<Pair<Integer, Integer>> firstPointers = pointers.subList(0, splitIndex);
+                // no need for a going up for the pointers
+                List<Pair<Integer, Integer>> secondPointers = pointers.subList(splitIndex, pointNum);
+                
+                InternalNode newNode = new InternalNode(tableNumber, tableSchema.incrementNumIndexPages(), n, parent.getPageNumber());
+                
+                // set the searck keys and pointers for the two child nodes
+                internal.setSK(firstSK);
+                internal.setPointers(firstPointers);
+                newNode.setSK(secondSK);
+                newNode.setPointers(secondPointers);
+
+                // append new search key to parent
+                parent.addSearchKey(goingUp, new Pair<Integer,Integer>(newNode.getPageNumber(), -1)); 
+                
+                this.addPageToBuffer(newNode);
+            } else if (node instanceof LeafNode) {
+                LeafNode leaf = (LeafNode)node;
+                ArrayList<Bucket> sks = leaf.getSK();
+                
+                // split into two
+                List<Bucket> first = sks.subList(0, sks.size()/2);
+                List<Bucket> second = sks.subList(sks.size()/2, sks.size());
+
+                // get next search key
+                Object goingUp = second.get(0).getPrimaryKey();
+
+                // create new node
+                LeafNode newNode = new LeafNode(tableNumber, tableSchema.incrementNumIndexPages(), n, parent.getPageNumber());
+                leaf.setSK(first);
+                newNode.setSK(second);
+                newNode.assignNextLeaf(leaf.getNextLeaf().first);
+                leaf.assignNextLeaf(newNode.getPageNumber());
+
+                // append new search key to parent
+                parent.addSearchKey(goingUp, new Pair<Integer,Integer>(newNode.getPageNumber(), -1)); 
+
+                this.addPageToBuffer(newNode);
+            }
+            // get new parent and node
+            // repeat
+            node = parent;
+        }
+
+        return location;
     }
 
     private Pair<Page, Record> deleteHelper(TableSchema schema, Object primaryKey) throws Exception {
