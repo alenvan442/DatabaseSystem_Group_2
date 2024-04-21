@@ -787,7 +787,20 @@ public class StorageManager implements StorageManagerInterface {
     }
 
     private void readIndexPageHardware(int tableNumber, int pageNumber) throws Exception {
+        Catalog catalog = Catalog.getCatalog();
+        TableSchema tableSchema = catalog.getSchema(tableNumber);
+        String tableFilePath = this.getTablePath(tableNumber);
+        File tableFile = new File(tableFilePath);
+        RandomAccessFile tableAccessFile = new RandomAccessFile(tableFile, "r");
+        int number = pageNumber - 1;
+
+        tableAccessFile.seek(Integer.BYTES + (catalog.getPageSize() * number));
+        int numIndex = tableAccessFile.readInt();
+        int numIndexPage = tableAccessFile.readInt();
+        Page page = new Page(numIndex, tableNumber, numIndexPage);
+        page.readFromHardware(tableAccessFile,tableSchema);
         // TODO
+        tableAccessFile.close();
     }
 
     private void writePageHardware(BufferPage page) throws Exception {
