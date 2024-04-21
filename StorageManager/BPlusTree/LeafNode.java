@@ -59,39 +59,10 @@ public class LeafNode extends BPlusNode{
             try {
                 Object pk = buckets.get(i).getPrimaryKey();
                 boolean found = false;
-                switch (type) {
-                    case INTEGER:
-                        int incoming = (Integer) value;
-                        int current = (Integer) pk;
-                        if (incoming == current) {
-                            found = true;
-                        }
-                        break;
-                    case DOUBLE:
-                        double incomingD = (Double) value;
-                        double currentD = (Double) pk;
-                        if (incomingD == currentD) {
-                            found = true;
-                        }
-                        break;
-                    case BOOLEAN:
-                        boolean incomingB = (Boolean) value;
-                        boolean currentB = (Boolean) pk;
-                        if (incomingB == currentB) {
-                            found = true;
-                        }
-                        break;
-                    case STRING:
-                        String incomingS = (String) value;
-                        String currentS = (String) pk;
-                        if (incomingS.equals(currentS)) {
-                            found = true;
-                        }
-                        break;
-                    default:
-                        MessagePrinter.printMessage(MessagePrinter.MessageType.ERROR, "Error in data type");
-                        break;
+                if (this.compareKey(pk, value, type) == 0) {
+                    found = true;
                 }
+
                 if (found) {
                     //BELONGS HERE
                     Bucket obtained = buckets.get(i);
@@ -113,55 +84,13 @@ public class LeafNode extends BPlusNode{
             try {
                 Object pk = buckets.get(i).getPrimaryKey();
                 boolean found = false;
-                switch (type) {
-                    case INTEGER:
-                        int incoming = (Integer) value;
-                        int current = (Integer) pk;
-                        if (incoming < current) {
-                            found = true;
-                        }else if(incoming == current){
-                            throw new Exception("PrimaryKey is already in db");
-                        }
-                        break;
-                    case DOUBLE:
-                        double incomingD = (Double) value;
-                        double currentD = (Double) pk;
-                        if (incomingD < currentD) {
-                            found = true;
-                        }else if(incomingD == currentD){
-                            throw new Exception("PrimaryKey is already in db");
-                        }
-                        break;
-                    case BOOLEAN:
-                        boolean incomingB = (Boolean) value;
-                        boolean currentB = (Boolean) pk;
-                        if(incomingB==currentB){
-                            throw new Exception("PrimaryKey is already in db");
-                        }
-                        //TODO: fix the comparison
-
-                        /*
-                        if (incomingB.compareTo(currentB)) {
-                            found = true;
-                        }else if(incomingB == currentB){
-                            throw new Exception("PrimaryKey is already in db");
-                        }
-                         */
-                        break;
-                    case STRING:
-                        String incomingS = (String) value;
-                        String currentS = (String) pk;
-                        //TODO: String Comparisons
-                        if (incomingS.equals(currentS)) {
-                            found = true;
-                        }else if(incomingS == currentS){
-                            throw new Exception("PrimaryKey is already in db");
-                        }
-                        break;
-                    default:
-                        MessagePrinter.printMessage(MessagePrinter.MessageType.ERROR, "Error in data type");
-                        break;
+                int result = this.compareKey(pk, value, type);
+                if (result == 0) {
+                    throw new Exception("PrimaryKey is already in db");
+                } else if (result < 0) {
+                    found = true;
                 }
+             
                 if (found) {
                     //BELONGS HERE
                     Bucket obtained = buckets.get(i);
@@ -197,6 +126,51 @@ public class LeafNode extends BPlusNode{
     public boolean overfull() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'overfull'");
+    }
+
+    @Override
+    public boolean willOverfull(int count) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'willOverfull'");
+    }
+
+    @Override
+    public boolean willUnderfull() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'willUnderfull'");
+    }
+
+    @Override
+    public void removeSearchKey(int index) {
+        this.buckets.remove(index);
+        this.setChanged();
+    }
+
+    @Override
+    public void removeSearchKey(int pageNum, boolean less) throws Exception {
+        int removeIndex = -1;
+        for (int i = 0; i < this.buckets.size(); i++) {
+            if (this.buckets.get(i).getPageNumber() == pageNum) {
+                removeIndex = i;
+            }
+        }
+
+        if (removeIndex == -1) {
+            MessagePrinter.printMessage(MessageType.ERROR, "This should not happen: RemoveSearchKeyLeafNode");
+            return;
+        }
+
+        // less variable is disregarded when dealing with leaf nodes
+        this.buckets.remove(removeIndex);
+        
+        this.setChanged();
+    }
+
+    @Override
+    public void clear() {
+        this.buckets.clear();
+        this.nextLeaf = null;
+        this.setChanged();
     }
 
 

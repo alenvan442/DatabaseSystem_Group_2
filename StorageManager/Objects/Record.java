@@ -87,7 +87,7 @@ public class Record implements java.io.Serializable, StorageManagerObjectInteref
         } else if (thisKey instanceof Boolean) {
             boolean thisBool = (Boolean) thisKey;
             boolean otherBool = (Boolean) otherKey;
-            return Boolean.compare(otherBool, thisBool);
+            return Boolean.compare(thisBool, otherBool);
         } else if (thisKey instanceof Double) {
             return Double.compare((Double) thisKey, (Double) otherKey);
         } else {

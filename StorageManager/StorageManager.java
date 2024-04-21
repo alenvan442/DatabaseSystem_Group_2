@@ -2,6 +2,7 @@ package StorageManager;
 
 import java.io.File;
 import java.io.RandomAccessFile;
+import java.lang.management.MemoryType;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.PriorityQueue;
@@ -494,7 +495,7 @@ public class StorageManager implements StorageManagerInterface {
         Pair<Page, Record> deletedPair = null;
 
         if (catalog.isIndexingOn()) {
-            deletedPair = deleteIndex(tableNumber, primaryKey);
+            deletedPair = deleteIndex(tableNumber, primaryKey, schema);
         } else {
             deletedPair = this.deleteHelper(schema, primaryKey);
         }
@@ -507,7 +508,8 @@ public class StorageManager implements StorageManagerInterface {
         return deletedRecord;
     }
 
-    private Pair<Page, Record> deleteIndex(int tableNumber, Object primaryKey) throws Exception {
+    private Pair<Page, Record> deleteIndex(int tableNumber, Object primaryKey, TableSchema tableSchema) throws Exception {
+        int n = 0;
         TableSchema schema = Catalog.getCatalog().getSchema(tableNumber);
         Page deletePage = null;
         
@@ -516,18 +518,94 @@ public class StorageManager implements StorageManagerInterface {
 
         // find location
         Pair<Integer, Integer> location = new Pair<Integer,Integer>(schema.getRootNumber(), -1);
+        BPlusNode node = null;
         while (location.second == -1) {
             // read in node
-            BPlusNode node = this.getIndexPage(tableNumber, location.first);
-            location = node.insert(primaryKey, pkType);
+            node = this.getIndexPage(tableNumber, location.first);
+            
+            location = node.delete(primaryKey, pkType);
+        }
+
+        // TODO merge/borrowing
+        while (node.underfull()) {
+            // get array in node
+            InternalNode parent = null;
+            if (node.getParent() == -1) {
+                // this is the root node that is underfull
+                // this means that there are less than 2 childrens here
+                // if the root node is a leaf node then there can be 0 search keys in it
+            } else {
+                parent = (InternalNode) this.getIndexPage(tableNumber, node.getParent());
+                if (node instanceof InternalNode) {
+                    // an internal node will be underfull if it has less than Math.Ceil(n/2) children
+                    
+                } else if (node instanceof LeafNode) {
+                    LeafNode curr = (LeafNode) node;
+                    // leafnode will be underfull if it has less than Math.Ceil((n-1)/2) search keys
+                    
+                    // retrieve neighbors
+                    Pair<Integer, Integer> neighbors = parent.getNeighbors(node.getPageNumber());
+                    LeafNode left = neighbors.first < 0 ? null : (LeafNode) this.getIndexPage(tableNumber, neighbors.first);
+                    LeafNode right = neighbors.second < 0 ? null : (LeafNode) this.getIndexPage(tableNumber, neighbors.second);
+
+                    if (left.willOverfull(curr.getSK().size()) || left == null) {
+                        if (right.willOverfull(curr.getSK().size()) || right == null) {
+                            if (left.willUnderfull() || left == null) {
+                                if (right.willUnderfull() || right == null) {
+                                    // this should never happen
+                                    MessagePrinter.printMessage(MessageType.ERROR, "An error that should never happen has been reached: BPlusUnderfull");
+                                } else {
+                                    // borrow right, borrows first element
+                                    Bucket bucket = right.getSK().get(0);
+                                    right.removeSearchKey(0);
+                                    curr.addBucket(bucket);
+                                    parent.replaceSearchKey(right.getSK().get(0).getPrimaryKey(), curr.getPageNumber(), false);
+                                }
+                            } else {
+                                // borrow left, borrows last element
+                                Bucket bucket = left.getSK().get(-1);
+                                left.removeSearchKey(-1);
+                                curr.addBucket(bucket);
+                                parent.replaceSearchKey(bucket.getPrimaryKey(), curr.getPageNumber(), true);
+                            }
+                        } else {
+                            // merge right, append this to the beginning of right's array
+                            ArrayList<Bucket> currSK = curr.getSK();
+                            ArrayList<Bucket> rightSK = right.getSK();
+
+                            currSK.addAll(rightSK);
+                            right.setSK(currSK);
+                            curr.clear();
+
+                            // TODO update the previous leafnode's pointer to this one
+
+                            parent.removeSearchKey(curr.getPageNumber(), false);
+                            this.deleteIndexNode(node);
+                        }
+                    } else {
+                        // merge left, append this to the end of left's array
+                        ArrayList<Bucket> currSK = curr.getSK();
+                        ArrayList<Bucket> leftSK = left.getSK();
+
+                        leftSK.addAll(currSK);
+                        left.setSK(leftSK);
+                        left.assignNextLeaf(curr.getNextLeaf().first);
+                        curr.clear();
+
+                        parent.removeSearchKey(curr.getPageNumber(), true);
+                        this.deleteIndexNode(node);
+                    }
+                }
+            }
         }
 
         // get page and delete
         deletePage = this.getPage(tableNumber, location.first);
         return new Pair<Page, Record>(deletePage, deletePage.deleteRecord(location.second));
+    }
 
-        // TODO merge/borrowing
-        
+    private void deleteIndexNode(BPlusNode node) {
+        // TODO
     }
 
     public void updateRecord(int tableNumber, Record newRecord, Object primaryKey) throws Exception {

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 import Parser.Type;
 import StorageManager.Objects.BufferPage;
+import StorageManager.Objects.MessagePrinter;
 import StorageManager.Objects.Utility.Pair;
 
 public abstract class BPlusNode extends BufferPage{
@@ -28,16 +29,81 @@ public abstract class BPlusNode extends BufferPage{
     }
 
     /**
-     * 
-     * @return
+     * Compares to see if an incoming key is less than the currently viewing key
+     * @param thisKey       The current key to compare with
+     * @param incomingKey   The incoming key to compare/look for
+     * @param type          The data type of the search keys
+     * @return:             0: The two are equal
+     *                      <0: this < other
+     *                      >0: this > other
+     * @throws Exception
+     */
+    protected int compareKey(Object thisKey, Object otherKey, Type type) throws Exception {
+        switch (type) {
+            case INTEGER:
+                return Integer.compare((Integer) thisKey, (Integer) otherKey);
+            case DOUBLE:
+                return Double.compare((Double) thisKey, (Double) otherKey);
+            case STRING:
+                String searchString = (String) thisKey;
+                String inString = (String) otherKey;
+                return searchString.compareTo(inString);
+            case BOOLEAN: //this seems really silly but may as well, defining false < true
+                boolean thisBool = (Boolean) thisKey;
+                boolean otherBool = (Boolean) otherKey;
+                return Boolean.compare(thisBool, otherBool);
+            default:
+                MessagePrinter.printMessage(MessagePrinter.MessageType.ERROR, "Invalid type for B+ tree index!");
+                throw new IllegalArgumentException("Unsupported datatype");
+        }
+    }
+
+    /**
+     * Removes a search key at a given index, will also remove the corresponding pointer as well
+     * @param int       Index to remove at
+     */
+    public abstract void removeSearchKey(int index);
+
+    /**
+     * Removes a search key at a given index, will also remove the corresponding pointer as well
+     * the passed in pageNum will be used to determine what the index to remove is
+     * @param pageNum       Helps determine where the search key to remove is
+     * @param less          Determines if the search key to remove is before (True)
+     *                          or after (False) the passed in pageNum pointer
+     * @throws Exception 
+     */
+    public abstract void removeSearchKey(int pageNum, boolean less) throws Exception;
+
+    /**
+     * Determines if this current node is underfull
+     * @return      True if it is
      */
     public abstract boolean underfull();
 
     /**
-     * 
-     * @return
+     * Determines if this current node is overfull
+     * @return      True if it is
      */
     public abstract boolean overfull();
+
+    /**
+     * Given a number, determine whether or not if we added that many
+     * more search keys, would we be overfull.
+     * @return      True if it will cause an overful, otherwise false
+     */
+    public abstract boolean willOverfull(int count);
+
+    /**
+     * If a single searchKey is removed, will this node be underfull?
+     * @return      True if it will be underfull, False otherwise
+     */
+    public abstract boolean willUnderfull();
+
+    /**
+     * Clears the node. Used in a merge
+     * Removes all search keys and pointers from this node
+     */
+    public abstract void clear();
 
     /**
      * Will search the node to find and return the location of a specific search key
