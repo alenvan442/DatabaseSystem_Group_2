@@ -319,6 +319,7 @@ public class InternalNode extends BPlusNode {
             Pair<Integer, Integer> pair = new Pair<Integer,Integer>(null, null);
             pair.first = tableAccessFile.readInt();
             pair.second = tableAccessFile.readInt();
+            this.pointers.add(pair);
         }
     }
 
