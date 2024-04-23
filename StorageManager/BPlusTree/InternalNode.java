@@ -316,9 +316,9 @@ public class InternalNode extends BPlusNode {
 
 
         for (int i=0; i < numSearchKeys + 1; ++i) {
-            Pair<Integer, Integer> pair = new Pair<Integer,Integer>(null, null);
-            pair.first = tableAccessFile.readInt();
-            pair.second = tableAccessFile.readInt();
+            int pageNumber = tableAccessFile.readInt();
+            int index = tableAccessFile.readInt();
+            Pair<Integer, Integer> pair = new Pair<Integer,Integer>(pageNumber, index);
             this.pointers.add(pair);
         }
     }
