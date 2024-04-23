@@ -301,7 +301,7 @@ public class InternalNode extends BPlusNode {
 
             if (attributeSchema.getDataType().equalsIgnoreCase("integer")) {
                 int value = tableAccessFile.readInt();
-                this.searchKeys.add(value)
+                this.searchKeys.add(value);
             } else if (attributeSchema.getDataType().equalsIgnoreCase("double")) {
                 double value = tableAccessFile.readDouble();
                 this.searchKeys.add(value);
