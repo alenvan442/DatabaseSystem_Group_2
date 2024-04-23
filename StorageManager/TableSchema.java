@@ -180,11 +180,8 @@ public class TableSchema implements SchemaInterface {
     return pkType;
   }
 
-  public int computeN(Catalog catalog) throws Exception {
-    int pageSize = catalog.getPageSize();
+  public int getSizeofDataType(String dataType) throws Exception {
     int dataSize = 0;
-    String dataType = this.attributes.get(this.getPrimaryIndex()).getDataType();
-
     switch (dataType) {
       case "integer":
         dataSize = Integer.BYTES;
@@ -196,7 +193,7 @@ public class TableSchema implements SchemaInterface {
         dataSize = 1;
         break;
       default:
-        if (dataType.contains("char")) {
+        if (dataType.contains("char") || dataType.contains("varchar")) {
           Pattern pattern = Pattern.compile("\\((\\d+)\\)");
           Matcher matcher = pattern.matcher(dataType);
           while (matcher.find()) {
@@ -205,10 +202,25 @@ public class TableSchema implements SchemaInterface {
         } else {
             MessagePrinter.printMessage(MessageType.ERROR, String.format("Invalid data type: %s", dataType));
         }
-        // should never reach the break because of the error message, just in case, test this
-        break;
-    }         
-    return Math.floorDiv(pageSize, dataSize+4) - 1;
+    }
+
+    return dataSize;
+  }
+
+  public int computeN(Catalog catalog) throws Exception {
+    int pageSize = catalog.getPageSize();
+    int dataSize = 0;
+    String dataType = this.attributes.get(this.getPrimaryIndex()).getDataType();
+
+    dataSize = getSizeofDataType(dataType);
+    return Math.floorDiv(pageSize, dataSize+8) - 1;
+  }
+
+  public int computeSizeOfNode(Catalog catalog) throws Exception {
+    int N = computeN(catalog);
+    String dataType = this.attributes.get(this.getPrimaryIndex()).getDataType();
+    int size = 1 + (Integer.BYTES * 3) + ((N-1) * getSizeofDataType(dataType)) + (N * (Integer.BYTES * 2));
+    return size;
   }
 
   private int hashName() {

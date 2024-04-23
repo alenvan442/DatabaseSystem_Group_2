@@ -3,7 +3,9 @@ package StorageManager.Objects;
 import java.io.RandomAccessFile;
 import java.util.Comparator;
 
-public abstract class BufferPage  implements Comparator<BufferPage> {
+import StorageManager.TableSchema;
+
+public abstract class BufferPage implements Comparator<BufferPage> {
     protected long priority;
     protected boolean changed;
     protected int tableNumber;
@@ -75,6 +77,8 @@ public abstract class BufferPage  implements Comparator<BufferPage> {
             return -1;
         }
     }
+
+    public abstract void readFromHardware(RandomAccessFile tableAccessFile, TableSchema tableSchema) throws Exception;
 
     public abstract void writeToHardware(RandomAccessFile tableAccessFile) throws Exception;
 

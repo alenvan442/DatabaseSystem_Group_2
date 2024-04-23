@@ -42,36 +42,4 @@ public class Bucket {
         this.index = index;
     }
 
-    /**
-     * calculates the size of the bucket
-     * @return - size of the bucket
-     */
-    public double calculateBucketSize(Type type) throws Exception {
-        Catalog catalog = Catalog.getCatalog();
-        //int floor;
-        int pageSize;
-        pageSize = catalog.getPageSize();
-        int bytes=0;
-        switch (type) {
-            case INTEGER:
-                bytes=Integer.BYTES;
-                break;
-            case DOUBLE:
-                bytes=Double.BYTES;
-                break;
-            case BOOLEAN:
-                bytes=1;
-                break;
-            case STRING:
-                String holder = (String) primaryKey;
-                bytes = holder.length();
-                break;
-            default:
-                MessagePrinter.printMessage(MessagePrinter.MessageType.ERROR, "Error in data type");
-                break;
-        }
-    return bytes+Integer.BYTES+Integer.BYTES;
-    }
-
-
 }

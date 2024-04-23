@@ -6,11 +6,10 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
-import StorageManager.StorageManagerObjectIntereface;
 import StorageManager.TableSchema;
 import StorageManager.Objects.MessagePrinter.MessageType;
 
-public class Page extends BufferPage implements java.io.Serializable, StorageManagerObjectIntereface {
+public class Page extends BufferPage {
     private int numRecords;
     private List<Record> records;
 
@@ -48,7 +47,7 @@ public class Page extends BufferPage implements java.io.Serializable, StorageMan
             if (record.compareTo(this.records.get(i), primaryKeyIndex) == 0) {
                 return i;
             }
-        } 
+        }
         // error 404
         MessagePrinter.printMessage(MessageType.ERROR, "Unable to find record in page: getRecordLocation");
         return -1;
@@ -148,7 +147,6 @@ public class Page extends BufferPage implements java.io.Serializable, StorageMan
      * @return  int - number of bytes of space left
      * @throws Exception
      */
-    @Override
     public int computeSize() {
         // Page: numRecord, PageNumber, records..
         int size = Integer.BYTES * 2;

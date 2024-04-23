@@ -1,6 +1,7 @@
 package StorageManager;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.RandomAccessFile;
 import java.lang.management.MemoryType;
 import java.util.ArrayList;
@@ -306,7 +307,7 @@ public class StorageManager implements StorageManagerInterface {
                     if (!page.addNewRecord(record, location.second)) {
                         // page was full
                         Pair<Integer, Integer> newLocatiion = this.pageSplit(page, record, tableSchema, primaryKeyIndex);
-                        node.replacePointer(record.getValues().get(primaryKeyIndex), tableSchema.getAttributeType(primaryKeyIndex), newLocatiion);                
+                        node.replacePointer(record.getValues().get(primaryKeyIndex), tableSchema.getAttributeType(primaryKeyIndex), newLocatiion);
                     }
                     tableSchema.incrementNumRecords();
                 } else {
@@ -348,7 +349,7 @@ public class StorageManager implements StorageManagerInterface {
 
         Pair<Integer, Integer> location = new Pair<Integer,Integer>(tableSchema.getRootNumber(), -1);
         BPlusNode node = null;
-        
+
         while (location != null && location.second == -1) {
             // read in node
             node = this.getIndexPage(tableNumber, location.first);
@@ -375,7 +376,7 @@ public class StorageManager implements StorageManagerInterface {
 
             if (node instanceof InternalNode) {
                 InternalNode internal = (InternalNode)node;
-                ArrayList<Object> searchKeys = internal.getSK(); 
+                ArrayList<Object> searchKeys = internal.getSK();
                 ArrayList<Pair<Integer, Integer>> pointers = internal.getPointers();
 
                 // split search keys into two
@@ -390,9 +391,9 @@ public class StorageManager implements StorageManagerInterface {
                 List<Pair<Integer, Integer>> firstPointers = pointers.subList(0, splitIndex);
                 // no need for a going up for the pointers
                 List<Pair<Integer, Integer>> secondPointers = pointers.subList(splitIndex, pointNum);
-                
+
                 InternalNode newNode = new InternalNode(tableNumber, tableSchema.incrementNumIndexPages(), n, parent.getPageNumber());
-                
+
                 // set the searck keys and pointers for the two child nodes
                 internal.setSK(firstSK);
                 internal.setPointers(firstPointers);
@@ -403,12 +404,12 @@ public class StorageManager implements StorageManagerInterface {
                 // append new pointer to parent
                 parent.addSearchKey(goingUp, -1);
                 parent.addPointer(new Pair<Integer, Integer>(newNode.getPageNumber(), -1), -1);
-                
+
                 this.addPageToBuffer(newNode);
             } else if (node instanceof LeafNode) {
                 LeafNode leaf = (LeafNode)node;
                 ArrayList<Bucket> sks = leaf.getSK();
-                
+
                 // split into two
                 List<Bucket> first = sks.subList(0, sks.size()/2);
                 List<Bucket> second = sks.subList(sks.size()/2, sks.size());
@@ -539,7 +540,7 @@ public class StorageManager implements StorageManagerInterface {
     private Pair<Page, Record> deleteIndex(int tableNumber, Object primaryKey, TableSchema tableSchema, Catalog catalog) throws Exception {
         TableSchema schema = Catalog.getCatalog().getSchema(tableNumber);
         Page deletePage = null;
-        
+
         // get pk data type
         Type pkType = schema.getAttributeType(schema.getPrimaryIndex());
 
@@ -600,7 +601,7 @@ public class StorageManager implements StorageManagerInterface {
                                 } else {
                                     // borrow right
                                     // a borrow right consists of these actions:
-                                    // move first search key in right neighbor up replacing the search key that was less than the pointer to right neighbor, but greater than current 
+                                    // move first search key in right neighbor up replacing the search key that was less than the pointer to right neighbor, but greater than current
                                     Object firstSK = right.deleteSK(0);
                                     Object borrowedSK = parent.replaceSearchKey(firstSK, curr.getPageNumber(), false);
 
@@ -611,7 +612,7 @@ public class StorageManager implements StorageManagerInterface {
                                     // delete the first pointer in right neighbor
                                     Pair<Integer, Integer> firstPointer = right.removePointer(0);
                                     curr.addPointer(firstPointer, -1);
-                                    
+
                                 }
                             } else {
                                 // borrow left
@@ -680,11 +681,11 @@ public class StorageManager implements StorageManagerInterface {
                         this.deleteIndexNode(node);
                     }
 
-                    
+
                 } else if (node instanceof LeafNode) {
                     LeafNode curr = (LeafNode) node;
                     // leafnode will be underfull if it has less than Math.Ceil((n-1)/2) search keys
-                    
+
                     // retrieve neighbors
                     Pair<Integer, Integer> neighbors = parent.getNeighbors(curr.getPageNumber());
                     LeafNode left = neighbors.first < 0 ? null : (LeafNode) this.getIndexPage(tableNumber, neighbors.first);
@@ -952,18 +953,52 @@ public class StorageManager implements StorageManagerInterface {
     private void readIndexPageHardware(int tableNumber, int pageNumber) throws Exception {
         Catalog catalog = Catalog.getCatalog();
         TableSchema tableSchema = catalog.getSchema(tableNumber);
-        String tableFilePath = this.getTablePath(tableNumber);
-        File tableFile = new File(tableFilePath);
-        RandomAccessFile tableAccessFile = new RandomAccessFile(tableFile, "r");
-        int number = pageNumber - 1;
+        String filePath = this.getIndexingPath(tableNumber);
+        File tableIndexFile = new File(filePath);
+        RandomAccessFile tableIndexAccessFile = new RandomAccessFile(tableIndexFile, "rw");
+        int nodeSize = tableSchema.computeSizeOfNode(catalog);
+        int nodeIndex = pageNumber - 1;
 
-        tableAccessFile.seek(Integer.BYTES + (catalog.getPageSize() * number));
-        int numIndex = tableAccessFile.readInt();
-        int numIndexPage = tableAccessFile.readInt();
-        Page page = new Page(numIndex, tableNumber, numIndexPage);
-        page.readFromHardware(tableAccessFile,tableSchema);
+        tableIndexAccessFile.seek(nodeIndex * nodeSize);
+        boolean nodeType = tableIndexAccessFile.readBoolean();
+        if (nodeType) {
+            pageNumber = tableIndexAccessFile.readInt(); // should change if everything is correct
+            int parent = tableIndexAccessFile.readInt();
+            LeafNode leafNode = new LeafNode(tableNumber, pageNumber, tableSchema.computeN(catalog), parent);
+            leafNode.readFromHardware(tableIndexAccessFile, tableSchema);
+        } else {
+            pageNumber = tableIndexAccessFile.readInt(); // should change if everything is correct
+            int parent = tableIndexAccessFile.readInt();
+            InternalNode internalNode = new InternalNode(tableNumber, pageNumber, tableSchema.computeN(catalog), parent);
+            internalNode.readFromHardware(tableIndexAccessFile, tableSchema);
+        }
+        tableIndexAccessFile.close();
+
+    }
+
+    private void writeIndexPageHardware(BPlusNode page) throws Exception {
         // TODO
-        tableAccessFile.close();
+        Catalog catalog = Catalog.getCatalog();
+        TableSchema tableSchema = catalog.getSchema(page.getTableNumber());
+        String filePath = this.getIndexingPath(page.getTableNumber());
+        File tableIndexFile = new File(filePath);
+        RandomAccessFile tableIndexAccessFile = new RandomAccessFile(tableIndexFile, "rw");
+        int nodeSize = tableSchema.computeSizeOfNode(catalog);
+        int nodeIndex = page.getPageNumber() - 1;
+
+        // got to node location
+        tableIndexAccessFile.seek(nodeIndex * nodeSize);
+
+        // allocate space for max size a node can be
+        Random random = new Random();
+        byte[] buffer = new byte[nodeSize];
+        random.nextBytes(buffer);
+        tableIndexAccessFile.write(buffer, 0, nodeSize);
+        tableIndexAccessFile.seek(tableIndexAccessFile.getFilePointer() - nodeSize); // move pointer back
+        page.writeToHardware(tableIndexAccessFile);
+        tableIndexAccessFile.close();
+
+
     }
 
     private void writePageHardware(BufferPage page) throws Exception {
@@ -1003,7 +1038,11 @@ public class StorageManager implements StorageManagerInterface {
     public void writeAll() throws Exception {
         for (BufferPage page : buffer) {
             if (page.isChanged()) {
-                writePageHardware(page);
+                if (page instanceof BPlusNode) {
+                    writeIndexPageHardware((BPlusNode) page);
+                } else {
+                    writePageHardware(page);
+                }
             }
         }
         this.buffer.removeAll(buffer);

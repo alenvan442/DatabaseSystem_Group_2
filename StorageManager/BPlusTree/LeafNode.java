@@ -1,8 +1,8 @@
 package StorageManager.BPlusTree;
 
-import Parser.Token;
 import Parser.Type;
-import StorageManager.Objects.Catalog;
+import StorageManager.TableSchema;
+import StorageManager.Objects.AttributeSchema;
 import StorageManager.Objects.MessagePrinter;
 import StorageManager.Objects.MessagePrinter.MessageType;
 import StorageManager.Objects.Utility.Pair;
@@ -80,7 +80,7 @@ public class LeafNode extends BPlusNode{
     }
 
     /**
-     * 
+     *
      * @param value
      * @param type
      * @param newPointer
@@ -147,7 +147,7 @@ public class LeafNode extends BPlusNode{
                 if (result == 0) {
                     found = true;
                 }
-             
+
                 if (found) {
                     // delete the found bucket
                     Bucket deleted = this.buckets.remove(i);
@@ -165,14 +165,9 @@ public class LeafNode extends BPlusNode{
     }
 
     @Override
-    public void writeToHardware(RandomAccessFile tableAccessFile) throws Exception {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'writeToHardware'");
-    }
-
-    @Override
     public boolean underfull() {
-        int min = Math.ceilDiv(this.n-1, 2);
+        double res = this.n-1 / 2;
+        int min = (int)Math.ceil(res);
         if (min <= this.buckets.size()) {
             return true;
         } else {
@@ -202,7 +197,8 @@ public class LeafNode extends BPlusNode{
 
     @Override
     public boolean willUnderfull() {
-        int min = Math.ceilDiv(this.n-1, 2);
+        double res = this.n-1 / 2;
+        int min = (int)Math.ceil(res);
         if (min <= this.buckets.size()-1) {
             return true;
         } else {
@@ -232,7 +228,7 @@ public class LeafNode extends BPlusNode{
 
         // less variable is disregarded when dealing with leaf nodes
         this.buckets.remove(removeIndex);
-        
+
         this.setChanged();
     }
 
@@ -243,5 +239,63 @@ public class LeafNode extends BPlusNode{
         this.setChanged();
     }
 
+    @Override
+    public void readFromHardware(RandomAccessFile tableAccessFile, TableSchema tableSchema) throws Exception {
+        int numSearchKeys = tableAccessFile.readInt();
+        ArrayList<Object> searchKeys = new ArrayList<>();
+        for (int i=0; i < numSearchKeys; ++i) {
+            AttributeSchema attributeSchema = tableSchema.getAttributes().get(tableSchema.getPrimaryIndex());
+
+            if (attributeSchema.getDataType().equalsIgnoreCase("integer")) {
+                int value = tableAccessFile.readInt();
+                searchKeys.add(value);
+            } else if (attributeSchema.getDataType().equalsIgnoreCase("double")) {
+                double value = tableAccessFile.readDouble();
+                searchKeys.add(value);
+            } else if (attributeSchema.getDataType().equalsIgnoreCase("boolean")) {
+                boolean value = tableAccessFile.readBoolean();
+                searchKeys.add(value);
+            } else if (attributeSchema.getDataType().contains("char") || attributeSchema.getDataType().contains("varchar")) {
+                String value = tableAccessFile.readUTF();
+                searchKeys.add(value);
+            }
+        }
+
+
+        for (int i=0; i < numSearchKeys; ++i) {
+            int pageNumber = tableAccessFile.readInt();
+            int index = tableAccessFile.readInt();
+            Bucket bucket = new Bucket(pageNumber, index, searchKeys.get(i));
+            this.buckets.add(bucket);
+        }
+    }
+
+    @Override
+    public void writeToHardware(RandomAccessFile tableAccessFile) throws Exception {
+        tableAccessFile.writeBoolean(this.type);
+        tableAccessFile.writeInt(this.pageNumber);
+        tableAccessFile.writeInt(this.parent);
+        tableAccessFile.writeInt(this.buckets.size());
+
+        for (Bucket bucket : this.buckets) {
+            Object searchKey = bucket.getPrimaryKey();
+            if (searchKey instanceof Integer) {
+                tableAccessFile.writeInt((Integer) searchKey);
+            } else if (searchKey instanceof String) {
+                tableAccessFile.writeUTF((String) searchKey);
+            } else if (searchKey instanceof Double) {
+                tableAccessFile.writeDouble((Double) searchKey);
+            } else if (searchKey instanceof Boolean) {
+                tableAccessFile.writeBoolean((Boolean) searchKey);
+            } else {
+                MessagePrinter.printMessage(MessageType.ERROR, "Not a valid data type for a search key");
+            }
+        }
+
+        for (Bucket bucket : this.buckets) {
+            tableAccessFile.writeInt(bucket.getPageNumber());
+            tableAccessFile.writeInt(bucket.getIndex());
+        }
+    }
 
 }

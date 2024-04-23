@@ -1,13 +1,12 @@
 package StorageManager.BPlusTree;
 
-import java.util.ArrayList;
 
 import Parser.Type;
 import StorageManager.Objects.BufferPage;
 import StorageManager.Objects.MessagePrinter;
 import StorageManager.Objects.Utility.Pair;
 
-public abstract class BPlusNode extends BufferPage{
+public abstract class BPlusNode extends BufferPage {
     protected int n;
     protected boolean type; // 0/false for internal, 1/true for leaf
     protected int parent; // this wil be the pageNumber of the parent
@@ -70,7 +69,7 @@ public abstract class BPlusNode extends BufferPage{
      * @param pageNum       Helps determine where the search key to remove is
      * @param less          Determines if the search key to remove is before (True)
      *                          or after (False) the passed in pageNum pointer
-     * @throws Exception 
+     * @throws Exception
      */
     public abstract void removeSearchKey(int pageNum, boolean less) throws Exception;
 
@@ -117,11 +116,11 @@ public abstract class BPlusNode extends BufferPage{
     /**
      * Will search the node to find and return the location of where a new search
      * key should be inserted.
-     * 
+     *
      * Will then insert the search key value into that location in the leaf node
      * If we find the search key already present in the leaf node, reject the insert
      * And raise an error.
-     * 
+     *
      * If rules are now in violation, split
      * @param value     The search key to find
      * @param type      The data type of the search key
@@ -132,9 +131,9 @@ public abstract class BPlusNode extends BufferPage{
 
     /**
      * Will search the node to find and return the location of a specific search key
-     * 
+     *
      * Will then delete the search key from the leaf node
-     * 
+     *
      * If rules are now in violation, borrow/merge
      * @param value     The search key to find
      * @param type      The data type of the search key
@@ -142,5 +141,4 @@ public abstract class BPlusNode extends BufferPage{
      * @throws Exception
      */
     public abstract Pair<Integer, Integer> delete(Object value, Type type) throws Exception;
-
 }

@@ -1,11 +1,14 @@
 package StorageManager.BPlusTree;
 
 import Parser.Type;
+import StorageManager.TableSchema;
+import StorageManager.Objects.AttributeSchema;
 import StorageManager.Objects.MessagePrinter;
 import StorageManager.Objects.MessagePrinter.MessageType;
 import StorageManager.Objects.Utility.Pair;
 
 import java.io.RandomAccessFile;
+import java.text.AttributedCharacterIterator.Attribute;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -70,7 +73,7 @@ public class InternalNode extends BPlusNode {
      *                          ex. P1 SK1 P2 SK2 P3
      *                              Say we know P2, and want to replace SK2, then we pass in the pageNum of P2
      *                              and set less to False, to replace SK2, if we set less to True, then it replaces SK1
-     * 
+     *
      * @return              The searchKey that was replaced
      * @throws Exception
      */
@@ -137,7 +140,7 @@ public class InternalNode extends BPlusNode {
             }
         }
         if (currentIndex == 0) {
-            leftPageNum = -2; 
+            leftPageNum = -2;
             rightPageNum = this.pointers.get(currentIndex + 1).first;
         } else if (currentIndex == this.pointers.size()-1) {
             leftPageNum = this.pointers.get(currentIndex - 1).first;
@@ -181,15 +184,11 @@ public class InternalNode extends BPlusNode {
         return this.search(value, type);
     }
 
-    @Override
-    public void writeToHardware(RandomAccessFile tableAccessFile) throws Exception {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'writeToHardware'");
-    }
 
     @Override
     public boolean underfull() {
-        int min = Math.ceilDiv(this.n-1, 2);
+        double res = this.n-1 / 2;
+        int min = (int)Math.ceil(res);
         if (min <= this.searchKeys.size()) {
             return true;
         } else {
@@ -219,7 +218,8 @@ public class InternalNode extends BPlusNode {
 
     @Override
     public boolean willUnderfull() {
-        int min = Math.ceilDiv(this.n-1, 2);
+        double res = this.n-1 / 2;
+        int min = (int)Math.ceil(res);
         if (min <= this.searchKeys.size()-1) {
             return true;
         } else {
@@ -261,7 +261,7 @@ public class InternalNode extends BPlusNode {
             this.pointers.remove(replaceIndex-1);
             this.searchKeys.remove(replaceIndex);
         }
-        
+
         this.setChanged();
     }
 
@@ -290,6 +290,65 @@ public class InternalNode extends BPlusNode {
         this.pointers.clear();
         this.searchKeys.clear();
         this.setChanged();
+    }
+
+    @Override
+    public void readFromHardware(RandomAccessFile tableAccessFile, TableSchema tableSchema) throws Exception {
+        int numSearchKeys = tableAccessFile.readInt();
+
+        for (int i=0; i < numSearchKeys; ++i) {
+            AttributeSchema attributeSchema = tableSchema.getAttributes().get(tableSchema.getPrimaryIndex());
+
+            if (attributeSchema.getDataType().equalsIgnoreCase("integer")) {
+                int value = tableAccessFile.readInt();
+                this.searchKeys.add(value)
+            } else if (attributeSchema.getDataType().equalsIgnoreCase("double")) {
+                double value = tableAccessFile.readDouble();
+                this.searchKeys.add(value);
+            } else if (attributeSchema.getDataType().equalsIgnoreCase("boolean")) {
+                boolean value = tableAccessFile.readBoolean();
+                this.searchKeys.add(value);
+            } else if (attributeSchema.getDataType().contains("char") || attributeSchema.getDataType().contains("varchar")) {
+                String value = tableAccessFile.readUTF();
+                this.searchKeys.add(value);
+            }
+        }
+
+
+        for (int i=0; i < numSearchKeys + 1; ++i) {
+            Pair<Integer, Integer> pair = new Pair<Integer,Integer>(null, null);
+            pair.first = tableAccessFile.readInt();
+            pair.second = tableAccessFile.readInt();
+        }
+    }
+
+    @Override
+    public void writeToHardware(RandomAccessFile tableAccessFile) throws Exception {
+        // write boolean indicator
+        tableAccessFile.writeBoolean(this.type);
+        tableAccessFile.writeInt(pageNumber);
+        tableAccessFile.writeInt(this.parent);
+        tableAccessFile.writeInt(this.searchKeys.size());
+
+
+        for (Object searchKey: this.searchKeys) {
+            if (searchKey instanceof Integer) {
+                tableAccessFile.writeInt((Integer) searchKey);
+            } else if (searchKey instanceof String) {
+                tableAccessFile.writeUTF((String) searchKey);
+            } else if (searchKey instanceof Double) {
+                tableAccessFile.writeDouble((Double) searchKey);
+            } else if (searchKey instanceof Boolean) {
+                tableAccessFile.writeBoolean((Boolean) searchKey);
+            } else {
+                MessagePrinter.printMessage(MessageType.ERROR, "Not a valid data type for a search key");
+            }
+        }
+
+        for (Pair<Integer, Integer> pointer : this.pointers) {
+            tableAccessFile.writeInt(pointer.first);
+            tableAccessFile.writeInt(pointer.second);
+        }
     }
 
 }
