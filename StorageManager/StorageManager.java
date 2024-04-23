@@ -387,7 +387,8 @@ public class StorageManager implements StorageManagerInterface {
 
                 // split pointers into two
                 int pointNum = pointers.size();
-                int splitIndex = Math.ceilDiv(pointNum, 2);
+                double res = pointNum / 2;
+                int splitIndex = (int) Math.ceil(res);
                 List<Pair<Integer, Integer>> firstPointers = pointers.subList(0, splitIndex);
                 // no need for a going up for the pointers
                 List<Pair<Integer, Integer>> secondPointers = pointers.subList(splitIndex, pointNum);
