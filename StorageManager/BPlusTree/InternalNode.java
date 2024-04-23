@@ -40,6 +40,7 @@ public class InternalNode extends BPlusNode {
         if (index < 0) {
             index = this.pointers.size() - (index+1);
         }
+        this.setChanged();
         return this.pointers.remove(index);
     }
 
@@ -57,6 +58,7 @@ public class InternalNode extends BPlusNode {
         if (index < 0) {
             index = this.searchKeys.size() - (index+1);
         }
+        this.setChanged();
         return this.searchKeys.remove(index);
     }
 
@@ -104,6 +106,7 @@ public class InternalNode extends BPlusNode {
             // index should then == array.size()
         }
         this.searchKeys.add(index, val);
+        this.setChanged();
     }
 
     public void addPointer(Pair<Integer, Integer> pointer, int index) {
@@ -113,6 +116,8 @@ public class InternalNode extends BPlusNode {
             // index should then == array.size()
         }
         this.pointers.add(index, pointer);
+        this.setChanged();
+
     }
 
     /**

@@ -66,10 +66,12 @@ public class StorageManager implements StorageManagerInterface {
      * @param tableSchema The schema of the table.
      * @throws Exception If an error occurs during the split operation.
      */
-    private void pageSplit(Page page, Record record, TableSchema tableSchema, int primaryKeyIndex) throws Exception {
+    private Pair<Integer, Integer> pageSplit(Page page, Record record, TableSchema tableSchema, int primaryKeyIndex) throws Exception {
         // Create a new page
         Page newPage = new Page(0, tableSchema.getTableNumber(), tableSchema.getNumPages() + 1);
         tableSchema.addPageNumber(page.getPageNumber(), newPage.getPageNumber());
+        int pageNum = 0;
+        int index = 0;
 
         // Calculate the split index
         int splitIndex = 0;
@@ -78,9 +80,11 @@ public class StorageManager implements StorageManagerInterface {
             if (record.compareTo(lastRecordInCurrPage, primaryKeyIndex) < 0) {
                 page.getRecords().clear();
                 page.addNewRecord(record);
+                pageNum = page.getPageNumber();
                 newPage.addNewRecord(lastRecordInCurrPage);
             } else {
                 newPage.addNewRecord(record);
+                pageNum = newPage.getPageNumber();
             }
         } else {
             splitIndex = (int) Math.floor(page.getRecords().size() / 2);
@@ -101,10 +105,14 @@ public class StorageManager implements StorageManagerInterface {
                 if (!page.addNewRecord(record)) {
                     pageSplit(page, record, tableSchema, primaryKeyIndex);
                 }
+                pageNum = page.getPageNumber();
+                index = page.getRecordLocation(record, primaryKeyIndex);
             } else {
                 if (!newPage.addNewRecord(record)) {
                     pageSplit(newPage, record, tableSchema, primaryKeyIndex);
                 }
+                pageNum = page.getPageNumber();
+                index = page.getRecordLocation(record, primaryKeyIndex);
             }
         }
 
@@ -114,6 +122,7 @@ public class StorageManager implements StorageManagerInterface {
 
         // Add the new page to the buffer
         this.addPageToBuffer(newPage);
+        return new Pair<Integer,Integer>(pageNum, index);
     }
 
     /**
@@ -252,7 +261,7 @@ public class StorageManager implements StorageManagerInterface {
                     tableSchema.incrementNumIndexPages();
                     tableSchema.setRoot(1);
                     Bucket bucket = new Bucket(1, 0, record.getValues().get(primaryKeyIndex));
-                    root.addBucket(bucket);
+                    root.addBucket(bucket, -1);
 
                     // then add the page to the buffer
                     this.addPageToBuffer(root);
@@ -283,7 +292,9 @@ public class StorageManager implements StorageManagerInterface {
             } else {
 
                 if (catalog.isIndexingOn()) {
-                    Pair<Integer, Integer> location = this.insertIndex(record, tableNumber, tableSchema, catalog);
+                    Pair<LeafNode, Pair<Integer, Integer>> results = this.insertIndex(record, tableNumber, tableSchema, catalog);
+                    LeafNode node = results.first;
+                    Pair<Integer, Integer> location = results.second;
 
                     if (location == null) {
                         MessagePrinter.printMessage(MessageType.ERROR, "Error in traversing B+ Tree");
@@ -294,7 +305,8 @@ public class StorageManager implements StorageManagerInterface {
                     Page page = this.getPage(tableNumber, location.first);
                     if (!page.addNewRecord(record, location.second)) {
                         // page was full
-                        this.pageSplit(page, record, tableSchema, primaryKeyIndex);
+                        Pair<Integer, Integer> newLocatiion = this.pageSplit(page, record, tableSchema, primaryKeyIndex);
+                        node.replacePointer(record.getValues().get(primaryKeyIndex), tableSchema.getAttributeType(primaryKeyIndex), newLocatiion);                
                     }
                     tableSchema.incrementNumRecords();
                 } else {
@@ -327,7 +339,7 @@ public class StorageManager implements StorageManagerInterface {
         }
     }
 
-    private Pair<Integer, Integer> insertIndex(Record record, int tableNumber, TableSchema tableSchema, Catalog catalog) throws Exception {
+    private Pair<LeafNode, Pair<Integer, Integer>> insertIndex(Record record, int tableNumber, TableSchema tableSchema, Catalog catalog) throws Exception {
         // set up while loop with the root as the first to search
         int primaryKeyIndex = tableSchema.getPrimaryIndex();
         Object pk = record.getValues().get(primaryKeyIndex);
@@ -425,7 +437,7 @@ public class StorageManager implements StorageManagerInterface {
             }
         }
 
-        return location;
+        return new Pair<LeafNode,Pair<Integer,Integer>>((LeafNode)node, location);
     }
 
     private Pair<Page, Record> deleteHelper(TableSchema schema, Object primaryKey) throws Exception {
@@ -688,14 +700,14 @@ public class StorageManager implements StorageManagerInterface {
                                     // borrow right, borrows first element
                                     Bucket bucket = right.getSK().get(0);
                                     right.removeSearchKey(0);
-                                    curr.addBucket(bucket);
+                                    curr.addBucket(bucket, -1);
                                     parent.replaceSearchKey(right.getSK().get(0).getPrimaryKey(), curr.getPageNumber(), false);
                                 }
                             } else {
                                 // borrow left, borrows last element
                                 Bucket bucket = left.getSK().get(-1);
                                 left.removeSearchKey(-1);
-                                curr.addBucket(bucket);
+                                curr.addBucket(bucket, 0);
                                 parent.replaceSearchKey(bucket.getPrimaryKey(), curr.getPageNumber(), true);
                             }
                         } else {
@@ -706,19 +718,18 @@ public class StorageManager implements StorageManagerInterface {
                             currSK.addAll(rightSK);
                             right.setSK(currSK);
                             int currPageNum = curr.getPageNumber();
-                            curr.clear();
 
                             // update the previous leafnode's pointer to the next leafNode to this one
                             BPlusNode searchLeaf = null;
-                            location = new Pair<Integer,Integer>(schema.getRootNumber(), -1);
-                            while (location.first != currPageNum || searchLeaf instanceof InternalNode) {
-                                searchLeaf = this.getIndexPage(tableNumber, location.first);
+                            Pair<Integer, Integer> finder = new Pair<Integer,Integer>(schema.getRootNumber(), -1);
+                            while (finder.first != currPageNum || searchLeaf instanceof InternalNode) {
+                                searchLeaf = this.getIndexPage(tableNumber, finder.first);
                                 if (searchLeaf instanceof InternalNode) {
                                     // internal node, traverse down leftmost side
-                                    location = ((InternalNode)searchLeaf).getPointers().get(0);
+                                    finder = ((InternalNode)searchLeaf).getPointers().get(0);
                                 } else {
                                     // leaf node
-                                    location = new Pair<Integer, Integer>(((LeafNode)searchLeaf).getSK().get(0).getPageNumber(), -1);
+                                    finder = new Pair<Integer, Integer>(((LeafNode)searchLeaf).getSK().get(0).getPageNumber(), -1);
                                 }
                             }
 
@@ -735,7 +746,6 @@ public class StorageManager implements StorageManagerInterface {
                         leftSK.addAll(currSK);
                         left.setSK(leftSK);
                         left.assignNextLeaf(curr.getNextLeaf().first);
-                        curr.clear();
 
                         parent.removeSearchKey(curr.getPageNumber(), true);
                         this.deleteIndexNode(node);
@@ -757,6 +767,7 @@ public class StorageManager implements StorageManagerInterface {
     }
 
     private void deleteIndexNode(BPlusNode node) {
+        node.clear();
         // TODO
     }
 

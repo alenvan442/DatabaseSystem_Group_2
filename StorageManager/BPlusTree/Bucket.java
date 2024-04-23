@@ -37,6 +37,11 @@ public class Bucket {
         return pageNumber;
     }
 
+    public void setPointer(int pageNum, int index) {
+        this.pageNumber = pageNum;
+        this.index = index;
+    }
+
     /**
      * calculates the size of the bucket
      * @return - size of the bucket

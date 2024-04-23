@@ -8,6 +8,7 @@ import java.util.Map;
 
 import StorageManager.StorageManagerObjectIntereface;
 import StorageManager.TableSchema;
+import StorageManager.Objects.MessagePrinter.MessageType;
 
 public class Page extends BufferPage implements java.io.Serializable, StorageManagerObjectIntereface {
     private int numRecords;
@@ -40,6 +41,17 @@ public class Page extends BufferPage implements java.io.Serializable, StorageMan
     public void setRecords(List<Record> records) {
         this.records = records;
         this.setNumRecords();
+    }
+
+    public int getRecordLocation(Record record, int primaryKeyIndex) throws Exception {
+        for (int i = 0; i < this.records.size(); i++) {
+            if (record.compareTo(this.records.get(i), primaryKeyIndex) == 0) {
+                return i;
+            }
+        } 
+        // error 404
+        MessagePrinter.printMessage(MessageType.ERROR, "Unable to find record in page: getRecordLocation");
+        return -1;
     }
 
     /**

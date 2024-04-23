@@ -31,11 +31,12 @@ public class LeafNode extends BPlusNode{
         this.setChanged();
     }
 
-    public int addBucket(Bucket b){
-        buckets.add(b);
+    public void addBucket(Bucket b, int index){
+        if (index < 0) {
+            index = this.buckets.size() - (index + 1);
+        }
+        buckets.add(index, b);
         this.setChanged();
-        // TODO insert into the correct spot and return the idnex it was inserted into
-        return 0;
     }
 
     public void assignNextLeaf(LeafNode ln){
@@ -78,26 +79,49 @@ public class LeafNode extends BPlusNode{
         return null;
     }
 
+    /**
+     * 
+     * @param value
+     * @param type
+     * @param newPointer
+     * @throws Exception
+     */
+    public void replacePointer(Object value, Type type, Pair<Integer, Integer> newPointer) throws Exception {
+        for(int i = 0; i < buckets.size(); i++){
+            try {
+                Object pk = buckets.get(i).getPrimaryKey();
+                boolean found = false;
+                if (this.compareKey(pk, value, type) == 0) {
+                    found = true;
+                }
+
+                if (found) {
+                    //BELONGS HERE
+                    buckets.get(i).setPointer(newPointer.first, newPointer.second);
+                    this.setChanged();
+                }
+            }catch(Exception e){
+                MessagePrinter.printMessage(MessagePrinter.MessageType.ERROR, "Error in data type");
+            }
+        }
+        // no matching key was found
+        MessagePrinter.printMessage(MessageType.ERROR, "No matching key of " + value.toString() + " was found");
+    }
+
     @Override
     public Pair<Integer, Integer> insert(Object value, Type type) throws Exception {
-        // TODO insert the search key and the pointer
-        // TODO return the new pointer ex. if incoming is less than something, then the pointer should be the same page, but one less index
         for(int i = 0; i < buckets.size(); i++){
             try {
                 Bucket curr = buckets.get(i);
                 Object pk = curr.getPrimaryKey();
-                boolean found = false;
                 int result = this.compareKey(pk, value, type);
                 if (result == 0) {
                     throw new Exception("PrimaryKey is already in db");
-                } else if (result < 0) {
-                    found = true;
-                }
-             
-                if (found) {
-                    // it is next in line
+                } else if (result > 0) {
+                    // it is previous in line
                     Bucket _new = new Bucket(this.pageNumber, curr.getIndex()+1, value);
-                    this.buckets.add(i+1, _new);
+                    this.buckets.add(i-1, _new);
+                    this.setChanged();
                     return new Pair<Integer, Integer>(_new.getPageNumber(), _new.getIndex());
                 }
             }catch(Exception e){
@@ -105,13 +129,15 @@ public class LeafNode extends BPlusNode{
                 return null;
             }
         }
-        Bucket last = buckets.get(-1);
-        return new Pair<Integer, Integer>(last.getPageNumber(), last.getIndex());
+        // if we reach this, then we need to insert at end of leafnode
+        Bucket _new = new Bucket(this.pageNumber, this.buckets.size(), value);
+        this.buckets.add(_new);
+        this.setChanged();
+        return new Pair<Integer, Integer>(_new.getPageNumber(), _new.getIndex());
     }
 
     @Override
     public Pair<Integer, Integer> delete(Object value, Type type) throws Exception {
-        // TODO Auto-generated method stub
         for(int i = 0; i < buckets.size(); i++){
             try {
                 Bucket curr = buckets.get(i);
@@ -125,6 +151,7 @@ public class LeafNode extends BPlusNode{
                 if (found) {
                     // delete the found bucket
                     Bucket deleted = this.buckets.remove(i);
+                    this.setChanged();
                     return new Pair<Integer, Integer>(deleted.getPageNumber(), deleted.getIndex());
                 }
             }catch(Exception e){
