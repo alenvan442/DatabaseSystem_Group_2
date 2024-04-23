@@ -230,11 +230,6 @@ public class StorageManager implements StorageManagerInterface {
 
         // determine index of the primary key
         int primaryKeyIndex = tableSchema.getPrimaryIndex();
-        int n = 0;
-
-        if (catalog.isIndexingOn()) {
-            n = tableSchema.computeN(catalog);
-        }
 
         // check to see if the file exists, if not create it
         if (!tableFile.exists()) {
@@ -253,7 +248,7 @@ public class StorageManager implements StorageManagerInterface {
                 if (!indexFile.exists()) {
                     indexFile.createNewFile();
                     // create a new leaf node and insert the new pk into it, this will be the first root node
-                    LeafNode root = new LeafNode(tableNumber, 1, n, -1);
+                    LeafNode root = new LeafNode(tableNumber, 1, tableSchema.computeN(catalog), -1);
                     tableSchema.incrementNumIndexPages();
                     tableSchema.setRoot(1);
                     Bucket bucket = new Bucket(1, 0, record.getValues().get(primaryKeyIndex));
@@ -278,7 +273,7 @@ public class StorageManager implements StorageManagerInterface {
                 this.addPageToBuffer(_new);
                 if (catalog.isIndexingOn() && tableSchema.getNumIndexPages() == 0) {
                     // create a new leaf node and insert the new record into it, this will be the first root node
-                    LeafNode root = new LeafNode(tableNumber, 1, n, -1);
+                    LeafNode root = new LeafNode(tableNumber, 1, tableSchema.computeN(catalog), -1);
                     tableSchema.incrementNumIndexPages();
                     tableSchema.setRoot(1);
 
@@ -288,7 +283,12 @@ public class StorageManager implements StorageManagerInterface {
             } else {
 
                 if (catalog.isIndexingOn()) {
-                    Pair<Integer, Integer> location = this.insertIndex(record, tableNumber, n, tableSchema);
+                    Pair<Integer, Integer> location = this.insertIndex(record, tableNumber, tableSchema, catalog);
+
+                    if (location == null) {
+                        MessagePrinter.printMessage(MessageType.ERROR, "Error in traversing B+ Tree");
+                        return;
+                    }
 
                     // get page and insert
                     Page page = this.getPage(tableNumber, location.first);
@@ -327,19 +327,25 @@ public class StorageManager implements StorageManagerInterface {
         }
     }
 
-    private Pair<Integer, Integer> insertIndex(Record record, int tableNumber, int n, TableSchema tableSchema) throws Exception {
+    private Pair<Integer, Integer> insertIndex(Record record, int tableNumber, TableSchema tableSchema, Catalog catalog) throws Exception {
         // set up while loop with the root as the first to search
         int primaryKeyIndex = tableSchema.getPrimaryIndex();
         Object pk = record.getValues().get(primaryKeyIndex);
         Type pkType = tableSchema.getAttributeType(primaryKeyIndex);
+        int n = tableSchema.computeN(catalog);
 
         Pair<Integer, Integer> location = new Pair<Integer,Integer>(tableSchema.getRootNumber(), -1);
         BPlusNode node = null;
         
-        while (location.second == -1) {
+        while (location != null && location.second == -1) {
             // read in node
             node = this.getIndexPage(tableNumber, location.first);
             location = node.insert(pk, pkType);
+        }
+
+        if (location == null) {
+            MessagePrinter.printMessage(MessageType.ERROR, "Error in traversing B+ Tree");
+            return null;
         }
 
         while (node.overfull()) {
@@ -382,7 +388,9 @@ public class StorageManager implements StorageManagerInterface {
                 newNode.setPointers(secondPointers);
 
                 // append new search key to parent
-                parent.addSearchKey(goingUp, new Pair<Integer,Integer>(newNode.getPageNumber(), -1)); 
+                // append new pointer to parent
+                parent.addSearchKey(goingUp, -1);
+                parent.addPointer(new Pair<Integer, Integer>(newNode.getPageNumber(), -1), -1);
                 
                 this.addPageToBuffer(newNode);
             } else if (node instanceof LeafNode) {
@@ -404,13 +412,17 @@ public class StorageManager implements StorageManagerInterface {
                 leaf.assignNextLeaf(newNode.getPageNumber());
 
                 // append new search key to parent
-                parent.addSearchKey(goingUp, new Pair<Integer,Integer>(newNode.getPageNumber(), -1)); 
+                parent.addSearchKey(goingUp, -1);
+                parent.addPointer(new Pair<Integer, Integer>(newNode.getPageNumber(), -1), -1);
 
                 this.addPageToBuffer(newNode);
             }
-            // get new parent and node
-            // repeat
-            node = parent;
+            // move up in the tree and repeat
+            if (parent == null) {
+                break;
+            } else {
+                node = parent;
+            }
         }
 
         return location;
@@ -495,7 +507,11 @@ public class StorageManager implements StorageManagerInterface {
         Pair<Page, Record> deletedPair = null;
 
         if (catalog.isIndexingOn()) {
-            deletedPair = deleteIndex(tableNumber, primaryKey, schema);
+            deletedPair = deleteIndex(tableNumber, primaryKey, schema, catalog);
+            if (deletedPair == null) {
+                MessagePrinter.printMessage(MessageType.ERROR, "Error in traversing B+ Tree");
+                return null;
+            }
         } else {
             deletedPair = this.deleteHelper(schema, primaryKey);
         }
@@ -508,8 +524,7 @@ public class StorageManager implements StorageManagerInterface {
         return deletedRecord;
     }
 
-    private Pair<Page, Record> deleteIndex(int tableNumber, Object primaryKey, TableSchema tableSchema) throws Exception {
-        int n = 0;
+    private Pair<Page, Record> deleteIndex(int tableNumber, Object primaryKey, TableSchema tableSchema, Catalog catalog) throws Exception {
         TableSchema schema = Catalog.getCatalog().getSchema(tableNumber);
         Page deletePage = null;
         
@@ -519,32 +534,147 @@ public class StorageManager implements StorageManagerInterface {
         // find location
         Pair<Integer, Integer> location = new Pair<Integer,Integer>(schema.getRootNumber(), -1);
         BPlusNode node = null;
-        while (location.second == -1) {
+        while (location != null && location.second == -1) {
             // read in node
             node = this.getIndexPage(tableNumber, location.first);
-            
             location = node.delete(primaryKey, pkType);
         }
 
-        // TODO merge/borrowing
+        if (location == null) {
+            MessagePrinter.printMessage(MessageType.ERROR, "Error in traversing B+ Tree");
+            return null;
+        }
+
         while (node.underfull()) {
             // get array in node
             InternalNode parent = null;
             if (node.getParent() == -1) {
-                // this is the root node that is underfull
-                // this means that there are less than 2 childrens here
-                // if the root node is a leaf node then there can be 0 search keys in it
+                // basically check to see if the root is ACTUALLY underfull, meaning it has less then 2 childrens, if so make the root a leafnode
+                InternalNode root = (InternalNode) node;
+                ArrayList<Pair<Integer, Integer>> pointers = root.getPointers();
+                if (pointers.size() < 2) {
+                    if (pointers.size() == 1) {
+                        // make the next node the new root
+                        BPlusNode newRoot = this.getIndexPage(tableNumber, pointers.get(0).first);
+                        this.deleteIndexNode(node);
+                        newRoot.setPageNumber(0);
+                        tableSchema.setRoot(0);
+                    } else if (pointers.size() == 0) {
+                        // not sure how this can happen, but if it does, create a new empty root as a leafnode and replace the old one
+                        LeafNode newRoot = new LeafNode(tableNumber, 0, tableSchema.computeN(catalog), -1);
+                        tableSchema.setRoot(0);
+                        this.addPageToBuffer(newRoot);
+                    }
+                }
             } else {
                 parent = (InternalNode) this.getIndexPage(tableNumber, node.getParent());
                 if (node instanceof InternalNode) {
                     // an internal node will be underfull if it has less than Math.Ceil(n/2) children
+                    InternalNode curr = (InternalNode) node;
+
+                    // retrieve neighbors
+                    Pair<Integer, Integer> neighbors = parent.getNeighbors(curr.getPageNumber());
+                    InternalNode left = neighbors.first < 0 ? null : (InternalNode) this.getIndexPage(tableNumber, neighbors.first);
+                    InternalNode right = neighbors.second < 0 ? null : (InternalNode) this.getIndexPage(tableNumber, neighbors.second);
+
+                    // for internal nodes:
+
+                    if (left.willOverfull(curr.getSK().size()+1) || left == null) {
+                        if (right.willOverfull(curr.getSK().size()+1) || right == null) {
+                            if (left.willUnderfull() || left == null) {
+                                if (right.willUnderfull() || right == null) {
+                                    // this should never happen
+                                    MessagePrinter.printMessage(MessageType.ERROR, "An error that should never happen has been reached: BPlusUnderfull");
+                                } else {
+                                    // borrow right
+                                    // a borrow right consists of these actions:
+                                    // move first search key in right neighbor up replacing the search key that was less than the pointer to right neighbor, but greater than current 
+                                    Object firstSK = right.deleteSK(0);
+                                    Object borrowedSK = parent.replaceSearchKey(firstSK, curr.getPageNumber(), false);
+
+                                    // move the search key in the parent that got replaced down to be the last search key in the current node
+                                    curr.addSearchKey(borrowedSK, -1);
+
+                                    // set the first pointer in right neighbor, to be the last pointer in the current node
+                                    // delete the first pointer in right neighbor
+                                    Pair<Integer, Integer> firstPointer = right.removePointer(0);
+                                    curr.addPointer(firstPointer, -1);
+                                    
+                                }
+                            } else {
+                                // borrow left
+                                // a borrow left consists of these actions:
+                                // move last search key in left neighbor up replacing the search key that was greater than the pointer to left neighbor, but less than current
+                                Object lastSK = left.deleteSK(-1);
+                                Object borrowedSK = parent.replaceSearchKey(lastSK, curr.getPageNumber(), true);
+
+                                // move the search key in the parent that got replaced down to be the first search key in the current node
+                                curr.addSearchKey(borrowedSK, 0);
+
+                                // set the last pointer in left neighbor, to be the first pointer in the current node
+                                // delete the last pointer in left neighbor
+                                Pair<Integer, Integer> lastPointer = left.removePointer(-1);
+                                curr.addPointer(lastPointer, 0);
+                            }
+                        } else {
+                            // attempt to merge right
+                            // a merge right consists of these actions:
+                            // bring the search key in the parent node that is separating left neighbor and current node down
+                            // to form a new array of (curr SKs) + (parent SK) + (right Sks)
+                            List<Object> currSK = curr.getSK();
+                            Object parentSK = parent.getSearchKey(curr.getPageNumber(), false);
+                            List<Object> rightSK = right.getSK();
+
+                            List<Object> newSK = new ArrayList<>();
+                            newSK.addAll(currSK);
+                            newSK.add(parentSK);
+                            newSK.addAll(rightSK);
+
+                            // set the new array into the right neighbor
+                            right.setSK(newSK);
+
+                            // new array of pointers is (curr Pointers) + (right Pointers)
+                            List<Pair<Integer, Integer>> currPointers = curr.getPointers();
+                            currPointers.addAll(right.getPointers());
+                            right.setPointers(currPointers);
+
+                            // delete the curr node
+                            this.deleteIndexNode(node);
+                        }
+
+                    } else {
+                        // attempt to merge left
+                        // a merge left consists of these actions:
+                        // bring the search key in the parent node that is separating left neighbor and current node down
+                        // to form a new array of (left SKs) + (parent SK) + (curr Sks)
+                        List<Object> currSK = curr.getSK();
+                        Object parentSK = parent.getSearchKey(curr.getPageNumber(), true);
+                        List<Object> leftSK = left.getSK();
+
+                        List<Object> newSK = new ArrayList<>();
+                        newSK.addAll(leftSK);
+                        newSK.add(parentSK);
+                        newSK.addAll(currSK);
+
+                        // set the new array into the left neighbor
+                        left.setSK(newSK);
+
+                        // new array of pointers is (left Pointers) + (curr Pointers)
+                        List<Pair<Integer, Integer>> leftPointers = left.getPointers();
+                        leftPointers.addAll(curr.getPointers());
+                        left.setPointers(leftPointers);
+
+                        // delete the curr node
+                        this.deleteIndexNode(node);
+                    }
+
                     
                 } else if (node instanceof LeafNode) {
                     LeafNode curr = (LeafNode) node;
                     // leafnode will be underfull if it has less than Math.Ceil((n-1)/2) search keys
                     
                     // retrieve neighbors
-                    Pair<Integer, Integer> neighbors = parent.getNeighbors(node.getPageNumber());
+                    Pair<Integer, Integer> neighbors = parent.getNeighbors(curr.getPageNumber());
                     LeafNode left = neighbors.first < 0 ? null : (LeafNode) this.getIndexPage(tableNumber, neighbors.first);
                     LeafNode right = neighbors.second < 0 ? null : (LeafNode) this.getIndexPage(tableNumber, neighbors.second);
 
@@ -575,9 +705,24 @@ public class StorageManager implements StorageManagerInterface {
 
                             currSK.addAll(rightSK);
                             right.setSK(currSK);
+                            int currPageNum = curr.getPageNumber();
                             curr.clear();
 
-                            // TODO update the previous leafnode's pointer to this one
+                            // update the previous leafnode's pointer to the next leafNode to this one
+                            BPlusNode searchLeaf = null;
+                            location = new Pair<Integer,Integer>(schema.getRootNumber(), -1);
+                            while (location.first != currPageNum || searchLeaf instanceof InternalNode) {
+                                searchLeaf = this.getIndexPage(tableNumber, location.first);
+                                if (searchLeaf instanceof InternalNode) {
+                                    // internal node, traverse down leftmost side
+                                    location = ((InternalNode)searchLeaf).getPointers().get(0);
+                                } else {
+                                    // leaf node
+                                    location = new Pair<Integer, Integer>(((LeafNode)searchLeaf).getSK().get(0).getPageNumber(), -1);
+                                }
+                            }
+
+                            ((LeafNode)searchLeaf).assignNextLeaf(right.getPageNumber());
 
                             parent.removeSearchKey(curr.getPageNumber(), false);
                             this.deleteIndexNode(node);
@@ -597,6 +742,13 @@ public class StorageManager implements StorageManagerInterface {
                     }
                 }
             }
+            // move up in the tree and repeat
+            if (parent == null) {
+                break;
+            } else {
+                node = parent;
+            }
+
         }
 
         // get page and delete

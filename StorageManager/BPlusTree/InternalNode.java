@@ -36,6 +36,13 @@ public class InternalNode extends BPlusNode {
         this.setChanged();
     }
 
+    public Pair<Integer, Integer> removePointer(int index) {
+        if (index < 0) {
+            index = this.pointers.size() - (index+1);
+        }
+        return this.pointers.remove(index);
+    }
+
     public ArrayList<Object> getSK() {
         return this.searchKeys;
     }
@@ -46,15 +53,26 @@ public class InternalNode extends BPlusNode {
         this.setChanged();
     }
 
+    public Object deleteSK(int index) {
+        if (index < 0) {
+            index = this.searchKeys.size() - (index+1);
+        }
+        return this.searchKeys.remove(index);
+    }
+
     /**
+     * Replaces a searchKey in the node and returns the replaced searchKey
+     * @param newKey        The new searchKey to replace
+     * @param pageNum       The pageNum of the pointer that we are using to determine which SK to replace
+     * @param less          Whether or not the intended searchkey is less than or greater than the inputted pageNum
+     *                          ex. P1 SK1 P2 SK2 P3
+     *                              Say we know P2, and want to replace SK2, then we pass in the pageNum of P2
+     *                              and set less to False, to replace SK2, if we set less to True, then it replaces SK1
      * 
-     * @param newKey
-     * @param pageNum
-     * @param type
-     * @param less
+     * @return              The searchKey that was replaced
      * @throws Exception
      */
-    public void replaceSearchKey(Object newKey, int pageNum, boolean less) throws Exception {
+    public Object replaceSearchKey(Object newKey, int pageNum, boolean less) throws Exception {
         int replaceIndex = -1;
         for (int i = 0; i < this.pointers.size(); i++) {
             if (this.pointers.get(i).first == pageNum) {
@@ -64,7 +82,7 @@ public class InternalNode extends BPlusNode {
 
         if (replaceIndex == -1) {
             MessagePrinter.printMessage(MessageType.ERROR, "This should not happen: RemoveSearchKeyLeafNode");
-            return;
+            return null;
         }
 
         if (less) {
@@ -74,23 +92,27 @@ public class InternalNode extends BPlusNode {
             replaceIndex--;
         }
 
-        this.searchKeys.set(replaceIndex, newKey);
+        Object replaced = this.searchKeys.set(replaceIndex, newKey);
         this.setChanged();
+        return replaced;
     }
 
-    /**
-     * Insert a new search key. This is used during the split algorithm for overfull conflicts
-     * @param val       The search key to append
-     * @param pointer   The pointer for the new node that was created.
-     *                  this node will consist of the second half of the search keys
-     */
-    public void addSearchKey(Object val, Pair<Integer, Integer> pointer) {
-        // TODO ensure the node is sorted and insert the pointer at the +1 index.
-        // we insert the pointer into the +1 index since the same index will still hold the pointer to the old node
-        int i = 0;
-        this.searchKeys.add(i, val);
-        this.pointers.add(i+1, pointer);
-        this.setChanged();
+    public void addSearchKey(Object val, int index) {
+        if (index < 0) {
+            index = this.searchKeys.size() - (index+1);
+            // if index == -1, meaning should insert at end of array
+            // index should then == array.size()
+        }
+        this.searchKeys.add(index, val);
+    }
+
+    public void addPointer(Pair<Integer, Integer> pointer, int index) {
+        if (index < 0) {
+            index = this.pointers.size() - (index+1);
+            // if index == -1, meaning should insert at end of array
+            // index should then == array.size()
+        }
+        this.pointers.add(index, pointer);
     }
 
     /**
@@ -132,6 +154,7 @@ public class InternalNode extends BPlusNode {
         if (pointers.size() == 0){
             //error case?
             MessagePrinter.printMessage(MessagePrinter.MessageType.ERROR, "Internal node has no children?");
+            return null;
         }
         for (int i = 0; i < searchKeys.size(); i++) {
             Object searchVal = searchKeys.get(i);
@@ -161,26 +184,42 @@ public class InternalNode extends BPlusNode {
 
     @Override
     public boolean underfull() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'underfull'");
+        int min = Math.ceilDiv(this.n-1, 2);
+        if (min <= this.searchKeys.size()) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     @Override
     public boolean overfull() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'overfull'");
+        int max = this.n-1;
+        if (this.searchKeys.size() <= max) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     @Override
     public boolean willOverfull(int count) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'willOverfull'");
+        int max = this.n-1;
+        if (this.searchKeys.size()+count <= max) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     @Override
     public boolean willUnderfull() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'willUnderfull'");
+        int min = Math.ceilDiv(this.n-1, 2);
+        if (min <= this.searchKeys.size()-1) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     @Override
@@ -219,6 +258,26 @@ public class InternalNode extends BPlusNode {
         }
         
         this.setChanged();
+    }
+
+    public Object getSearchKey(int pageNum, boolean less) throws Exception {
+        int getIndex = -1;
+        for (int i = 0; i < this.pointers.size(); i++) {
+            if (this.pointers.get(i).first == pageNum) {
+                getIndex = i;
+            }
+        }
+
+        if (getIndex == -1) {
+            MessagePrinter.printMessage(MessageType.ERROR, "This should not happen: RemoveSearchKeyLeafNode");
+            return null;
+        }
+
+        if (less) {
+            return this.searchKeys.get(getIndex-1);
+        } else {
+            return this.searchKeys.get(getIndex);
+        }
     }
 
     @Override

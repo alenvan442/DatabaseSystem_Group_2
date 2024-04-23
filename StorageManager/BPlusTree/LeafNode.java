@@ -70,10 +70,12 @@ public class LeafNode extends BPlusNode{
                 }
             }catch(Exception e){
                 MessagePrinter.printMessage(MessagePrinter.MessageType.ERROR, "Error in data type");
+                return null;
             }
         }
-        Bucket last = buckets.get(-1);
-        return new Pair<Integer, Integer>(last.getPageNumber(), last.getIndex());
+        // no matching key was found
+        MessagePrinter.printMessage(MessageType.ERROR, "No matching key of " + value.toString() + " was found");
+        return null;
     }
 
     @Override
@@ -82,7 +84,8 @@ public class LeafNode extends BPlusNode{
         // TODO return the new pointer ex. if incoming is less than something, then the pointer should be the same page, but one less index
         for(int i = 0; i < buckets.size(); i++){
             try {
-                Object pk = buckets.get(i).getPrimaryKey();
+                Bucket curr = buckets.get(i);
+                Object pk = curr.getPrimaryKey();
                 boolean found = false;
                 int result = this.compareKey(pk, value, type);
                 if (result == 0) {
@@ -92,12 +95,14 @@ public class LeafNode extends BPlusNode{
                 }
              
                 if (found) {
-                    //BELONGS HERE
-                    Bucket obtained = buckets.get(i);
-                    return new Pair<Integer, Integer>(obtained.getPageNumber(), obtained.getIndex());
+                    // it is next in line
+                    Bucket _new = new Bucket(this.pageNumber, curr.getIndex()+1, value);
+                    this.buckets.add(i+1, _new);
+                    return new Pair<Integer, Integer>(_new.getPageNumber(), _new.getIndex());
                 }
             }catch(Exception e){
                 MessagePrinter.printMessage(MessagePrinter.MessageType.ERROR, "Error in data type");
+                return null;
             }
         }
         Bucket last = buckets.get(-1);
@@ -107,7 +112,29 @@ public class LeafNode extends BPlusNode{
     @Override
     public Pair<Integer, Integer> delete(Object value, Type type) throws Exception {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'delete'");
+        for(int i = 0; i < buckets.size(); i++){
+            try {
+                Bucket curr = buckets.get(i);
+                Object pk = curr.getPrimaryKey();
+                boolean found = false;
+                int result = this.compareKey(pk, value, type);
+                if (result == 0) {
+                    found = true;
+                }
+             
+                if (found) {
+                    // delete the found bucket
+                    Bucket deleted = this.buckets.remove(i);
+                    return new Pair<Integer, Integer>(deleted.getPageNumber(), deleted.getIndex());
+                }
+            }catch(Exception e){
+                MessagePrinter.printMessage(MessagePrinter.MessageType.ERROR, "Error in data type");
+                return null;
+            }
+        }
+        // no matching key was found
+        MessagePrinter.printMessage(MessageType.ERROR, "No matching key of " + value.toString() + " was found");
+        return null;
     }
 
     @Override
@@ -118,26 +145,42 @@ public class LeafNode extends BPlusNode{
 
     @Override
     public boolean underfull() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'underfull'");
+        int min = Math.ceilDiv(this.n-1, 2);
+        if (min <= this.buckets.size()) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     @Override
     public boolean overfull() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'overfull'");
+        int max = this.n-1;
+        if (this.buckets.size() <= max) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     @Override
     public boolean willOverfull(int count) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'willOverfull'");
+        int max = this.n-1;
+        if (this.buckets.size()+count <= max) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     @Override
     public boolean willUnderfull() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'willUnderfull'");
+        int min = Math.ceilDiv(this.n-1, 2);
+        if (min <= this.buckets.size()-1) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     @Override

@@ -53,6 +53,12 @@ public abstract class BufferPage  implements Comparator<BufferPage> {
 
     public void decrementPageNumber() {
         this.pageNumber--;
+        this.setChanged();
+    }
+
+    public void setPageNumber(int n) {
+        this.pageNumber = n;
+        this.setChanged();
     }
 
     /**
