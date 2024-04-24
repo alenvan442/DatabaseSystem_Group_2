@@ -1,4 +1,4 @@
-package StorageManager.BPlusTree;
+package BPlusTree;
 
 
 import Parser.Type;
@@ -37,7 +37,7 @@ public abstract class BPlusNode extends BufferPage {
      *                      >0: this > other
      * @throws Exception
      */
-    protected int compareKey(Object thisKey, Object otherKey, Type type) throws Exception {
+    public int compareKey(Object thisKey, Object otherKey, Type type) throws Exception {
         switch (type) {
             case INTEGER:
                 return Integer.compare((Integer) thisKey, (Integer) otherKey);

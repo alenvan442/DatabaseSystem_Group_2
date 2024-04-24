@@ -1,4 +1,4 @@
-package StorageManager.BPlusTree;
+package BPlusTree;
 
 import Parser.Type;
 import StorageManager.TableSchema;
@@ -19,7 +19,7 @@ public class LeafNode extends BPlusNode{
     int tableNumber;
     public LeafNode(int tableNumber, int pageNumber, int n, int parent) {
         super(tableNumber, pageNumber, n, parent, true);
-        buckets = new ArrayList<>();
+        this.buckets = new ArrayList<>();
         this.nextLeaf = null;
     }
 
@@ -123,6 +123,8 @@ public class LeafNode extends BPlusNode{
      * Start somewhere on the page, loop through every bucket until we find the record to update
      * update the record, then increment to the next bucket and record, then match again.
      * Theoretically, they should be in order.
+     * This is typically used after a DB page got split so we need to update the pointer
+     * of all buckets that were in the pages that got split
      * @param startIndex    where to start on the passed in page
      * @param type          datatype of PK
      * @param page          the page to update
@@ -163,9 +165,10 @@ public class LeafNode extends BPlusNode{
                 if (result == 0) {
                     throw new Exception("PrimaryKey is already in db");
                 } else if (result < 0) {
-                    // it is next in line
-                    Bucket _new = new Bucket(this.pageNumber, curr.getIndex()+1, value);
-                    this.buckets.add(i+1, _new);
+                    // it goes before the current, or in otherwords
+                    // it goes where the current is, pushing the current forward in index
+                    Bucket _new = new Bucket(curr.getPageNumber(), curr.getIndex(), value);
+                    this.buckets.add(i, _new);
                     this.setChanged();
                     return new Pair<Integer, Integer>(_new.getPageNumber(), _new.getIndex());
                 }
@@ -175,7 +178,7 @@ public class LeafNode extends BPlusNode{
             }
         }
         // if we reach this, then we need to insert at end of leafnode
-        Bucket _new = new Bucket(this.pageNumber, this.buckets.size(), value);
+        Bucket _new = new Bucket(this.buckets.get(this.buckets.size()-1).getPageNumber(), this.buckets.size(), value);
         this.buckets.add(_new);
         this.setChanged();
         return new Pair<Integer, Integer>(_new.getPageNumber(), _new.getIndex());
@@ -224,9 +227,9 @@ public class LeafNode extends BPlusNode{
     public boolean overfull() {
         int max = this.n-1;
         if (this.buckets.size() <= max) {
-            return true;
-        } else {
             return false;
+        } else {
+            return true;
         }
     }
 

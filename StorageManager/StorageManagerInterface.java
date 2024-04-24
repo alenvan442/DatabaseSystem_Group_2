@@ -2,7 +2,7 @@ package StorageManager;
 
 import java.util.List;
 
-import StorageManager.BPlusTree.BPlusNode;
+import BPlusTree.BPlusNode;
 import StorageManager.Objects.Page;
 import StorageManager.Objects.Record;
 

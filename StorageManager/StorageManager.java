@@ -10,13 +10,13 @@ import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Random;
 
+import BPlusTree.BPlusNode;
+import BPlusTree.Bucket;
+import BPlusTree.InternalNode;
+import BPlusTree.LeafNode;
 import Parser.Insert;
 import Parser.Type;
 import QueryExecutor.InsertQueryExcutor;
-import StorageManager.BPlusTree.BPlusNode;
-import StorageManager.BPlusTree.Bucket;
-import StorageManager.BPlusTree.InternalNode;
-import StorageManager.BPlusTree.LeafNode;
 import StorageManager.Objects.AttributeSchema;
 import StorageManager.Objects.BufferPage;
 import StorageManager.Objects.Catalog;
@@ -326,7 +326,13 @@ public class StorageManager implements StorageManagerInterface {
                                 LeafNode leaf = (LeafNode)node;
                                 while (pageIndex < p.getRecords().size()) {
                                     pageIndex = leaf.replacePointerMultiple(pageIndex, pkType, p, primaryKeyIndex);
+
+                                    if (leaf.getNextLeaf() == null) {
+                                        break;
+                                    }
+                                    
                                     leaf = (LeafNode)this.getIndexPage(tableNumber, leaf.getNextLeaf().first);
+
                                 }
                             } catch (Exception e) {
                                 MessagePrinter.printMessage(MessageType.ERROR, e.getMessage() + ": insertRecord.indexing");
@@ -393,6 +399,8 @@ public class StorageManager implements StorageManagerInterface {
             location = node.insert(pk, pkType);
         }
 
+        int leafNodeFound = node.getPageNumber();
+
         if (location == null) {
             MessagePrinter.printMessage(MessageType.ERROR, "Error in traversing B+ Tree");
             return null;
@@ -405,9 +413,9 @@ public class StorageManager implements StorageManagerInterface {
                 // this is the root node that is overfull
                 // create new parent node which will be the new root
                 parent = new InternalNode(tableNumber, tableSchema.incrementNumIndexPages(), n, -1);
-                tableSchema.incrementNumIndexPages();
                 node.setParent(parent.getPageNumber());
                 tableSchema.setRoot(parent.getPageNumber());
+                parent.addPointer(new Pair<Integer,Integer>(node.getPageNumber(), -1), 0);
                 this.addPageToBuffer(parent);
             } else {
                 parent = (InternalNode)this.getIndexPage(tableNumber, node.getParent()); // only internals can be a parent
@@ -442,18 +450,19 @@ public class StorageManager implements StorageManagerInterface {
 
                 // append new search key to parent
                 // append new pointer to parent
-                parent.addSearchKey(goingUp, -1);
-                parent.addPointer(new Pair<Integer, Integer>(newNode.getPageNumber(), -1), -1);
+                parent.addSearchKey(goingUp, node.getPageNumber(), false);
+                parent.addPointer(new Pair<Integer, Integer>(newNode.getPageNumber(), -1), node.getPageNumber(), false);
 
-                tableSchema.incrementNumIndexPages();
                 this.addPageToBuffer(newNode);
             } else if (node instanceof LeafNode) {
                 LeafNode leaf = (LeafNode)node;
                 ArrayList<Bucket> sks = leaf.getSK();
 
                 // split into two
-                List<Bucket> first = sks.subList(0, sks.size()/2);
-                List<Bucket> second = sks.subList(sks.size()/2, sks.size());
+                List<Bucket> first = new ArrayList<>();
+                List<Bucket> second= new ArrayList<>();
+                first.addAll(sks.subList(0, sks.size()/2));
+                second.addAll(sks.subList(sks.size()/2, sks.size()));
 
                 // get next search key
                 Object goingUp = second.get(0).getPrimaryKey();
@@ -462,16 +471,20 @@ public class StorageManager implements StorageManagerInterface {
                 LeafNode newNode = new LeafNode(tableNumber, tableSchema.incrementNumIndexPages(), n, parent.getPageNumber());
                 leaf.setSK(first);
                 newNode.setSK(second);
-                newNode.assignNextLeaf(leaf.getNextLeaf().first);
+
+                if (leaf.getNextLeaf() != null) {
+                    newNode.assignNextLeaf(leaf.getNextLeaf().first);
+                }
+
                 leaf.assignNextLeaf(newNode.getPageNumber());
 
                 // append new search key to parent
-                parent.addSearchKey(goingUp, -1);
-                parent.addPointer(new Pair<Integer, Integer>(newNode.getPageNumber(), -1), -1);
+                parent.addSearchKey(goingUp, node.getPageNumber(), false);
+                parent.addPointer(new Pair<Integer, Integer>(newNode.getPageNumber(), -1), node.getPageNumber(), false);
 
-                tableSchema.incrementNumIndexPages();
                 this.addPageToBuffer(newNode);
             }
+
             // move up in the tree and repeat
             if (parent == null) {
                 break;
@@ -480,7 +493,7 @@ public class StorageManager implements StorageManagerInterface {
             }
         }
 
-        this.incrementIndexPointer(tableNumber, node.getPageNumber(), location.second, location.first);
+        this.incrementIndexPointer(tableNumber, leafNodeFound, location.second, location.first, pk, pkType);
         return location;
     }
 
@@ -663,22 +676,25 @@ public class StorageManager implements StorageManagerInterface {
             InternalNode parent = null;
             if (node.getParent() == -1) {
                 // basically check to see if the root is ACTUALLY underfull, meaning it has less then 2 childrens, if so make the root a leafnode
-                InternalNode root = (InternalNode) node;
-                ArrayList<Pair<Integer, Integer>> pointers = root.getPointers();
-                if (pointers.size() < 2) {
-                    if (pointers.size() == 1) {
-                        // make the next node the new root
-                        BPlusNode newRoot = this.getIndexPage(tableNumber, pointers.get(0).first);
-                        this.deleteIndexNode(node, schema);
-                        newRoot.setPageNumber(0);
-                        tableSchema.setRoot(0);
-                    } else if (pointers.size() == 0) {
-                        // not sure how this can happen, but if it does, create a new empty root as a leafnode and replace the old one
-                        LeafNode newRoot = new LeafNode(tableNumber, 0, tableSchema.computeN(catalog), -1);
-                        tableSchema.setRoot(0);
-                        this.addPageToBuffer(newRoot);
+                // TODO fix root being internal or leaf
+                if (node instanceof InternalNode) {
+                    InternalNode root = (InternalNode) node;
+                    ArrayList<Pair<Integer, Integer>> pointers = root.getPointers();
+                    if (pointers.size() < 2) {
+                        if (pointers.size() == 1) {
+                            // make the next node the new root
+                            BPlusNode newRoot = this.getIndexPage(tableNumber, pointers.get(0).first);
+                            this.deleteIndexNode(node, schema);
+                            newRoot.setPageNumber(1);
+                            tableSchema.setRoot(0);
+                        } else if (pointers.size() == 0) {
+                            // not sure how this can happen, but if it does, create a new empty root as a leafnode and replace the old one
+                            LeafNode newRoot = new LeafNode(tableNumber, 1, tableSchema.computeN(catalog), -1);
+                            tableSchema.setRoot(0);
+                            this.addPageToBuffer(newRoot);
+                        }
                     }
-                }
+                } 
             } else {
                 parent = (InternalNode) this.getIndexPage(tableNumber, node.getParent());
                 if (node instanceof InternalNode) {
@@ -927,7 +943,7 @@ public class StorageManager implements StorageManagerInterface {
      * @param pageNum   The pageNum that actual record was initially on
      * @throws Exception
      */
-    private void incrementIndexPointer(int tableNum, int leafNum, int index, int pageNum) throws Exception {
+    private void incrementIndexPointer(int tableNum, int leafNum, int index, int pageNum, Object searchKey, Type type) throws Exception {
         LeafNode leaf = null;
         boolean end = false;
         do {
@@ -942,7 +958,7 @@ public class StorageManager implements StorageManagerInterface {
                         break;
                     }
 
-                    if (b.getIndex() >= index) {
+                    if (b.getIndex() >= index && leaf.compareKey(searchKey, b.getPrimaryKey(), type) != 0) {
                         b.setPointer(pageNum, b.getIndex()+1);
                     }
                 }
@@ -1175,7 +1191,9 @@ public class StorageManager implements StorageManagerInterface {
         int nodeIndex = pageNumber - 1;
 
         tableIndexAccessFile.seek(nodeIndex * nodeSize);
+
         boolean nodeType = tableIndexAccessFile.readBoolean();
+
         if (nodeType) {
             pageNumber = tableIndexAccessFile.readInt(); // should change if everything is correct
             int parent = tableIndexAccessFile.readInt();

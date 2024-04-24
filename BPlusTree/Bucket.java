@@ -1,4 +1,4 @@
-package StorageManager.BPlusTree;
+package BPlusTree;
 
 public class Bucket {
 

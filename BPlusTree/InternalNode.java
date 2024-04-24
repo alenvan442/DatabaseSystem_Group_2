@@ -1,4 +1,4 @@
-package StorageManager.BPlusTree;
+package BPlusTree;
 
 import Parser.Type;
 import StorageManager.TableSchema;
@@ -129,6 +129,52 @@ public class InternalNode extends BPlusNode {
         return replaced;
     }
 
+    public void addSearchKey(Object newKey, int pageNum, boolean less) throws Exception {
+        int replaceIndex = -1;
+        for (int i = 0; i < this.pointers.size(); i++) {
+            if (this.pointers.get(i).first == pageNum) {
+                replaceIndex = i;
+            }
+        }
+
+        if (replaceIndex == -1) {
+            MessagePrinter.printMessage(MessageType.ERROR, "This should not happen: RemoveSearchKeyLeafNode");
+        }
+
+        if (less) {
+            // idea: we pass in the pageNum of the node that was modified/deleted from
+            // if we merge left, we are merging with a node that is less than us, meaning
+            // the corresponding search key is at a lower index
+            replaceIndex--;
+        }
+
+        this.searchKeys.add(replaceIndex, newKey);
+        this.setChanged();
+    }
+
+    public void addPointer(Pair<Integer, Integer> newPointer, int pageNum, boolean less) throws Exception {
+        int replaceIndex = -1;
+        for (int i = 0; i < this.pointers.size(); i++) {
+            if (this.pointers.get(i).first == pageNum) {
+                replaceIndex = i;
+            }
+        }
+
+        if (replaceIndex == -1) {
+            MessagePrinter.printMessage(MessageType.ERROR, "This should not happen: RemoveSearchKeyLeafNode");
+        }
+
+        if (less) {
+            // idea: we pass in the pageNum of the node that was modified/deleted from
+            replaceIndex--;
+        } else {
+            replaceIndex++;
+        }
+
+        this.pointers.add(replaceIndex, newPointer);
+        this.setChanged();
+    }
+
     /**
      * Add a search key based on an index
      * @param val       The search key to add
@@ -207,7 +253,7 @@ public class InternalNode extends BPlusNode {
                 return pointers.get(i);
             }
         }
-        return pointers.get(pointers.size());
+        return pointers.get(pointers.size()-1);
 
     }
 
@@ -237,9 +283,9 @@ public class InternalNode extends BPlusNode {
     public boolean overfull() {
         int max = this.n-1;
         if (this.searchKeys.size() <= max) {
-            return true;
-        } else {
             return false;
+        } else {
+            return true;
         }
     }
 
@@ -377,7 +423,6 @@ public class InternalNode extends BPlusNode {
         tableAccessFile.writeInt(pageNumber);
         tableAccessFile.writeInt(this.parent);
         tableAccessFile.writeInt(this.searchKeys.size());
-
 
         for (Object searchKey: this.searchKeys) {
             if (searchKey instanceof Integer) {
