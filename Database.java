@@ -47,7 +47,8 @@ public class Database {
         } else {
             System.out.println("Creating new db at " + dbDirectory.getAbsolutePath());
             File tableDirectory = new File(dbDirectory.getAbsolutePath().concat("/tables"));
-            boolean success = tableDirectory.mkdir() && schemaFile.createNewFile();
+            File indexDirectory = new File(dbDirectory.getAbsolutePath().concat("/indexing"));
+            boolean success = tableDirectory.mkdir() && schemaFile.createNewFile() && indexDirectory.mkdir();
             if (success){
                 StorageManager.createStorageManager(bufferSize);
                 Catalog.createCatalog(dbDirectory.getAbsolutePath(), schemaFile.getAbsolutePath(), pageSize, bufferSize, indexing);
