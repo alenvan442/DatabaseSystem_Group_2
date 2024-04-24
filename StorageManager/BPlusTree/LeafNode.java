@@ -23,16 +23,29 @@ public class LeafNode extends BPlusNode{
         this.nextLeaf = null;
     }
 
+    /**
+     * Get all buckets of this leaf node
+     * @return a list of all of the buckets
+     */
     public ArrayList<Bucket> getSK() {
         return this.buckets;
     }
 
+    /**
+     * set the buckets of this node to the incoming list
+     * @param newbuckets    The list of buckets to set to
+     */
     public void setSK(List<Bucket> newbuckets) {
         this.buckets.clear();
         this.buckets.addAll(newbuckets);
         this.setChanged();
     }
 
+    /**
+     * Add a bucket at a specific index
+     * @param b         The bucket to add
+     * @param index     Where to add the bucket
+     */
     public void addBucket(Bucket b, int index){
         if (index < 0) {
             index = this.buckets.size() - (index + 1);
@@ -41,16 +54,28 @@ public class LeafNode extends BPlusNode{
         this.setChanged();
     }
 
+    /**
+     * Assign a new pointer that points to the next leaf node
+     * @param ln    The next leafnode to point to
+     */
     public void assignNextLeaf(LeafNode ln){
         nextLeaf = new Pair<Integer,Integer>(ln.pageNumber, -1);
         this.setChanged();
     }
 
+    /**
+     * Assign a new pointer that points to the next leaf node
+     * @param ln    The pageNumber of the leafNode to point to
+     */
     public void assignNextLeaf(int ln){
         nextLeaf = new Pair<Integer,Integer>(ln, -1);
         this.setChanged();
     }
 
+    /**
+     * Returns the pointer to the next leaf node
+     * @return      A pointer <PageNumber, -1>
+     */
     public Pair<Integer, Integer> getNextLeaf() {
         return this.nextLeaf;
     }
@@ -92,35 +117,6 @@ public class LeafNode extends BPlusNode{
         // no matching key was found
         MessagePrinter.printMessage(MessageType.ERROR, "No matching key of " + value.toString() + " was found");
         return null;
-    }
-
-    /**
-     *
-     * @param value
-     * @param type
-     * @param newPointer
-     * @throws Exception
-     */
-    public void replacePointer(Object value, Type type, Pair<Integer, Integer> newPointer) throws Exception {
-        for(int i = 0; i < buckets.size(); i++){
-            try {
-                Object pk = buckets.get(i).getPrimaryKey();
-                boolean found = false;
-                if (this.compareKey(pk, value, type) == 0) {
-                    found = true;
-                }
-
-                if (found) {
-                    //BELONGS HERE
-                    buckets.get(i).setPointer(newPointer.first, newPointer.second);
-                    this.setChanged();
-                }
-            }catch(Exception e){
-                MessagePrinter.printMessage(MessagePrinter.MessageType.ERROR, "Error in data type");
-            }
-        }
-        // no matching key was found
-        MessagePrinter.printMessage(MessageType.ERROR, "No matching key of " + value.toString() + " was found");
     }
 
     /**
@@ -346,6 +342,8 @@ public class LeafNode extends BPlusNode{
             tableAccessFile.writeInt(bucket.getIndex());
         }
     }
+
+    @Override
     public void decrementNodePointerPage(int pageNum) {
         if (this.getNextLeaf() != null && this.getNextLeaf().first > pageNum) {
             this.assignNextLeaf(this.getNextLeaf().first-1);

@@ -29,16 +29,29 @@ public class InternalNode extends BPlusNode {
         this.pointers = new ArrayList<>();
     }
 
+    /**
+     * Returns a list of all pointers
+     * @return
+     */
     public ArrayList<Pair<Integer, Integer>> getPointers() {
         return this.pointers;
     }
 
+    /**
+     * set the pointers of this node to the list of pointers that are incoming
+     * @param newPointers
+     */
     public void setPointers(List<Pair<Integer, Integer>> newPointers) {
         this.pointers.clear();
         this.pointers.addAll(newPointers);
         this.setChanged();
     }
 
+    /**
+     * remove a specific pointer based on an index
+     * @param index     Index of the pointer to remove
+     * @return          The deleted pointer
+     */
     public Pair<Integer, Integer> removePointer(int index) {
         if (index < 0) {
             index = this.pointers.size() - (index+1);
@@ -47,16 +60,30 @@ public class InternalNode extends BPlusNode {
         return this.pointers.remove(index);
     }
 
+    /**
+     * Returns a list of all search keys
+     * @return
+     */
     public ArrayList<Object> getSK() {
         return this.searchKeys;
     }
 
+    /**
+     * Sets the list of search keys in this node
+     * to the list that is incoming
+     * @param newSK
+     */
     public void setSK(List<Object> newSK) {
         this.searchKeys.clear();
         this.searchKeys.addAll(newSK);
         this.setChanged();
     }
 
+    /**
+     * deletes a search key based on an index
+     * @param index     Index of the search key to delete
+     * @return          The deleted searchkey
+     */
     public Object deleteSK(int index) {
         if (index < 0) {
             index = this.searchKeys.size() - (index+1);
@@ -102,6 +129,11 @@ public class InternalNode extends BPlusNode {
         return replaced;
     }
 
+    /**
+     * Add a search key based on an index
+     * @param val       The search key to add
+     * @param index     Where to insert the key
+     */
     public void addSearchKey(Object val, int index) {
         if (index < 0) {
             index = this.searchKeys.size() - (index+1);
@@ -112,6 +144,11 @@ public class InternalNode extends BPlusNode {
         this.setChanged();
     }
 
+    /**
+     * Add a pointer based on an index
+     * @param pointer       The pointer to add
+     * @param index         Where to insert the pointer
+     */
     public void addPointer(Pair<Integer, Integer> pointer, int index) {
         if (index < 0) {
             index = this.pointers.size() - (index+1);
@@ -265,6 +302,16 @@ public class InternalNode extends BPlusNode {
         this.setChanged();
     }
 
+    /**
+     * Gets a search key based on a pointer
+     * idea: Start at an internal node, move up to it's parent back tracking
+     * the pointer, and now determine if we want the search key
+     * to the right or left of the pointer
+     * @param pageNum       The page of the node the pointer is pointing to
+     * @param less          Whether we get the search key to the left or not
+     * @return              The founded search key
+     * @throws Exception
+     */
     public Object getSearchKey(int pageNum, boolean less) throws Exception {
         int getIndex = -1;
         for (int i = 0; i < this.pointers.size(); i++) {
@@ -352,6 +399,7 @@ public class InternalNode extends BPlusNode {
         }
     }
 
+    @Override
     public void decrementNodePointerPage(int pageNum) {
         // while we are here, if a pointer exists in which it pointed to the
         // deleted page, remove it, also remove the search key that is just greater than it

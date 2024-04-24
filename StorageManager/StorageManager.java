@@ -365,6 +365,18 @@ public class StorageManager implements StorageManagerInterface {
         }
     }
 
+    /**
+     * Insert a record by finding where it should be insertted into based on the B+ tree
+     * Traverse the B+ tree, insert the SK into the tree. Return a pointer to where it should be insertted
+     * Insert the record into the DB. Increment the pointer of all pointers in the B+ tree after the newly insertted record
+     * If a page splits, update the pointers of all affected buckets in the B+ tree
+     * @param record            The record to insert
+     * @param tableNumber       The table to insert into
+     * @param tableSchema       The schema of the table
+     * @param catalog           The catalog of the database
+     * @return                  The location as to where to insert the record
+     * @throws Exception
+     */
     private Pair<Integer, Integer> insertIndex(Record record, int tableNumber, TableSchema tableSchema, Catalog catalog) throws Exception {
         // set up while loop with the root as the first to search
         int primaryKeyIndex = tableSchema.getPrimaryIndex();
@@ -472,6 +484,13 @@ public class StorageManager implements StorageManagerInterface {
         return location;
     }
 
+    /**
+     * Iterates through the DB and finds the record to delete
+     * @param schema        The table schema of the table to delete
+     * @param primaryKey    The primaryKey of the record to delete
+     * @return              The page the record was deleted from as well as the deleted record
+     * @throws Exception
+     */
     private Pair<Page, Record> deleteHelper(TableSchema schema, Object primaryKey) throws Exception {
 
         Integer tableNumber = schema.getTableNumber();
@@ -525,6 +544,13 @@ public class StorageManager implements StorageManagerInterface {
         return null;
     }
 
+    /**
+     * Checks if a page is empty, if it is, delete it from the database
+     * if indexing is on, decrement any pageNumbeers that are affected
+     * @param schema        The table schema of the table in consideration
+     * @param page          The page that was deleted from and may be empty
+     * @throws Exception
+     */
     private void checkDeletePage(TableSchema schema, Page page) throws Exception {
         if (page.getNumRecords() == 0) {
             // begin to delete the page by moving all preceding pages up
@@ -601,6 +627,16 @@ public class StorageManager implements StorageManagerInterface {
         return deletedRecord;
     }
 
+    /**
+     * Determines where a record is based off the B+ tree and deletes it from the tree
+     * then returns the location of the record
+     * @param tableNumber       The table to delete from
+     * @param primaryKey        The primary key of the record to delete
+     * @param tableSchema       The table's schema
+     * @param catalog           The catalog of the DB
+     * @return                  The location/pointer of where the record is in the DB
+     * @throws Exception
+     */
     private Pair<Page, Record> deleteIndex(int tableNumber, Object primaryKey, TableSchema tableSchema, Catalog catalog) throws Exception {
         TableSchema schema = Catalog.getCatalog().getSchema(tableNumber);
         Page deletePage = null;
@@ -924,8 +960,9 @@ public class StorageManager implements StorageManagerInterface {
     }
 
     /**
-     * 
-     * @param node
+     * Deletes a BPlusNode from the tree and updates all pointers
+     * @param node          The node to delete
+     * @param schema        The table's schema
      * @throws Exception 
      */
     private void deleteIndexNode(BPlusNode node, TableSchema schema) throws Exception {
