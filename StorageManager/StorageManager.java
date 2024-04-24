@@ -314,7 +314,7 @@ public class StorageManager implements StorageManagerInterface {
                             int pageIndex = 0;
                             Pair<Integer, Integer> searchLocation = new Pair<Integer,Integer>(tableSchema.getRootNumber(), -1);
                             BPlusNode node = null;
-                            Object firstSK = p.getRecords().getFirst().getValues().get(primaryKeyIndex);
+                            Object firstSK = p.getRecords().get(0).getValues().get(primaryKeyIndex);
                             do {
                                 // read in node
                                 node = this.getIndexPage(tableNumber, searchLocation.first);
@@ -330,7 +330,7 @@ public class StorageManager implements StorageManagerInterface {
                                     if (leaf.getNextLeaf() == null) {
                                         break;
                                     }
-                                    
+
                                     leaf = (LeafNode)this.getIndexPage(tableNumber, leaf.getNextLeaf().first);
 
                                 }
@@ -694,7 +694,7 @@ public class StorageManager implements StorageManagerInterface {
                             this.addPageToBuffer(newRoot);
                         }
                     }
-                } 
+                }
             } else {
                 parent = (InternalNode) this.getIndexPage(tableNumber, node.getParent());
                 if (node instanceof InternalNode) {
@@ -1195,13 +1195,13 @@ public class StorageManager implements StorageManagerInterface {
         boolean nodeType = tableIndexAccessFile.readBoolean();
 
         if (nodeType) {
-            pageNumber = tableIndexAccessFile.readInt(); // should change if everything is correct
+            pageNumber = tableIndexAccessFile.readInt();
             int parent = tableIndexAccessFile.readInt();
             LeafNode leafNode = new LeafNode(tableNumber, pageNumber, tableSchema.computeN(catalog), parent);
             leafNode.readFromHardware(tableIndexAccessFile, tableSchema);
             this.addPageToBuffer(leafNode);
         } else {
-            pageNumber = tableIndexAccessFile.readInt(); // should change if everything is correct
+            pageNumber = tableIndexAccessFile.readInt();
             int parent = tableIndexAccessFile.readInt();
             InternalNode internalNode = new InternalNode(tableNumber, pageNumber, tableSchema.computeN(catalog), parent);
             internalNode.readFromHardware(tableIndexAccessFile, tableSchema);
