@@ -1199,11 +1199,13 @@ public class StorageManager implements StorageManagerInterface {
             int parent = tableIndexAccessFile.readInt();
             LeafNode leafNode = new LeafNode(tableNumber, pageNumber, tableSchema.computeN(catalog), parent);
             leafNode.readFromHardware(tableIndexAccessFile, tableSchema);
+            this.addPageToBuffer(leafNode);
         } else {
             pageNumber = tableIndexAccessFile.readInt(); // should change if everything is correct
             int parent = tableIndexAccessFile.readInt();
             InternalNode internalNode = new InternalNode(tableNumber, pageNumber, tableSchema.computeN(catalog), parent);
             internalNode.readFromHardware(tableIndexAccessFile, tableSchema);
+            this.addPageToBuffer(internalNode);
         }
         tableIndexAccessFile.close();
 

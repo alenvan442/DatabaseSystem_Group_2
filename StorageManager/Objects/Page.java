@@ -17,7 +17,6 @@ public class Page extends BufferPage {
         super(tableNumber, pageNumber);
         this.numRecords = numRecords;
         this.changed = false;
-        this.priority = System.currentTimeMillis();
         this.records = new ArrayList<>();
     }
 

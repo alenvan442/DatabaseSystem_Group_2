@@ -14,6 +14,7 @@ public abstract class BufferPage implements Comparator<BufferPage> {
     public BufferPage(int tableNumber, int pageNumber) {
         this.tableNumber = tableNumber;
         this.pageNumber = pageNumber;
+        this.setPriority();
     }
 
     /**
