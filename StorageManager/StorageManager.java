@@ -613,7 +613,7 @@ public class StorageManager implements StorageManagerInterface {
             if (deletedPair == null) {
                 MessagePrinter.printMessage(MessageType.ERROR, "Error in traversing B+ Tree");
                 return null;
-            }            
+            }
 
         } else {
             deletedPair = this.deleteHelper(schema, primaryKey);
@@ -885,7 +885,7 @@ public class StorageManager implements StorageManagerInterface {
      * @param leafNum   The leaf node number to begin consideration
      * @param index     The index of the deleted record
      * @param pageNum   The pageNum that actual record was initially on
-     * @throws Exception 
+     * @throws Exception
      */
     private void decrementIndexPointer(int tableNum, int leafNum, int index, int pageNum) throws Exception {
         LeafNode leaf = null;
@@ -925,7 +925,7 @@ public class StorageManager implements StorageManagerInterface {
      * @param leafNum   The leaf node number to begin consideration
      * @param index     The index of the inserted record
      * @param pageNum   The pageNum that actual record was initially on
-     * @throws Exception 
+     * @throws Exception
      */
     private void incrementIndexPointer(int tableNum, int leafNum, int index, int pageNum) throws Exception {
         LeafNode leaf = null;
@@ -963,7 +963,7 @@ public class StorageManager implements StorageManagerInterface {
      * Deletes a BPlusNode from the tree and updates all pointers
      * @param node          The node to delete
      * @param schema        The table's schema
-     * @throws Exception 
+     * @throws Exception
      */
     private void deleteIndexNode(BPlusNode node, TableSchema schema) throws Exception {
         node.clear();
@@ -978,12 +978,12 @@ public class StorageManager implements StorageManagerInterface {
                 currNode.setPageNumber(currNode.getPageNumber()-1);
             }
 
-            // for every read in node, loop through it's pointers and decrement any pointer to a 
+            // for every read in node, loop through it's pointers and decrement any pointer to a
             // BPlusNode whose page is greater than the deleted node
             // this will also remove the deleted node from any internal node that pointed to it
             currNode.decrementNodePointerPage(deletedPageNum);
         }
-        schema.decrementNumIndexPages();        
+        schema.decrementNumIndexPages();
 
     }
 
@@ -1170,7 +1170,7 @@ public class StorageManager implements StorageManagerInterface {
         TableSchema tableSchema = catalog.getSchema(tableNumber);
         String filePath = this.getIndexingPath(tableNumber);
         File tableIndexFile = new File(filePath);
-        RandomAccessFile tableIndexAccessFile = new RandomAccessFile(tableIndexFile, "rw");
+        RandomAccessFile tableIndexAccessFile = new RandomAccessFile(tableIndexFile, "r");
         int nodeSize = tableSchema.computeSizeOfNode(catalog);
         int nodeIndex = pageNumber - 1;
 
