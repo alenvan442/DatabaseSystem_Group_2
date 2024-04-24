@@ -5,6 +5,7 @@ import java.io.FileNotFoundException;
 import java.io.RandomAccessFile;
 import java.lang.management.MemoryType;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Random;
@@ -62,17 +63,18 @@ public class StorageManager implements StorageManagerInterface {
     /**
      * Splits a page by moving half of its records to a new page.
      *
-     * @param page        The page to split.
-     * @param record      The record to insert after the split.
-     * @param tableSchema The schema of the table.
+     * @param page              The page to split.
+     * @param record            The record to insert after the split.
+     * @param tableSchema       The schema of the table.
+     * @param primaryKeyIndex   The index in which the PK resides in the record
+     * @return                  The list of pages that results from the split
      * @throws Exception If an error occurs during the split operation.
      */
-    private Pair<Integer, Integer> pageSplit(Page page, Record record, TableSchema tableSchema, int primaryKeyIndex) throws Exception {
+    private List<Page> pageSplit(Page page, Record record, TableSchema tableSchema, int primaryKeyIndex) throws Exception {
         // Create a new page
         Page newPage = new Page(0, tableSchema.getTableNumber(), tableSchema.getNumPages() + 1);
         tableSchema.addPageNumber(page.getPageNumber(), newPage.getPageNumber());
-        int pageNum = 0;
-        int index = 0;
+        List<Page> results = Arrays.asList(page, newPage);
 
         // Calculate the split index
         int splitIndex = 0;
@@ -81,11 +83,9 @@ public class StorageManager implements StorageManagerInterface {
             if (record.compareTo(lastRecordInCurrPage, primaryKeyIndex) < 0) {
                 page.getRecords().clear();
                 page.addNewRecord(record);
-                pageNum = page.getPageNumber();
                 newPage.addNewRecord(lastRecordInCurrPage);
             } else {
                 newPage.addNewRecord(record);
-                pageNum = newPage.getPageNumber();
             }
         } else {
             splitIndex = (int) Math.floor(page.getRecords().size() / 2);
@@ -93,7 +93,9 @@ public class StorageManager implements StorageManagerInterface {
             // Move half of the records to the new page
             for (Record copyRecord : page.getRecords().subList(splitIndex, page.getRecords().size())) {
                 if (!newPage.addNewRecord(copyRecord)) {
-                    pageSplit(newPage, copyRecord, tableSchema, primaryKeyIndex);
+                    List<Page> temp = pageSplit(newPage, copyRecord, tableSchema, primaryKeyIndex);
+                    results.remove(newPage);
+                    results.addAll(temp);
                 }
             }
 
@@ -104,16 +106,16 @@ public class StorageManager implements StorageManagerInterface {
             if (record.compareTo(lastRecordInCurrPage, primaryKeyIndex) < 0) {
                 // record is less than lastRecord in page
                 if (!page.addNewRecord(record)) {
-                    pageSplit(page, record, tableSchema, primaryKeyIndex);
+                    List<Page> temp = pageSplit(page, record, tableSchema, primaryKeyIndex);
+                    results.remove(page);
+                    results.addAll(temp);
                 }
-                pageNum = page.getPageNumber();
-                index = page.getRecordLocation(record, primaryKeyIndex);
             } else {
                 if (!newPage.addNewRecord(record)) {
-                    pageSplit(newPage, record, tableSchema, primaryKeyIndex);
+                    List<Page> temp = pageSplit(newPage, record, tableSchema, primaryKeyIndex);
+                    results.remove(newPage);
+                    results.addAll(temp);
                 }
-                pageNum = page.getPageNumber();
-                index = page.getRecordLocation(record, primaryKeyIndex);
             }
         }
 
@@ -123,7 +125,7 @@ public class StorageManager implements StorageManagerInterface {
 
         // Add the new page to the buffer
         this.addPageToBuffer(newPage);
-        return new Pair<Integer,Integer>(pageNum, index);
+        return results;
     }
 
     /**
@@ -293,9 +295,7 @@ public class StorageManager implements StorageManagerInterface {
             } else {
 
                 if (catalog.isIndexingOn()) {
-                    Pair<LeafNode, Pair<Integer, Integer>> results = this.insertIndex(record, tableNumber, tableSchema, catalog);
-                    LeafNode node = results.first;
-                    Pair<Integer, Integer> location = results.second;
+                    Pair<Integer, Integer> location = this.insertIndex(record, tableNumber, tableSchema, catalog);
 
                     if (location == null) {
                         MessagePrinter.printMessage(MessageType.ERROR, "Error in traversing B+ Tree");
@@ -306,10 +306,31 @@ public class StorageManager implements StorageManagerInterface {
                     Page page = this.getPage(tableNumber, location.first);
                     if (!page.addNewRecord(record, location.second)) {
                         // page was full
-                        Pair<Integer, Integer> newLocatiion = this.pageSplit(page, record, tableSchema, primaryKeyIndex);
-                        node.replacePointer(record.getValues().get(primaryKeyIndex), tableSchema.getAttributeType(primaryKeyIndex), newLocatiion);
+                        List<Page> pages = this.pageSplit(page, record, tableSchema, primaryKeyIndex);
+                        Type pkType = tableSchema.getAttributeType(primaryKeyIndex);
+                        for (Page p : pages) {
+                            // for every page present in the split
+                            // find the first leaf node that we need
+                            int pageIndex = 0;
+                            Pair<Integer, Integer> searchLocation = new Pair<Integer,Integer>(tableSchema.getRootNumber(), -1);
+                            BPlusNode node = null;
+                            Object firstSK = p.getRecords().getFirst().getValues().get(primaryKeyIndex);
+                            do {
+                                // read in node
+                                node = this.getIndexPage(tableNumber, searchLocation.first);
+                                searchLocation = node.search(firstSK, pkType);
+                            } while (searchLocation != null && searchLocation.second == -1);
+
+                            // stop when we get the first LeaFNode
+                            LeafNode leaf = (LeafNode)node;
+                            while (pageIndex < p.getRecords().size()) {
+                                pageIndex = leaf.replacePointerMultiple(pageIndex, pkType, p, primaryKeyIndex);
+                                leaf = (LeafNode)this.getIndexPage(tableNumber, leaf.getNextLeaf().first);
+                            }
+                        }
                     }
                     tableSchema.incrementNumRecords();
+
                 } else {
 
                     for (Integer pageNumber : tableSchema.getPageOrder()) {
@@ -340,7 +361,7 @@ public class StorageManager implements StorageManagerInterface {
         }
     }
 
-    private Pair<LeafNode, Pair<Integer, Integer>> insertIndex(Record record, int tableNumber, TableSchema tableSchema, Catalog catalog) throws Exception {
+    private Pair<Integer, Integer> insertIndex(Record record, int tableNumber, TableSchema tableSchema, Catalog catalog) throws Exception {
         // set up while loop with the root as the first to search
         int primaryKeyIndex = tableSchema.getPrimaryIndex();
         Object pk = record.getValues().get(primaryKeyIndex);
@@ -439,7 +460,8 @@ public class StorageManager implements StorageManagerInterface {
             }
         }
 
-        return new Pair<LeafNode,Pair<Integer,Integer>>((LeafNode)node, location);
+        this.incrementIndexPointer(tableNumber, node.getPageNumber(), location.second, location.first);
+        return location;
     }
 
     private Pair<Page, Record> deleteHelper(TableSchema schema, Object primaryKey) throws Exception {
@@ -509,6 +531,34 @@ public class StorageManager implements StorageManagerInterface {
 
             // update the pageOrder of the schema
             schema.deletePageNumber(page.getPageNumber());
+
+            // if indexing on, start at first leaf node, loop through all and decrement any pages that has a greater page number than the one being deleted
+            if (Catalog.getCatalog().isIndexingOn()) {
+                // get first leaf node
+                Pair<Integer, Integer> location = new Pair<Integer,Integer>(schema.getRootNumber(), -1);
+                BPlusNode node = null;
+                while (location != null && location.second == -1) {
+                    node = this.getIndexPage(schema.getTableNumber(), location.first);
+                    location = ((InternalNode)node).getPointers().get(0); // get leftmost
+                }
+
+                // the pointer points to a leaf node now
+                LeafNode leaf = null;
+                int leafNum = location.first;
+
+                while (true) {
+                    leaf = (LeafNode)this.getIndexPage(schema.getTableNumber(), leafNum);
+                    leaf.decrementPointerPage(page.getPageNumber());
+                    if (leaf.getNextLeaf() != null) {
+                        leafNum = leaf.getNextLeaf().first;
+                    } else {
+                        // no more leaves to read in
+                        break;
+                    }
+                };
+
+            }
+
         }
     }
 
@@ -525,7 +575,8 @@ public class StorageManager implements StorageManagerInterface {
             if (deletedPair == null) {
                 MessagePrinter.printMessage(MessageType.ERROR, "Error in traversing B+ Tree");
                 return null;
-            }
+            }            
+
         } else {
             deletedPair = this.deleteHelper(schema, primaryKey);
         }
@@ -570,7 +621,7 @@ public class StorageManager implements StorageManagerInterface {
                     if (pointers.size() == 1) {
                         // make the next node the new root
                         BPlusNode newRoot = this.getIndexPage(tableNumber, pointers.get(0).first);
-                        this.deleteIndexNode(node);
+                        this.deleteIndexNode(node, schema);
                         newRoot.setPageNumber(0);
                         tableSchema.setRoot(0);
                     } else if (pointers.size() == 0) {
@@ -653,7 +704,7 @@ public class StorageManager implements StorageManagerInterface {
                             right.setPointers(currPointers);
 
                             // delete the curr node
-                            this.deleteIndexNode(node);
+                            this.deleteIndexNode(node, schema);
                         }
 
                     } else {
@@ -679,7 +730,7 @@ public class StorageManager implements StorageManagerInterface {
                         left.setPointers(leftPointers);
 
                         // delete the curr node
-                        this.deleteIndexNode(node);
+                        this.deleteIndexNode(node, schema);
                     }
 
 
@@ -724,21 +775,28 @@ public class StorageManager implements StorageManagerInterface {
                             // update the previous leafnode's pointer to the next leafNode to this one
                             BPlusNode searchLeaf = null;
                             Pair<Integer, Integer> finder = new Pair<Integer,Integer>(schema.getRootNumber(), -1);
-                            while (finder.first != currPageNum || searchLeaf instanceof InternalNode) {
+
+                            while (finder.first != currPageNum) {
                                 searchLeaf = this.getIndexPage(tableNumber, finder.first);
                                 if (searchLeaf instanceof InternalNode) {
-                                    // internal node, traverse down leftmost side
+                                    // go down leftmosr side of the tree
                                     finder = ((InternalNode)searchLeaf).getPointers().get(0);
                                 } else {
-                                    // leaf node
-                                    finder = new Pair<Integer, Integer>(((LeafNode)searchLeaf).getSK().get(0).getPageNumber(), -1);
+                                    LeafNode leaf = (LeafNode)searchLeaf;
+                                    if (leaf.getNextLeaf() == null) {
+                                        MessagePrinter.printMessage(MessageType.ERROR, "Did not find the previous neighbor of the current node: deleteIndex");
+                                    }
+
+                                    // if we're at the leaf node level already
+                                    // move to the next leaf node until we find what we need
+                                    finder = leaf.getNextLeaf();
                                 }
                             }
 
                             ((LeafNode)searchLeaf).assignNextLeaf(right.getPageNumber());
 
                             parent.removeSearchKey(curr.getPageNumber(), false);
-                            this.deleteIndexNode(node);
+                            this.deleteIndexNode(node, schema);
                         }
                     } else {
                         // merge left, append this to the end of left's array
@@ -750,7 +808,7 @@ public class StorageManager implements StorageManagerInterface {
                         left.assignNextLeaf(curr.getNextLeaf().first);
 
                         parent.removeSearchKey(curr.getPageNumber(), true);
-                        this.deleteIndexNode(node);
+                        this.deleteIndexNode(node, schema);
                     }
                 }
             }
@@ -760,17 +818,111 @@ public class StorageManager implements StorageManagerInterface {
             } else {
                 node = parent;
             }
-
         }
 
         // get page and delete
         deletePage = this.getPage(tableNumber, location.first);
+        // decrement all records after the deleted record in B+ tree
+        this.decrementIndexPointer(tableNumber, node.getPageNumber(), location.second, location.first);
         return new Pair<Page, Record>(deletePage, deletePage.deleteRecord(location.second));
     }
 
-    private void deleteIndexNode(BPlusNode node) {
+    /**
+     * After a deletion decrement all records in the page that appears after the deleted record
+     * @param tableNum  The table number
+     * @param leafNum   The leaf node number to begin consideration
+     * @param index     The index of the deleted record
+     * @param pageNum   The pageNum that actual record was initially on
+     * @throws Exception 
+     */
+    private void decrementIndexPointer(int tableNum, int leafNum, int index, int pageNum) throws Exception {
+        LeafNode leaf = null;
+        boolean end = false;
+        do {
+            leaf = (LeafNode)this.getIndexPage(tableNum, leafNum);
+            List<Bucket> buckets = leaf.getSK();
+            for (Bucket b : buckets) {
+                // for every bucket, if the pageNum is the same
+                // check if the index is after the deleted index, if so decrement
+                if (b.getPageNumber() != pageNum) {
+                    end = true; // we have moved on to the next page
+                    break;
+                }
+
+                if (b.getIndex() > index) {
+                    b.setPointer(pageNum, b.getIndex()-1);
+                }
+            }
+
+            if (leaf.getNextLeaf() != null) {
+                leafNum = leaf.getNextLeaf().first;
+            } else {
+                break;
+            }
+
+        } while (!end);
+    }
+
+    /**
+     * After an insertion increment all records in the page that appears after the inserted record
+     * @param tableNum  The table number
+     * @param leafNum   The leaf node number to begin consideration
+     * @param index     The index of the inserted record
+     * @param pageNum   The pageNum that actual record was initially on
+     * @throws Exception 
+     */
+    private void incrementIndexPointer(int tableNum, int leafNum, int index, int pageNum) throws Exception {
+        LeafNode leaf = null;
+        boolean end = false;
+        do {
+            leaf = (LeafNode)this.getIndexPage(tableNum, leafNum);
+            List<Bucket> buckets = leaf.getSK();
+            for (Bucket b : buckets) {
+                // for every bucket, if the pageNum is the same
+                // check if the index is after the deleted index, if so decrement
+                if (b.getPageNumber() != pageNum) {
+                    end = true; // we have moved on to the next page
+                    break;
+                }
+
+                if (b.getIndex() >= index) {
+                    b.setPointer(pageNum, b.getIndex()+1);
+                }
+            }
+
+            if (leaf.getNextLeaf() != null) {
+                leafNum = leaf.getNextLeaf().first;
+            } else {
+                break;
+            }
+
+        } while (!end);
+    }
+
+    /**
+     * 
+     * @param node
+     * @throws Exception 
+     */
+    private void deleteIndexNode(BPlusNode node, TableSchema schema) throws Exception {
         node.clear();
-        // TODO
+        int deletedPageNum = node.getPageNumber();
+
+        // decrement all node's page number
+        for (int i = 0; i < schema.getNumIndexPages(); i++) {
+            // read in all nodes, if the read in node's page number is higher than the deleted
+            // then decrement
+            BPlusNode currNode = this.getIndexPage(schema.getTableNumber(), i);
+            if (currNode.getPageNumber() > deletedPageNum) {
+                currNode.setPageNumber(currNode.getPageNumber()-1);
+            }
+
+            // for every read in node, loop through it's pointers and decrement any pointer to a 
+            // BPlusNode whose page is greater than the deleted node
+            // this will also remove the deleted node from any internal node that pointed to it
+            currNode.decrementNodePointerPage(deletedPageNum);
+        }        
+
     }
 
     public void updateRecord(int tableNumber, Record newRecord, Object primaryKey) throws Exception {

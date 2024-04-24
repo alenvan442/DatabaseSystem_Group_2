@@ -5,6 +5,7 @@ import StorageManager.TableSchema;
 import StorageManager.Objects.AttributeSchema;
 import StorageManager.Objects.MessagePrinter;
 import StorageManager.Objects.MessagePrinter.MessageType;
+import StorageManager.Objects.Page;
 import StorageManager.Objects.Utility.Pair;
 
 import java.io.RandomAccessFile;
@@ -19,6 +20,7 @@ public class LeafNode extends BPlusNode{
     public LeafNode(int tableNumber, int pageNumber, int n, int parent) {
         super(tableNumber, pageNumber, n, parent, true);
         buckets = new ArrayList<>();
+        this.nextLeaf = null;
     }
 
     public ArrayList<Bucket> getSK() {
@@ -51,6 +53,19 @@ public class LeafNode extends BPlusNode{
 
     public Pair<Integer, Integer> getNextLeaf() {
         return this.nextLeaf;
+    }
+
+    /**
+     * Decrements all pointers that consist of a page that is greater than the passed in value
+     * @param page      The page number that was just deleted, so decrement any pages after this
+     */
+    public void decrementPointerPage(int page) {
+        for (Bucket b : this.buckets) {
+            if (b.getPageNumber() > page) {
+                b.setPointer(b.getPageNumber()-1, b.getIndex());
+            }
+        }
+        this.setChanged();
     }
 
 
@@ -108,19 +123,53 @@ public class LeafNode extends BPlusNode{
         MessagePrinter.printMessage(MessageType.ERROR, "No matching key of " + value.toString() + " was found");
     }
 
+    /**
+     * Start somewhere on the page, loop through every bucket until we find the record to update
+     * update the record, then increment to the next bucket and record, then match again.
+     * Theoretically, they should be in order.
+     * @param startIndex    where to start on the passed in page
+     * @param type          datatype of PK
+     * @param page          the page to update
+     * @param skIndex       index of the SK/PK
+     * @return              the index where we leave off but have not yet updated
+     * @throws Exception
+     */
+    public int replacePointerMultiple(int startIndex, Type type, Page page, int skIndex) throws Exception {
+        int pageIndex = startIndex;
+        for (int i = 0; i < this.buckets.size(); i++) {
+            if (pageIndex >= page.getRecords().size()) {
+                break;
+            }
+
+            Object sk = page.getRecords().get(pageIndex).getValues().get(skIndex);
+            Bucket curr = this.buckets.get(i);
+            int result = this.compareKey(sk, curr.getPrimaryKey(), type);
+            if (result == 0) {
+                // found match => update pointer
+                curr.setPointer(page.getPageNumber(), pageIndex);
+                this.setChanged();
+                pageIndex++;
+            } else if (result < 0) {
+                MessagePrinter.printMessage(MessageType.ERROR, "B+ tree out of order or missing record: replacePointerMultiple");
+                return -1;
+            }
+        }
+        return pageIndex;
+    }
+
     @Override
     public Pair<Integer, Integer> insert(Object value, Type type) throws Exception {
         for(int i = 0; i < buckets.size(); i++){
             try {
                 Bucket curr = buckets.get(i);
                 Object pk = curr.getPrimaryKey();
-                int result = this.compareKey(pk, value, type);
+                int result = this.compareKey(value, pk, type);
                 if (result == 0) {
                     throw new Exception("PrimaryKey is already in db");
-                } else if (result > 0) {
-                    // it is previous in line
+                } else if (result < 0) {
+                    // it is next in line
                     Bucket _new = new Bucket(this.pageNumber, curr.getIndex()+1, value);
-                    this.buckets.add(i-1, _new);
+                    this.buckets.add(i+1, _new);
                     this.setChanged();
                     return new Pair<Integer, Integer>(_new.getPageNumber(), _new.getIndex());
                 }
@@ -297,5 +346,12 @@ public class LeafNode extends BPlusNode{
             tableAccessFile.writeInt(bucket.getIndex());
         }
     }
+    public void decrementNodePointerPage(int pageNum) {
+        if (this.getNextLeaf() != null && this.getNextLeaf().first > pageNum) {
+            this.assignNextLeaf(this.getNextLeaf().first-1);
+        }
+        this.setChanged();
+    }
+
 
 }

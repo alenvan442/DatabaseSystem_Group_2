@@ -352,5 +352,26 @@ public class InternalNode extends BPlusNode {
         }
     }
 
+    public void decrementNodePointerPage(int pageNum) {
+        // while we are here, if a pointer exists in which it pointed to the
+        // deleted page, remove it, also remove the search key that is just greater than it
+        int remove = -1;
+        for (int i = 0; i < this.pointers.size(); i++) {
+            if (this.pointers.get(i).first == pageNum) {
+                remove = i;
+            } else if (this.pointers.get(i).first > pageNum) {
+                Pair<Integer, Integer> newPointer = new Pair<Integer, Integer>(this.pointers.remove(i).first, -1);
+                this.pointers.add(i, newPointer);
+            }
+        }
+
+        if (remove != -1) {
+            this.pointers.remove(remove);
+            this.searchKeys.remove(remove);
+        }
+        this.setChanged();
+
+    }
+
 }
 

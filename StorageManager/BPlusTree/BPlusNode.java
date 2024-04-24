@@ -99,6 +99,12 @@ public abstract class BPlusNode extends BufferPage {
     public abstract boolean willUnderfull();
 
     /**
+     * @pageNum     decrement any pointer that points to another BPlusNode, 
+     *              and whose pageNumber is greater than the passed in pageNum
+     */
+    public abstract void decrementNodePointerPage(int pageNum);
+
+    /**
      * Clears the node. Used in a merge
      * Removes all search keys and pointers from this node
      */
