@@ -321,11 +321,15 @@ public class StorageManager implements StorageManagerInterface {
                                 searchLocation = node.search(firstSK, pkType);
                             } while (searchLocation != null && searchLocation.second == -1);
 
-                            // stop when we get the first LeaFNode
-                            LeafNode leaf = (LeafNode)node;
-                            while (pageIndex < p.getRecords().size()) {
-                                pageIndex = leaf.replacePointerMultiple(pageIndex, pkType, p, primaryKeyIndex);
-                                leaf = (LeafNode)this.getIndexPage(tableNumber, leaf.getNextLeaf().first);
+                            try {
+                                // stop when we get the first LeaFNode
+                                LeafNode leaf = (LeafNode)node;
+                                while (pageIndex < p.getRecords().size()) {
+                                    pageIndex = leaf.replacePointerMultiple(pageIndex, pkType, p, primaryKeyIndex);
+                                    leaf = (LeafNode)this.getIndexPage(tableNumber, leaf.getNextLeaf().first);
+                                }
+                            } catch (Exception e) {
+                                MessagePrinter.printMessage(MessageType.ERROR, e.getMessage() + ": insertRecord.indexing");
                             }
                         }
                     }
@@ -389,8 +393,10 @@ public class StorageManager implements StorageManagerInterface {
                 // this is the root node that is overfull
                 // create new parent node which will be the new root
                 parent = new InternalNode(tableNumber, tableSchema.incrementNumIndexPages(), n, -1);
+                tableSchema.incrementNumIndexPages();
                 node.setParent(parent.getPageNumber());
                 tableSchema.setRoot(parent.getPageNumber());
+                this.addPageToBuffer(parent);
             } else {
                 parent = (InternalNode)this.getIndexPage(tableNumber, node.getParent()); // only internals can be a parent
             }
@@ -427,6 +433,7 @@ public class StorageManager implements StorageManagerInterface {
                 parent.addSearchKey(goingUp, -1);
                 parent.addPointer(new Pair<Integer, Integer>(newNode.getPageNumber(), -1), -1);
 
+                tableSchema.incrementNumIndexPages();
                 this.addPageToBuffer(newNode);
             } else if (node instanceof LeafNode) {
                 LeafNode leaf = (LeafNode)node;
@@ -450,6 +457,7 @@ public class StorageManager implements StorageManagerInterface {
                 parent.addSearchKey(goingUp, -1);
                 parent.addPointer(new Pair<Integer, Integer>(newNode.getPageNumber(), -1), -1);
 
+                tableSchema.incrementNumIndexPages();
                 this.addPageToBuffer(newNode);
             }
             // move up in the tree and repeat
@@ -534,28 +542,32 @@ public class StorageManager implements StorageManagerInterface {
 
             // if indexing on, start at first leaf node, loop through all and decrement any pages that has a greater page number than the one being deleted
             if (Catalog.getCatalog().isIndexingOn()) {
-                // get first leaf node
-                Pair<Integer, Integer> location = new Pair<Integer,Integer>(schema.getRootNumber(), -1);
-                BPlusNode node = null;
-                while (location != null && location.second == -1) {
-                    node = this.getIndexPage(schema.getTableNumber(), location.first);
-                    location = ((InternalNode)node).getPointers().get(0); // get leftmost
-                }
-
-                // the pointer points to a leaf node now
-                LeafNode leaf = null;
-                int leafNum = location.first;
-
-                while (true) {
-                    leaf = (LeafNode)this.getIndexPage(schema.getTableNumber(), leafNum);
-                    leaf.decrementPointerPage(page.getPageNumber());
-                    if (leaf.getNextLeaf() != null) {
-                        leafNum = leaf.getNextLeaf().first;
-                    } else {
-                        // no more leaves to read in
-                        break;
+                try {
+                    // get first leaf node
+                    Pair<Integer, Integer> location = new Pair<Integer,Integer>(schema.getRootNumber(), -1);
+                    BPlusNode node = null;
+                    while (location != null && location.second == -1) {
+                        node = this.getIndexPage(schema.getTableNumber(), location.first);
+                        location = ((InternalNode)node).getPointers().get(0); // get leftmost
                     }
-                };
+
+                    // the pointer points to a leaf node now
+                    LeafNode leaf = null;
+                    int leafNum = location.first;
+
+                    while (true) {
+                        leaf = (LeafNode)this.getIndexPage(schema.getTableNumber(), leafNum);
+                        leaf.decrementPointerPage(page.getPageNumber());
+                        if (leaf.getNextLeaf() != null) {
+                            leafNum = leaf.getNextLeaf().first;
+                        } else {
+                            // no more leaves to read in
+                            break;
+                        }
+                    };
+                } catch (Exception e) {
+                    MessagePrinter.printMessage(MessageType.ERROR, e.getMessage() + ": checkDeletePage.indexing");
+                }
 
             }
 
@@ -776,27 +788,31 @@ public class StorageManager implements StorageManagerInterface {
                             BPlusNode searchLeaf = null;
                             Pair<Integer, Integer> finder = new Pair<Integer,Integer>(schema.getRootNumber(), -1);
 
-                            while (finder.first != currPageNum) {
-                                searchLeaf = this.getIndexPage(tableNumber, finder.first);
-                                if (searchLeaf instanceof InternalNode) {
-                                    // go down leftmosr side of the tree
-                                    finder = ((InternalNode)searchLeaf).getPointers().get(0);
-                                } else {
-                                    LeafNode leaf = (LeafNode)searchLeaf;
-                                    if (leaf.getNextLeaf() == null) {
-                                        MessagePrinter.printMessage(MessageType.ERROR, "Did not find the previous neighbor of the current node: deleteIndex");
+                            try {
+                                while (finder.first != currPageNum) {
+                                    searchLeaf = this.getIndexPage(tableNumber, finder.first);
+                                    if (searchLeaf instanceof InternalNode) {
+                                        // go down leftmosr side of the tree
+                                        finder = ((InternalNode)searchLeaf).getPointers().get(0);
+                                    } else {
+                                        LeafNode leaf = (LeafNode)searchLeaf;
+                                        if (leaf.getNextLeaf() == null) {
+                                            MessagePrinter.printMessage(MessageType.ERROR, "Did not find the previous neighbor of the current node: deleteIndex");
+                                        }
+
+                                        // if we're at the leaf node level already
+                                        // move to the next leaf node until we find what we need
+                                        finder = leaf.getNextLeaf();
                                     }
-
-                                    // if we're at the leaf node level already
-                                    // move to the next leaf node until we find what we need
-                                    finder = leaf.getNextLeaf();
                                 }
+
+                                ((LeafNode)searchLeaf).assignNextLeaf(right.getPageNumber());
+
+                                parent.removeSearchKey(curr.getPageNumber(), false);
+                                this.deleteIndexNode(node, schema);
+                            } catch (Exception e) {
+                                MessagePrinter.printMessage(MessageType.ERROR, e.getMessage() + ": deleteIndex");
                             }
-
-                            ((LeafNode)searchLeaf).assignNextLeaf(right.getPageNumber());
-
-                            parent.removeSearchKey(curr.getPageNumber(), false);
-                            this.deleteIndexNode(node, schema);
                         }
                     } else {
                         // merge left, append this to the end of left's array
@@ -838,29 +854,33 @@ public class StorageManager implements StorageManagerInterface {
     private void decrementIndexPointer(int tableNum, int leafNum, int index, int pageNum) throws Exception {
         LeafNode leaf = null;
         boolean end = false;
-        do {
-            leaf = (LeafNode)this.getIndexPage(tableNum, leafNum);
-            List<Bucket> buckets = leaf.getSK();
-            for (Bucket b : buckets) {
-                // for every bucket, if the pageNum is the same
-                // check if the index is after the deleted index, if so decrement
-                if (b.getPageNumber() != pageNum) {
-                    end = true; // we have moved on to the next page
+            try {
+            do {
+                leaf = (LeafNode)this.getIndexPage(tableNum, leafNum);
+                List<Bucket> buckets = leaf.getSK();
+                for (Bucket b : buckets) {
+                    // for every bucket, if the pageNum is the same
+                    // check if the index is after the deleted index, if so decrement
+                    if (b.getPageNumber() != pageNum) {
+                        end = true; // we have moved on to the next page
+                        break;
+                    }
+
+                    if (b.getIndex() > index) {
+                        b.setPointer(pageNum, b.getIndex()-1);
+                    }
+                }
+
+                if (leaf.getNextLeaf() != null) {
+                    leafNum = leaf.getNextLeaf().first;
+                } else {
                     break;
                 }
 
-                if (b.getIndex() > index) {
-                    b.setPointer(pageNum, b.getIndex()-1);
-                }
-            }
-
-            if (leaf.getNextLeaf() != null) {
-                leafNum = leaf.getNextLeaf().first;
-            } else {
-                break;
-            }
-
-        } while (!end);
+            } while (!end);
+        } catch (Exception e) {
+            MessagePrinter.printMessage(MessageType.ERROR, e.getMessage() + ": decrementIndexPointer");
+        }
     }
 
     /**
@@ -875,25 +895,29 @@ public class StorageManager implements StorageManagerInterface {
         LeafNode leaf = null;
         boolean end = false;
         do {
-            leaf = (LeafNode)this.getIndexPage(tableNum, leafNum);
-            List<Bucket> buckets = leaf.getSK();
-            for (Bucket b : buckets) {
-                // for every bucket, if the pageNum is the same
-                // check if the index is after the deleted index, if so decrement
-                if (b.getPageNumber() != pageNum) {
-                    end = true; // we have moved on to the next page
+            try {
+                leaf = (LeafNode)this.getIndexPage(tableNum, leafNum);
+                List<Bucket> buckets = leaf.getSK();
+                for (Bucket b : buckets) {
+                    // for every bucket, if the pageNum is the same
+                    // check if the index is after the deleted index, if so decrement
+                    if (b.getPageNumber() != pageNum) {
+                        end = true; // we have moved on to the next page
+                        break;
+                    }
+
+                    if (b.getIndex() >= index) {
+                        b.setPointer(pageNum, b.getIndex()+1);
+                    }
+                }
+
+                if (leaf.getNextLeaf() != null) {
+                    leafNum = leaf.getNextLeaf().first;
+                } else {
                     break;
                 }
-
-                if (b.getIndex() >= index) {
-                    b.setPointer(pageNum, b.getIndex()+1);
-                }
-            }
-
-            if (leaf.getNextLeaf() != null) {
-                leafNum = leaf.getNextLeaf().first;
-            } else {
-                break;
+            } catch (Exception e) {
+                MessagePrinter.printMessage(MessageType.ERROR, e.getMessage() + ": incrementIndexPointer");
             }
 
         } while (!end);
@@ -921,7 +945,8 @@ public class StorageManager implements StorageManagerInterface {
             // BPlusNode whose page is greater than the deleted node
             // this will also remove the deleted node from any internal node that pointed to it
             currNode.decrementNodePointerPage(deletedPageNum);
-        }        
+        }
+        schema.decrementNumIndexPages();        
 
     }
 
