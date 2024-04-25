@@ -113,11 +113,9 @@ public class InternalNode extends BPlusNode {
         }
 
         if (replaceIndex == -1) {
-            MessagePrinter.printMessage(MessageType.ERROR, "This should not happen: RemoveSearchKeyLeafNode");
+            MessagePrinter.printMessage(MessageType.ERROR, "This should not happen: ReplaceSearchKeyInternalNode");
             return null;
-        }
-
-        if (less) {
+        } else if (less) {
             // idea: we pass in the pageNum of the node that was modified/deleted from
             // if we merge left, we are merging with a node that is less than us, meaning
             // the corresponding search key is at a lower index
@@ -137,16 +135,18 @@ public class InternalNode extends BPlusNode {
             }
         }
 
-        if (replaceIndex == -1) {
-            MessagePrinter.printMessage(MessageType.ERROR, "This should not happen: RemoveSearchKeyLeafNode");
-        }
-
-        if (less) {
+        if (this.searchKeys.size() == 0) {
+            replaceIndex = 0;
+        } else if (replaceIndex == -1) {
+            // append to the end
+            replaceIndex = this.searchKeys.size();
+        } else if (less) {
             // idea: we pass in the pageNum of the node that was modified/deleted from
             // if we merge left, we are merging with a node that is less than us, meaning
             // the corresponding search key is at a lower index
             replaceIndex--;
         }
+
 
         this.searchKeys.add(replaceIndex, newKey);
         this.setChanged();
@@ -160,16 +160,18 @@ public class InternalNode extends BPlusNode {
             }
         }
 
-        if (replaceIndex == -1) {
-            MessagePrinter.printMessage(MessageType.ERROR, "This should not happen: RemoveSearchKeyLeafNode");
-        }
-
-        if (less) {
+        if (this.pointers.size() == 0) {
+            replaceIndex = 0;
+        } else if (replaceIndex == -1) {
+            // must be greater than all others
+            replaceIndex = this.pointers.size();
+        } else if (less) {
             // idea: we pass in the pageNum of the node that was modified/deleted from
             replaceIndex--;
         } else {
             replaceIndex++;
         }
+        
 
         this.pointers.add(replaceIndex, newPointer);
         this.setChanged();
@@ -367,7 +369,7 @@ public class InternalNode extends BPlusNode {
         }
 
         if (getIndex == -1) {
-            MessagePrinter.printMessage(MessageType.ERROR, "This should not happen: RemoveSearchKeyLeafNode");
+            MessagePrinter.printMessage(MessageType.ERROR, "This should not happen: GetSearchKeyLeafNode");
             return null;
         }
 

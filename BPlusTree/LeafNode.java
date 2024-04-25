@@ -178,7 +178,7 @@ public class LeafNode extends BPlusNode{
             }
         }
         // if we reach this, then we need to insert at end of leafnode
-        Bucket _new = new Bucket(this.buckets.get(this.buckets.size()-1).getPageNumber(), this.buckets.size(), value);
+        Bucket _new = new Bucket(this.buckets.get(this.buckets.size()-1).getPageNumber(), this.buckets.get(this.buckets.size()-1).getIndex()+1, value);
         this.buckets.add(_new);
         this.setChanged();
         return new Pair<Integer, Integer>(_new.getPageNumber(), _new.getIndex());
@@ -290,6 +290,14 @@ public class LeafNode extends BPlusNode{
     @Override
     public void readFromHardware(RandomAccessFile tableAccessFile, TableSchema tableSchema) throws Exception {
         int numSearchKeys = tableAccessFile.readInt();
+        int nextLeaf = tableAccessFile.readInt();
+
+        if (nextLeaf == -1) {
+            this.nextLeaf = null;
+        } else {
+            this.nextLeaf = new Pair<Integer,Integer>(nextLeaf, -1);
+        }
+
         ArrayList<Object> searchKeys = new ArrayList<>();
         for (int i=0; i < numSearchKeys; ++i) {
             AttributeSchema attributeSchema = tableSchema.getAttributes().get(tableSchema.getPrimaryIndex());
@@ -324,6 +332,12 @@ public class LeafNode extends BPlusNode{
         tableAccessFile.writeInt(this.pageNumber);
         tableAccessFile.writeInt(this.parent);
         tableAccessFile.writeInt(this.buckets.size());
+
+        if (this.nextLeaf == null) {
+            tableAccessFile.writeInt(-1);
+        } else {
+            tableAccessFile.writeInt(this.nextLeaf.first);
+        }
 
         for (Bucket bucket : this.buckets) {
             Object searchKey = bucket.getPrimaryKey();
