@@ -1057,7 +1057,7 @@ public class StorageManager implements StorageManagerInterface {
 
             // if BPlus exists, drop it
             if (indexFile.exists()) {
-                tableFile.delete();
+                indexFile.delete();
             }
 
             // for every page in the buffer that has this table number, remove it.
