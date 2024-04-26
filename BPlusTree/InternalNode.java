@@ -321,6 +321,7 @@ public class InternalNode extends BPlusNode {
 
     @Override
     public void removeSearchKey(int pageNum, boolean less) throws Exception {
+        // NOTE pageNum is the pageNum of the current node that is underfull and is trying to merge with another node
         int replaceIndex = -1;
         for (int i = 0; i < this.pointers.size(); i++) {
             if (this.pointers.get(i).first == pageNum) {
@@ -343,7 +344,7 @@ public class InternalNode extends BPlusNode {
             this.searchKeys.remove(replaceIndex-1);
         } else {
             // for merge rights
-            this.pointers.remove(replaceIndex-1);
+            this.pointers.remove(replaceIndex);
             this.searchKeys.remove(replaceIndex);
         }
 
@@ -448,22 +449,20 @@ public class InternalNode extends BPlusNode {
 
     @Override
     public void decrementNodePointerPage(int pageNum) {
-        // while we are here, if a pointer exists in which it pointed to the
-        // deleted page, remove it, also remove the search key that is just greater than it
-        int remove = -1;
+
+        // handles next node pointer
         for (int i = 0; i < this.pointers.size(); i++) {
-            if (this.pointers.get(i).first == pageNum) {
-                remove = i;
-            } else if (this.pointers.get(i).first > pageNum) {
+            if (this.pointers.get(i).first > pageNum) {
                 Pair<Integer, Integer> newPointer = new Pair<Integer, Integer>(this.pointers.remove(i).first-1, -1);
                 this.pointers.add(i, newPointer);
             }
         }
 
-        if (remove != -1) {
-            this.pointers.remove(remove);
-            this.searchKeys.remove(remove);
+        // handles parent pointer
+        if (this.parent > pageNum) {
+            this.parent--;
         }
+
         this.setChanged();
 
     }

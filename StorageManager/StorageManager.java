@@ -857,11 +857,13 @@ public class StorageManager implements StorageManagerInterface {
                             currSK.addAll(rightSK);
                             right.setSK(currSK);
                             int currPageNum = curr.getPageNumber();
+                            parent.removeSearchKey(currPageNum, false);
 
                             // update the previous leafnode's pointer to the next leafNode to this one
                             BPlusNode searchLeaf = null;
                             Pair<Integer, Integer> finder = new Pair<Integer,Integer>(schema.getRootNumber(), -1);
 
+                            // TODO potential error here
                             try {
                                 while (finder.first != currPageNum) {
                                     searchLeaf = this.getIndexPage(tableNumber, finder.first);
@@ -884,7 +886,6 @@ public class StorageManager implements StorageManagerInterface {
                                 searchLeaf = (LeafNode)this.getIndexPage(tableNumber, finder.first);
                                 ((LeafNode)searchLeaf).assignNextLeaf(right.getPageNumber());
 
-                                parent.removeSearchKey(right.getPageNumber(), true);
                                 this.deleteIndexNode(node, schema);
                                 leafNodeFound = right.getPageNumber();
                             } catch (Exception e) {
@@ -1262,9 +1263,6 @@ public class StorageManager implements StorageManagerInterface {
     }
 
     private void writeIndexPageHardware(BPlusNode page) throws Exception {
-        /*if (page.getPageNumber() < 0) {
-            System.out.println("Negative pageNumber");
-        }*/
         Catalog catalog = Catalog.getCatalog();
         TableSchema tableSchema = catalog.getSchema(page.getTableNumber());
         String filePath = this.getIndexingPath(page.getTableNumber());

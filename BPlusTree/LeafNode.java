@@ -238,9 +238,9 @@ public class LeafNode extends BPlusNode{
     public boolean willOverfull(int count) {
         int max = this.n-1;
         if (this.buckets.size()+count <= max) {
-            return true;
-        } else {
             return false;
+        } else {
+            return true;
         }
     }
 
@@ -249,9 +249,9 @@ public class LeafNode extends BPlusNode{
         double res = (this.n-1) / 2;
         int min = (int)Math.ceil(res);
         if (min <= this.buckets.size()-1) {
-            return true;
-        } else {
             return false;
+        } else {
+            return true;
         }
     }
 
@@ -363,8 +363,14 @@ public class LeafNode extends BPlusNode{
 
     @Override
     public void decrementNodePointerPage(int pageNum) {
+        // handles next leaf pointer
         if (this.getNextLeaf() != null && this.getNextLeaf().first > pageNum) {
             this.assignNextLeaf(this.getNextLeaf().first-1);
+        }
+
+        //handles parent pointer
+        if (this.parent > pageNum) {
+            this.parent--;
         }
         this.setChanged();
     }
