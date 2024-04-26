@@ -683,6 +683,8 @@ public class StorageManager implements StorageManagerInterface {
             return null;
         }
 
+        int leafNodeFound = node.getPageNumber();
+
         while (node.underfull()) {
             // get array in node
             InternalNode parent = null;
@@ -904,7 +906,7 @@ public class StorageManager implements StorageManagerInterface {
         // get page and delete
         deletePage = this.getPage(tableNumber, location.first);
         // decrement all records after the deleted record in B+ tree
-        this.decrementIndexPointer(tableNumber, node.getPageNumber(), location.second, location.first);
+        this.decrementIndexPointer(tableNumber, leafNodeFound, location.second, location.first, primaryKey, pkType);
         return new Pair<Page, Record>(deletePage, deletePage.deleteRecord(location.second));
     }
 
@@ -916,22 +918,29 @@ public class StorageManager implements StorageManagerInterface {
      * @param pageNum   The pageNum that actual record was initially on
      * @throws Exception
      */
-    private void decrementIndexPointer(int tableNum, int leafNum, int index, int pageNum) throws Exception {
+    private void decrementIndexPointer(int tableNum, int leafNum, int index, int pageNum, Object searchKey, Type type) throws Exception {
         LeafNode leaf = null;
         boolean end = false;
+        boolean started = false;
+
+        do {
             try {
-            do {
                 leaf = (LeafNode)this.getIndexPage(tableNum, leafNum);
                 List<Bucket> buckets = leaf.getSK();
                 for (Bucket b : buckets) {
                     // for every bucket, if the pageNum is the same
                     // check if the index is after the deleted index, if so decrement
-                    if (b.getPageNumber() != pageNum) {
+                    if (b.getPageNumber() == pageNum) {
+                        if (!started) {
+                            started = true;
+                        }
+                    } else if (started && b.getPageNumber() != pageNum) {
                         end = true; // we have moved on to the next page
                         break;
                     }
 
-                    if (b.getIndex() > index) {
+                    if (b.getIndex() >= index && leaf.compareKey(searchKey, b.getPrimaryKey(), type) != 0 &&
+                        b.getPageNumber() == pageNum) {
                         b.setPointer(pageNum, b.getIndex()-1);
                     }
                 }
@@ -941,11 +950,10 @@ public class StorageManager implements StorageManagerInterface {
                 } else {
                     break;
                 }
-
-            } while (!end);
-        } catch (Exception e) {
-            MessagePrinter.printMessage(MessageType.ERROR, e.getMessage() + ": decrementIndexPointer");
-        }
+            } catch (Exception e) {
+                MessagePrinter.printMessage(MessageType.ERROR, e.getMessage() + ": incrementIndexPointer ");
+            }
+        } while (!end);
     }
 
     /**
@@ -967,7 +975,7 @@ public class StorageManager implements StorageManagerInterface {
                 List<Bucket> buckets = leaf.getSK();
                 for (Bucket b : buckets) {
                     // for every bucket, if the pageNum is the same
-                    // check if the index is after the deleted index, if so decrement
+                    // check if the index is after the deleted index, if so increment
                     if (b.getPageNumber() == pageNum) {
                         if (!started) {
                             started = true;
