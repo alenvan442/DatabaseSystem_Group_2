@@ -74,7 +74,7 @@ public class StorageManager implements StorageManagerInterface {
         // Create a new page
         Page newPage = new Page(0, tableSchema.getTableNumber(), tableSchema.getNumPages() + 1);
         tableSchema.addPageNumber(page.getPageNumber(), newPage.getPageNumber());
-        List<Page> results = Arrays.asList(page, newPage);
+        List<Page> results = Arrays.asList(newPage);
 
         // Calculate the split index
         int splitIndex = 0;
