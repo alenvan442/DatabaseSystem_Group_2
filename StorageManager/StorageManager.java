@@ -286,6 +286,9 @@ public class StorageManager implements StorageManagerInterface {
                 if (catalog.isIndexingOn() && tableSchema.getNumIndexPages() == 0) {
                     // create a new leaf node and insert the new record into it, this will be the first root node
                     LeafNode root = new LeafNode(tableNumber, 1, tableSchema.computeN(catalog), -1);
+                    if (root.getPageNumber() < 0 ) {
+                        System.out.println("flag");
+                    }
                     tableSchema.incrementNumIndexPages();
                     tableSchema.setRoot(1);
 
@@ -596,10 +599,10 @@ public class StorageManager implements StorageManagerInterface {
                 try {
                     // get first leaf node
                     Pair<Integer, Integer> location = new Pair<Integer,Integer>(schema.getRootNumber(), -1);
-                    BPlusNode node = null;
-                    while (location != null && location.second == -1) {
+                    BPlusNode node = this.getIndexPage(schema.getTableNumber(), location.first);
+                    while (location != null && node instanceof InternalNode) {
+                        location = ((InternalNode)node).getPointers().get(0);
                         node = this.getIndexPage(schema.getTableNumber(), location.first);
-                        location = ((InternalNode)node).getPointers().get(0); // get leftmost
                     }
 
                     // the pointer points to a leaf node now
@@ -723,10 +726,10 @@ public class StorageManager implements StorageManagerInterface {
 
                     // for internal nodes:
 
-                    if (left.willOverfull(curr.getSK().size()+1) || left == null) {
-                        if (right.willOverfull(curr.getSK().size()+1) || right == null) {
-                            if (left.willUnderfull() || left == null) {
-                                if (right.willUnderfull() || right == null) {
+                    if (left == null || left.willOverfull(curr.getSK().size()+1)) {
+                        if (right == null || right.willOverfull(curr.getSK().size()+1)) {
+                            if (left == null || left.willUnderfull()) {
+                                if (right == null || right.willUnderfull()) {
                                     // this should never happen
                                     MessagePrinter.printMessage(MessageType.ERROR, "An error that should never happen has been reached: BPlusUnderfull");
                                 } else {
@@ -822,10 +825,10 @@ public class StorageManager implements StorageManagerInterface {
                     LeafNode left = neighbors.first < 0 ? null : (LeafNode) this.getIndexPage(tableNumber, neighbors.first);
                     LeafNode right = neighbors.second < 0 ? null : (LeafNode) this.getIndexPage(tableNumber, neighbors.second);
 
-                    if (left.willOverfull(curr.getSK().size()) || left == null) {
-                        if (right.willOverfull(curr.getSK().size()) || right == null) {
-                            if (left.willUnderfull() || left == null) {
-                                if (right.willUnderfull() || right == null) {
+                    if (left == null || left.willOverfull(curr.getSK().size())) {
+                        if (right == null || right.willOverfull(curr.getSK().size())) {
+                            if (left == null || left.willUnderfull()) {
+                                if (right == null || right.willUnderfull()) {
                                     // this should never happen
                                     MessagePrinter.printMessage(MessageType.ERROR, "An error that should never happen has been reached: BPlusUnderfull");
                                 } else {
@@ -873,9 +876,11 @@ public class StorageManager implements StorageManagerInterface {
                                     }
                                 }
 
+                                // read one last time
+                                searchLeaf = (LeafNode)this.getIndexPage(tableNumber, finder.first);
                                 ((LeafNode)searchLeaf).assignNextLeaf(right.getPageNumber());
 
-                                parent.removeSearchKey(curr.getPageNumber(), false);
+                                parent.removeSearchKey(right.getPageNumber(), true);
                                 this.deleteIndexNode(node, schema);
                             } catch (Exception e) {
                                 MessagePrinter.printMessage(MessageType.ERROR, e.getMessage() + ": deleteIndex");
@@ -1226,6 +1231,9 @@ public class StorageManager implements StorageManagerInterface {
             pageNumber = tableIndexAccessFile.readInt();
             int parent = tableIndexAccessFile.readInt();
             LeafNode leafNode = new LeafNode(tableNumber, pageNumber, tableSchema.computeN(catalog), parent);
+            if (leafNode.getPageNumber() < 0 ) {
+                        System.out.println("flag");
+                    }
             leafNode.readFromHardware(tableIndexAccessFile, tableSchema);
             this.addPageToBuffer(leafNode);
         } else {

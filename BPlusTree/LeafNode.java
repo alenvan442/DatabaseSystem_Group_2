@@ -199,6 +199,7 @@ public class LeafNode extends BPlusNode{
                 if (found) {
                     // delete the found bucket
                     Bucket deleted = this.buckets.remove(i);
+                    //System.out.println("Deleted from node: " + deleted.getPrimaryKey());
                     this.setChanged();
                     return new Pair<Integer, Integer>(deleted.getPageNumber(), deleted.getIndex());
                 }
@@ -214,12 +215,12 @@ public class LeafNode extends BPlusNode{
 
     @Override
     public boolean underfull() {
-        double res = this.n-1 / 2;
+        double res = (this.n-1) / 2;
         int min = (int)Math.ceil(res);
         if (min <= this.buckets.size()) {
-            return true;
-        } else {
             return false;
+        } else {
+            return true;
         }
     }
 
@@ -245,7 +246,7 @@ public class LeafNode extends BPlusNode{
 
     @Override
     public boolean willUnderfull() {
-        double res = this.n-1 / 2;
+        double res = (this.n-1) / 2;
         int min = (int)Math.ceil(res);
         if (min <= this.buckets.size()-1) {
             return true;

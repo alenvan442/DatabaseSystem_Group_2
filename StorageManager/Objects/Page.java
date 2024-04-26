@@ -122,6 +122,7 @@ public class Page extends BufferPage {
         this.changed = true;
         this.setPriority();
         this.setNumRecords();
+        //System.out.println("Deleted record pk: " + removed.getValues().get(0));
         return removed;
     }
 
