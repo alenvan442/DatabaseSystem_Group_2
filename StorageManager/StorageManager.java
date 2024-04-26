@@ -286,6 +286,8 @@ public class StorageManager implements StorageManagerInterface {
                 if (catalog.isIndexingOn() && tableSchema.getNumIndexPages() == 0) {
                     // create a new leaf node and insert the new record into it, this will be the first root node
                     LeafNode root = new LeafNode(tableNumber, 1, tableSchema.computeN(catalog), -1);
+                    Bucket bucket = new Bucket(1, 0, record.getValues().get(primaryKeyIndex));
+                    root.addBucket(bucket, -1);
                     if (root.getPageNumber() < 0 ) {
                         System.out.println("flag");
                     }
