@@ -135,6 +135,18 @@ public class TableSchema implements SchemaInterface {
   }
 
   /**
+   * Decrements all pageNumbers that are greater than the input
+   * @param pageNum   The pageNum that was deleted
+   */
+  public void decrementPageOrder(int pageNum) {
+    for (int i = 0; i < this.pageOrder.size(); i++) {
+      if (this.pageOrder.get(i) > pageNum) {
+        this.pageOrder.set(i, this.pageOrder.get(i)-1);
+      }
+    }
+  }
+
+  /**
   * deletes a page from the tableSchema
   * then decrement all pageNumber that appear after
   * the deleted page

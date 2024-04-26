@@ -582,9 +582,8 @@ public class StorageManager implements StorageManagerInterface {
     private void checkDeletePage(TableSchema schema, Page page) throws Exception {
         if (page.getNumRecords() == 0) {
             // begin to delete the page by moving all preceding pages up
-            List<Integer> pageOrder = schema.getPageOrder();
-            for (int i = 0; i < schema.getPageOrder().size(); i++) {
-                Page foundPage = this.getPage(schema.getTableNumber(), pageOrder.get(i));
+            for (int i = 0; i < schema.getNumPages(); i++) {
+                Page foundPage = this.getPage(schema.getTableNumber(), i+1);
                 if (foundPage.getPageNumber() > page.getPageNumber()) {
                     foundPage.decrementPageNumber();
                     schema.setNumPages();
@@ -593,6 +592,7 @@ public class StorageManager implements StorageManagerInterface {
 
             // update the pageOrder of the schema
             schema.deletePageNumber(page.getPageNumber());
+            schema.decrementPageOrder(page.getPageNumber());
 
             // if indexing on, start at first leaf node, loop through all and decrement any pages that has a greater page number than the one being deleted
             if (Catalog.getCatalog().isIndexingOn()) {
@@ -1026,10 +1026,10 @@ public class StorageManager implements StorageManagerInterface {
         int deletedPageNum = node.getPageNumber();
 
         // decrement all node's page number
-        for (int i = 1; i <= schema.getNumIndexPages(); i++) {
+        for (int i = 0; i < schema.getNumIndexPages(); i++) {
             // read in all nodes, if the read in node's page number is higher than the deleted
             // then decrement
-            BPlusNode currNode = this.getIndexPage(schema.getTableNumber(), i);
+            BPlusNode currNode = this.getIndexPage(schema.getTableNumber(), i+1);
             if (currNode.getPageNumber() > deletedPageNum) {
                 if (schema.getRootNumber() == currNode.getPageNumber()) {
                     schema.setRoot(currNode.getPageNumber()-1);
