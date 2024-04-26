@@ -864,6 +864,7 @@ public class StorageManager implements StorageManagerInterface {
                             Pair<Integer, Integer> finder = new Pair<Integer,Integer>(schema.getRootNumber(), -1);
 
                             // TODO potential error here
+                            boolean noPrevious = false;
                             try {
                                 while (finder.first != currPageNum) {
                                     searchLeaf = this.getIndexPage(tableNumber, finder.first);
@@ -873,7 +874,10 @@ public class StorageManager implements StorageManagerInterface {
                                     } else {
                                         LeafNode leaf = (LeafNode)searchLeaf;
                                         if (leaf.getNextLeaf() == null) {
-                                            MessagePrinter.printMessage(MessageType.ERROR, "Did not find the previous neighbor of the current node: deleteIndex");
+                                            // the node that was deleted was the firs tleaf node
+                                            // no need to update a nextLeaf
+                                            noPrevious = true;
+                                            break;
                                         }
 
                                         // if we're at the leaf node level already
@@ -883,8 +887,10 @@ public class StorageManager implements StorageManagerInterface {
                                 }
 
                                 // read one last time
-                                searchLeaf = (LeafNode)this.getIndexPage(tableNumber, finder.first);
-                                ((LeafNode)searchLeaf).assignNextLeaf(right.getPageNumber());
+                                if (!noPrevious) {
+                                    searchLeaf = (LeafNode)this.getIndexPage(tableNumber, finder.first);
+                                    ((LeafNode)searchLeaf).assignNextLeaf(right.getPageNumber());
+                                }
 
                                 this.deleteIndexNode(node, schema);
                                 leafNodeFound = right.getPageNumber();

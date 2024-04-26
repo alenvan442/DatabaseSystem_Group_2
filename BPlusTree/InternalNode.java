@@ -224,15 +224,20 @@ public class InternalNode extends BPlusNode {
                 break;
             }
         }
-        if (currentIndex == 0) {
+        if (this.pointers.size() <= 1) {
             leftPageNum = -2;
-            rightPageNum = this.pointers.get(currentIndex + 1).first;
-        } else if (currentIndex == this.pointers.size()-1) {
-            leftPageNum = this.pointers.get(currentIndex - 1).first;
             rightPageNum = -2;
         } else {
-            leftPageNum = this.pointers.get(currentIndex - 1).first;
-            rightPageNum = this.pointers.get(currentIndex + 1).first;
+            if (currentIndex == 0) {
+                leftPageNum = -2;
+                rightPageNum = this.pointers.get(currentIndex + 1).first;
+            } else if (currentIndex == this.pointers.size()-1) {
+                leftPageNum = this.pointers.get(currentIndex - 1).first;
+                rightPageNum = -2;
+            } else {
+                leftPageNum = this.pointers.get(currentIndex - 1).first;
+                rightPageNum = this.pointers.get(currentIndex + 1).first;
+            }
         }
 
         return new Pair<Integer,Integer>(leftPageNum, rightPageNum);
