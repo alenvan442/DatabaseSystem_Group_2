@@ -716,6 +716,9 @@ public class StorageManager implements StorageManagerInterface {
                     }
                 } else if (node instanceof LeafNode) {
                     // actually should be fine if we do nothing here and let it be empty
+                    deleteIndexNode(node, schema);
+                    deletePage = this.getPage(tableNumber, location.first);
+                    return new Pair<Page,Record>(deletePage, deletePage.deleteRecord(location.second));
                 }
             } else {
                 parent = (InternalNode) this.getIndexPage(tableNumber, node.getParent());
@@ -1041,7 +1044,7 @@ public class StorageManager implements StorageManagerInterface {
                     schema.setRoot(currNode.getPageNumber()-1);
                 }
                 currNode.setPageNumber(currNode.getPageNumber()-1);
-                
+
             }
 
             // for every read in node, loop through it's pointers and decrement any pointer to a
