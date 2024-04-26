@@ -455,7 +455,7 @@ public class InternalNode extends BPlusNode {
             if (this.pointers.get(i).first == pageNum) {
                 remove = i;
             } else if (this.pointers.get(i).first > pageNum) {
-                Pair<Integer, Integer> newPointer = new Pair<Integer, Integer>(this.pointers.remove(i).first, -1);
+                Pair<Integer, Integer> newPointer = new Pair<Integer, Integer>(this.pointers.remove(i).first-1, -1);
                 this.pointers.add(i, newPointer);
             }
         }

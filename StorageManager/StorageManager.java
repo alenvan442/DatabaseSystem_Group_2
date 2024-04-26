@@ -672,9 +672,9 @@ public class StorageManager implements StorageManagerInterface {
         // get pk data type
         Type pkType = schema.getAttributeType(schema.getPrimaryIndex());
 
-        //if ((Integer)primaryKey == 4019) {
-        //    System.out.println("Flag");
-        //}
+        /*if ((Integer)primaryKey == 4019) {
+            System.out.println("Flag");
+        }*/
 
         // find location
         Pair<Integer, Integer> location = new Pair<Integer,Integer>(schema.getRootNumber(), -1);
@@ -706,11 +706,11 @@ public class StorageManager implements StorageManagerInterface {
                             BPlusNode newRoot = this.getIndexPage(tableNumber, pointers.get(0).first);
                             this.deleteIndexNode(node, schema);
                             newRoot.setPageNumber(1);
-                            tableSchema.setRoot(0);
+                            tableSchema.setRoot(newRoot.getPageNumber());
                         } else if (pointers.size() == 0) {
                             // not sure how this can happen, but if it does, create a new empty root as a leafnode and replace the old one
                             LeafNode newRoot = new LeafNode(tableNumber, 1, tableSchema.computeN(catalog), -1);
-                            tableSchema.setRoot(0);
+                            tableSchema.setRoot(newRoot.getPageNumber());
                             this.addPageToBuffer(newRoot);
                         }
                     }
@@ -1030,7 +1030,11 @@ public class StorageManager implements StorageManagerInterface {
             // then decrement
             BPlusNode currNode = this.getIndexPage(schema.getTableNumber(), i);
             if (currNode.getPageNumber() > deletedPageNum) {
+                if (schema.getRootNumber() == currNode.getPageNumber()) {
+                    schema.setRoot(currNode.getPageNumber()-1);
+                }
                 currNode.setPageNumber(currNode.getPageNumber()-1);
+                
             }
 
             // for every read in node, loop through it's pointers and decrement any pointer to a
@@ -1229,9 +1233,9 @@ public class StorageManager implements StorageManagerInterface {
         int nodeSize = tableSchema.computeSizeOfNode(catalog);
         int nodeIndex = pageNumber - 1;
 
-        //if (nodeIndex < 0) {
-        //    System.out.println("Negative seeke");
-        //}
+        /*if (nodeIndex < 0) {
+            System.out.println("Negative seeke");
+        }*/
 
         tableIndexAccessFile.seek(nodeIndex * nodeSize);
 
@@ -1239,9 +1243,9 @@ public class StorageManager implements StorageManagerInterface {
 
         if (nodeType) {
             pageNumber = tableIndexAccessFile.readInt();
-            //if (pageNumber < 0) {
-            //    System.out.println("Negative pageNumber");
-            //}
+            /*if (pageNumber < 0) {
+                System.out.println("Negative pageNumber");
+            }*/
             int parent = tableIndexAccessFile.readInt();
             LeafNode leafNode = new LeafNode(tableNumber, pageNumber, tableSchema.computeN(catalog), parent);
             leafNode.readFromHardware(tableIndexAccessFile, tableSchema);
@@ -1258,9 +1262,9 @@ public class StorageManager implements StorageManagerInterface {
     }
 
     private void writeIndexPageHardware(BPlusNode page) throws Exception {
-        //if (page.getPageNumber() < 0) {
-        //    System.out.println("Negative pageNumber");
-        //}
+        /*if (page.getPageNumber() < 0) {
+            System.out.println("Negative pageNumber");
+        }*/
         Catalog catalog = Catalog.getCatalog();
         TableSchema tableSchema = catalog.getSchema(page.getTableNumber());
         String filePath = this.getIndexingPath(page.getTableNumber());
@@ -1269,9 +1273,9 @@ public class StorageManager implements StorageManagerInterface {
         int nodeSize = tableSchema.computeSizeOfNode(catalog);
         int nodeIndex = page.getPageNumber() - 1;
 
-        //if (nodeIndex < 0) {
-        //    System.out.println("Negative seeke");
-        //}
+        /*if (nodeIndex < 0) {
+            System.out.println("Negative seeke");
+        }*/
 
         // got to node location
         tableIndexAccessFile.seek(nodeIndex * nodeSize);
