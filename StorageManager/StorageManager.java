@@ -959,6 +959,7 @@ public class StorageManager implements StorageManagerInterface {
     private void incrementIndexPointer(int tableNum, int leafNum, int index, int pageNum, Object searchKey, Type type) throws Exception {
         LeafNode leaf = null;
         boolean end = false;
+        boolean started = false;
 
         do {
             try {
@@ -967,7 +968,11 @@ public class StorageManager implements StorageManagerInterface {
                 for (Bucket b : buckets) {
                     // for every bucket, if the pageNum is the same
                     // check if the index is after the deleted index, if so decrement
-                    if (b.getPageNumber() > pageNum) {
+                    if (b.getPageNumber() == pageNum) {
+                        if (!started) {
+                            started = true;
+                        }
+                    } else if (started && b.getPageNumber() != pageNum) {
                         end = true; // we have moved on to the next page
                         break;
                     }
