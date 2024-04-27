@@ -1038,14 +1038,13 @@ public class StorageManager implements StorageManagerInterface {
      * @throws Exception
      */
     private void deleteIndexNode(BPlusNode node, TableSchema schema) throws Exception {
-        node.clear();
         int deletedPageNum = node.getPageNumber();
 
         // decrement all node's page number
         for (int i = deletedPageNum; i < schema.getNumIndexPages(); i++) {
             // read in all nodes, if the read in node's page number is higher than the deleted
             // then decrement
-            BPlusNode currNode = this.getIndexPage(schema.getTableNumber(), i+1);
+            BPlusNode currNode = this.getIndexPage(schema.getTableNumber(), i);
 
             if (currNode.getPageNumber() > deletedPageNum) {
                 if (schema.getRootNumber() == currNode.getPageNumber()) {

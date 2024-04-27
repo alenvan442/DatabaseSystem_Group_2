@@ -458,8 +458,8 @@ public class InternalNode extends BPlusNode {
         // handles next node pointer
         for (int i = 0; i < this.pointers.size(); i++) {
             if (this.pointers.get(i).first > pageNum) {
-                Pair<Integer, Integer> newPointer = new Pair<Integer, Integer>(this.pointers.remove(i).first-1, -1);
-                this.pointers.add(i, newPointer);
+                Pair<Integer, Integer> newPointer = new Pair<Integer, Integer>(this.pointers.get(i).first-1, -1);
+                this.pointers.set(i, newPointer);
             }
         }
 
